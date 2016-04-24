@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #endif
+#include <cuda.h>
 #include "haarlick.h"
 #include "CVIPtexture.h"
 #include "image_matrix.h"
@@ -152,10 +153,29 @@ void allocate_haarlick_memory(ImageMatrix *matrix, double distance, double *out)
 	double *d_distance, *d_out;
 	ImageMatrix *d_matrix;
 	TEXTURE *d_features;
+	int d_a, d_x, d_y;
+	unsigned char **d_p_gray;
+	TEXTURE *d_features;
+	long d_angle;
+	double d_min[14], d_max[14], d_sum[14];
+	double d_min_value = INF, d_max_value = -INF;//max_value=pow(2,Im->bits)-1;
+	size_t pitch;
+
+	cudaMallocPitch((void**)&d_p_gray, &pitch, matrix->width * sizeof(unsigned char), matrix->height);
+	cudaMalloc(d_a, sizeof(int));
+	cudaMalloc(d_x, sizeof(int));
+	cudaMalloc(d_y, sizeof(int));
+	cudaMalloc(d_angle, sizeof(long));
+	cudaMalloc(&d_min, sizeof(double));
+	cudaMalloc(&d_max, sizeof(double));
+	cudaMalloc(&d_sum, sizeof(double));
+	cudaMalloc(d_min_value, sizeof(double));
+	cudaMalloc(d_max_value, sizeof(double));
 	cudaMalloc(&d_features, sizeof(TEXTURE))
 	cudaMalloc(&d_matrix, sizeof(ImageMatrix));
 	cudaMalloc(&d_out, sizeof(double));
 	cudaMalloc(&d_distance, sizeof(double));
+
 
 	cudaMemcpy(d_matrix, matrix, sizeof(ImageMatrix), cudaMemcpyHostToDevice);
 	cudaMemcpy(d_out, out, sizeof(double), cudaMemcpyHostToDevice);
