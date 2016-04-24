@@ -151,6 +151,8 @@ void allocate_haarlick_memory(ImageMatrix *matrix, double distance, double *out)
 	// haarlick computation
 	double *d_distance, *d_out;
 	ImageMatrix *d_matrix;
+	TEXTURE *d_features;
+	cudaMalloc(&d_features, sizeof(TEXTURE))
 	cudaMalloc(&d_matrix, sizeof(ImageMatrix));
 	cudaMalloc(&d_out, sizeof(double));
 	cudaMalloc(&d_distance, sizeof(double));
