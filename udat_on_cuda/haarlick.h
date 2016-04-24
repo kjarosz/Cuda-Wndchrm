@@ -4,9 +4,8 @@
 #define haarlickH
 //---------------------------------------------------------------------------
 
-#include "cmatrix.h"
+#include "image_matrix.h"
 
-void haarlick2D(ImageMatrix *Im, double distance, double *out);
 void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out);
 
 #endif
