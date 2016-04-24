@@ -7,7 +7,7 @@
 #include <stdio.h>
 #endif
 #include "haarlick.h"
-#include "../CVIPtexture.h"
+#include "CVIPtexture.h"
 #include "image_matrix.h"
 //---------------------------------------------------------------------------
 /* haarlick
@@ -32,9 +32,9 @@ __global__ void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out) {
 
 	Im[i]->BasicStatistics(NULL, NULL, NULL, &min_value, &max_value, NULL, 0);
 	for (y = 0; y<Im[i]->height; y++)
-	for (x = 0; x<Im[i]->width; x++)
-	if (Im[i]->bits>8) p_gray[y][x] = (unsigned char)((Im[i]->pixel(x, y, 0).intensity - min_value)*(255.0 / (max_value - min_value)));
-	else p_gray[y][x] = (unsigned char)(Im[i]->pixel(x, y, 0).intensity);
+		for (x = 0; x<Im[i]->width; x++)
+			if (Im[i]->bits>8) p_gray[y][x] = (unsigned char)((Im[i]->pixel(x, y, 0).intensity - min_value)*(255.0 / (max_value - min_value)));
+			else p_gray[y][x] = (unsigned char)(Im[i]->pixel(x, y, 0).intensity);
 
 	for (a = 0; a<14; a++)
 	{
