@@ -91,10 +91,6 @@ public:
 	int LoadBMP(char *filename, int ColorMode);      /* load from a bitmap file              */
 	int LoadJPG(char *filename, int ColorMode);      /* load from a JPG file                 */
 #endif
-	int LoadTIFF(char *filename);                   /* load from TIFF file                  */
-	int SaveTiff(char *filename);                   /* save a matrix in TIF format          */
-	int LoadPPM(char *filename, int ColorMode);     /* load from a PPM file                 */
-	int LoadWav(char *filename);                    /* load from Wav file                   */
 	int OpenImage(char *image_file_name, int downsample, rect *bounding_rect, double mean, double stddev, long DynamicRange, double otsu_mask); /* load an image of any supported format */
 	ImageMatrix();                                  /* basic constructor                    */
 	ImageMatrix(int width, int height, int depth);    /* construct a new empty matrix         */
@@ -115,29 +111,9 @@ public:
 	void rotate(double angle);                      /* rotate and image                     */
 	void convolve(ImageMatrix *filter);
 	void BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *histogram, int bins);
-	void GetColorStatistics(double *hue_avg, double *hue_std, double *sat_avg, double *sat_std, double *val_avg, double *val_std, double *max_color, double *colors);
-	void ColorTransform(double *color_hist, int use_hue);
+
 	void histogram(double *bins, unsigned short bins_num, int imhist);
-	double Otsu();                                  /* Otsu grey threshold                  */
 	void MultiScaleHistogram(double *out);
-	//   double AverageEdge();
-	void EdgeTransform();                           /* gradient binarized using otsu threshold */
-	double fft2();
-	void ChebyshevTransform(int N);
-	void ChebyshevFourierTransform2D(double *coeff);
-	void Symlet5Transform();
-	void GradientMagnitude(int span);
-	void GradientDirection2D(int span);
-	void PerwittMagnitude2D(ImageMatrix *output);
-	void PerwittDirection2D(ImageMatrix *output);
-	void ChebyshevStatistics2D(double *coeff, int N, int bins_num);
-	int CombFirstFourMoments2D(double *vec);
-	void EdgeStatistics(long *EdgeArea, double *MagMean, double *MagMedian, double *MagVar, double *MagHist, double *DirecMean, double *DirecMedian, double *DirecVar, double *DirecHist, double *DirecHomogeneity, double *DiffDirecHist, int num_bins);
-	void RadonTransform2D(double *vec);
-	double OtsuBinaryMaskTransform();
-	void Mask(double threshold);
-	int BWlabel(int level);
-	void centroid(double *x_centroid, double *y_centroid, double *z_centroid);
 	void FeatureStatistics(int *count, int *Euler, double *centroid_x, double *centroid_y, double *centroid_z, int *AreaMin, int *AreaMax,
 		double *AreaMean, int *AreaMedian, double *AreaVar, int *area_histogram, double *DistMin, double *DistMax,
 		double *DistMean, double *DistMedian, double *DistVar, int *dist_histogram, int num_bins);

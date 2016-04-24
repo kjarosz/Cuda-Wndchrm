@@ -7,7 +7,7 @@
 #include <stdio.h>
 #endif
 #include "haarlick.h"
-#include "CVIPtexture.h"
+#include "../CVIPtexture.h"
 #include "image_matrix.h"
 //---------------------------------------------------------------------------
 /* haarlick
