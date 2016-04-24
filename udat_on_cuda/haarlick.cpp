@@ -147,5 +147,20 @@ __global__ void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out) {
 	out[i][27] = temp[17];
 }
 
+void allocate_haarlick_memory(ImageMatrix *matrix, double distance, double *out) {
+	// haarlick computation
+	double *d_distance, *d_out;
+	ImageMatrix *d_matrix;
+	cudaMalloc(&d_matrix, sizeof(ImageMatrix));
+	cudaMalloc(&d_out, sizeof(double));
+	cudaMalloc(&d_distance, sizeof(double));
+
+	cudaMemcpy(d_matrix, matrix, sizeof(ImageMatrix), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_out, out, sizeof(double), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_distance, distance, sizeof(double), cudaMemcpyHostToDevice);
+	CUDA_haarlick2d<<<1, 1>>>(matrix, distance, out);
+	cudaMemcpy(out, d_out, sizeof(double), cudaMemcpyDeviceToHost);
+}
+
 
 #pragma package(smart_init)
