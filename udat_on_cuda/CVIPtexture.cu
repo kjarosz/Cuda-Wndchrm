@@ -67,6 +67,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "CVIPtexture.h"
+#include "device_launch_parameters.h"
 
 #define RADIX 2.0
 #define EPSILON 0.000000001
@@ -75,39 +76,39 @@
 #define SWAP(a,b) {y=(a);(a)=(b);(b)=y;}
 #define PGM_MAXMAXVAL 255
 
-double f1_asm(double **P, int Ng);
-double f2_contrast(double **P, int Ng);
-double f3_corr(double **P, int Ng);
-double f4_var(double **P, int Ng);
-double f5_idm(double **P, int Ng);
-double f6_savg(double **P, int Ng);
-double f7_svar(double **P, int Ng, double S);
-double f8_sentropy(double **P, int Ng);
-double f9_entropy(double **P, int Ng);
-double f10_dvar(double **P, int Ng);
-double f11_dentropy(double **P, int Ng);
-double f12_icorr(double **P, int Ng);
-double f13_icorr(double **P, int Ng);
-double f14_maxcorr(double **P, int Ng);
+__device__ double f1_asm(double **P, int Ng);
+__device__ double f2_contrast(double **P, int Ng);
+__device__ double f3_corr(double **P, int Ng);
+__device__ double f4_var(double **P, int Ng);
+__device__ double f5_idm(double **P, int Ng);
+__device__ double f6_savg(double **P, int Ng);
+__device__ double f7_svar(double **P, int Ng, double S);
+__device__ double f8_sentropy(double **P, int Ng);
+__device__ double f9_entropy(double **P, int Ng);
+__device__ double f10_dvar(double **P, int Ng);
+__device__ double f11_dentropy(double **P, int Ng);
+__device__ double f12_icorr(double **P, int Ng);
+__device__ double f13_icorr(double **P, int Ng);
+__device__ double f14_maxcorr(double **P, int Ng);
 
 
-double *allocate_vector(int nl, int nh);
-double **allocate_matrix(int nrl, int nrh, int ncl, int nch);
-void free_matrix(double **matrix, int nrh);
+__device__ double *allocate_vector(int nl, int nh);
+__device__ double **allocate_matrix(int nrl, int nrh, int ncl, int nch);
+__device__ void free_matrix(double **matrix, int nrh);
 
-double** CoOcMat_Angle_0(int distance, u_int8_t **grays,
+__device__ double** CoOcMat_Angle_0(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count);
-double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
+__device__ double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count);
-double** CoOcMat_Angle_90(int distance, u_int8_t **grays,
+__device__ double** CoOcMat_Angle_90(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count);
-double** CoOcMat_Angle_135(int distance, u_int8_t **grays,
+__device__ double** CoOcMat_Angle_135(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count);
 
 
 /* support functions to compute f14_maxcorr */
 
-void mkbalanced(double **a, int n)
+__device__ void mkbalanced(double **a, int n)
 {
 	int last, j, i;
 	double s, r, g, f, c, sqrdx;
@@ -157,7 +158,7 @@ void mkbalanced(double **a, int n)
 }
 
 
-void reduction(double **a, int n)
+__device__ void reduction(double **a, int n)
 {
 	int m, j, i;
 	double y, x;
@@ -200,7 +201,7 @@ void reduction(double **a, int n)
 	}
 }
 
-int hessenberg(double **a, int n, double wr[], double wi[])
+__device__ int hessenberg(double **a, int n, double wr[], double wi[])
 {
 	int nn, m, l, k, j, its, i, mmin;
 	double z, y, x, w, v, u, t, s, r = 0.0, q = 0.0, p = 0.0, anorm;
@@ -364,7 +365,7 @@ int hessenberg(double **a, int n, double wr[], double wi[])
 
 
 
-TEXTURE * Extract_Texture_Features(int distance, int angle,
+__device__ TEXTURE * Extract_Texture_Features(int distance, int angle,
 	register u_int8_t **grays, int rows, int cols, int max_val)
 {
 	int tone_LUT[PGM_MAXMAXVAL + 1]; /* LUT mapping gray tone(0-255) to matrix indicies */
@@ -435,7 +436,7 @@ TEXTURE * Extract_Texture_Features(int distance, int angle,
 }
 
 /* Compute gray-tone spatial dependence matrix */
-double** CoOcMat_Angle_0(int distance, u_int8_t **grays,
+__device__ double** CoOcMat_Angle_0(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count)
 {
 	int d = distance;
@@ -476,7 +477,7 @@ double** CoOcMat_Angle_0(int distance, u_int8_t **grays,
 	return matrix;
 }
 
-double** CoOcMat_Angle_90(int distance, u_int8_t **grays,
+__device__ double** CoOcMat_Angle_90(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count)
 {
 	int d = distance;
@@ -516,7 +517,7 @@ double** CoOcMat_Angle_90(int distance, u_int8_t **grays,
 	return matrix;
 }
 
-double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
+__device__ double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count)
 {
 	int d = distance;
@@ -556,7 +557,7 @@ double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
 	return matrix;
 }
 
-double** CoOcMat_Angle_135(int distance, u_int8_t **grays,
+__device__ double** CoOcMat_Angle_135(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count)
 {
 	int d = distance;
@@ -611,7 +612,7 @@ of gray-levels.
 * gray-tone transitions. Hence the P matrix for such an image will have
 * fewer entries of large magnitude.
 */
-double f1_asm(double **P, int Ng) {
+__device__ double f1_asm(double **P, int Ng) {
 	int i, j;
 	double sum = 0;
 
@@ -628,7 +629,7 @@ double f1_asm(double **P, int Ng) {
 * measure of the contrast or the amount of local variations present in an
 * image.
 */
-double f2_contrast(double **P, int Ng) {
+__device__ double f2_contrast(double **P, int Ng) {
 	int i, j, n;
 	double sum = 0, bigsum = 0;
 
@@ -650,7 +651,7 @@ double f2_contrast(double **P, int Ng) {
 * This correlation feature is a measure of gray-tone linear-dependencies
 * in the image.
 */
-double f3_corr(double **P, int Ng) {
+__device__ double f3_corr(double **P, int Ng) {
 	int i, j;
 	double sum_sqrx = 0, sum_sqry = 0, tmp, *px;
 	double meanx = 0, meany = 0, stddevx, stddevy;
@@ -695,7 +696,7 @@ double f3_corr(double **P, int Ng) {
 }
 
 /* Sum of Squares: Variance */
-double f4_var(double **P, int Ng) {
+__device__ double f4_var(double **P, int Ng) {
 	int i, j;
 	double mean = 0, var = 0;
 
@@ -716,7 +717,7 @@ double f4_var(double **P, int Ng) {
 }
 
 /* Inverse Difference Moment */
-double f5_idm(double **P, int Ng) {
+__device__ double f5_idm(double **P, int Ng) {
 	int i, j;
 	double idm = 0;
 
@@ -728,7 +729,7 @@ double f5_idm(double **P, int Ng) {
 }
 
 /* Sum Average */
-double f6_savg(double **P, int Ng) {
+__device__ double f6_savg(double **P, int Ng) {
 	int i, j;
 	double savg = 0;
 	double *Pxpy = allocate_vector(0, 2 * Ng);
@@ -752,7 +753,7 @@ double f6_savg(double **P, int Ng) {
 }
 
 /* Sum Variance */
-double f7_svar(double **P, int Ng, double S) {
+__device__ double f7_svar(double **P, int Ng, double S) {
 	int i, j;
 	double var = 0;
 	double *Pxpy = allocate_vector(0, 2 * Ng);
@@ -776,7 +777,7 @@ double f7_svar(double **P, int Ng, double S) {
 }
 
 /* Sum Entropy */
-double f8_sentropy(double **P, int Ng) {
+__device__ double f8_sentropy(double **P, int Ng) {
 	int i, j;
 	double sentropy = 0;
 	double *Pxpy = allocate_vector(0, 2 * Ng);
@@ -797,7 +798,7 @@ double f8_sentropy(double **P, int Ng) {
 }
 
 /* Entropy */
-double f9_entropy(double **P, int Ng) {
+__device__ double f9_entropy(double **P, int Ng) {
 	int i, j;
 	double entropy = 0;
 
@@ -810,7 +811,7 @@ double f9_entropy(double **P, int Ng) {
 }
 
 /* Difference Variance */
-double f10_dvar(double **P, int Ng) {
+__device__ double f10_dvar(double **P, int Ng) {
 	int i, j;
 	double sum = 0, sum_sqr = 0, var = 0;
 	double *Pxpy = allocate_vector(0, 2 * Ng);
@@ -840,7 +841,7 @@ double f10_dvar(double **P, int Ng) {
 }
 
 /* Difference Entropy */
-double f11_dentropy(double **P, int Ng) {
+__device__ double f11_dentropy(double **P, int Ng) {
 	int i, j;
 	double sum = 0;
 	double *Pxpy = allocate_vector(0, 2 * Ng);
@@ -861,7 +862,7 @@ double f11_dentropy(double **P, int Ng) {
 }
 
 /* Information Measures of Correlation */
-double f12_icorr(double **P, int Ng) {
+__device__ double f12_icorr(double **P, int Ng) {
 	int i, j;
 	double *px, *py;
 	double hx = 0, hy = 0, hxy = 0, hxy1 = 0, hxy2 = 0;
@@ -902,7 +903,7 @@ double f12_icorr(double **P, int Ng) {
 }
 
 /* Information Measures of Correlation */
-double f13_icorr(double **P, int Ng) {
+__device__ double f13_icorr(double **P, int Ng) {
 	int i, j;
 	double *px, *py;
 	double hx = 0, hy = 0, hxy = 0, hxy1 = 0, hxy2 = 0;
@@ -942,7 +943,7 @@ double f13_icorr(double **P, int Ng) {
 }
 
 /* Returns the Maximal Correlation Coefficient */
-double f14_maxcorr(double **P, int Ng) {
+__device__ double f14_maxcorr(double **P, int Ng) {
 	int i, j, k;
 	double *px, *py, **Q;
 	double *x, *iy, tmp;
@@ -1011,7 +1012,7 @@ double f14_maxcorr(double **P, int Ng) {
 	return f;
 }
 
-double *allocate_vector(int nl, int nh) {
+__device__ double *allocate_vector(int nl, int nh) {
 	double *v;
 
 	v = (double *)calloc(1, (unsigned)(nh - nl + 1) * sizeof (double));
@@ -1021,7 +1022,7 @@ double *allocate_vector(int nl, int nh) {
 }
 
 /* free matrix */
-void free_matrix(double **matrix, int nrh)
+__device__ void free_matrix(double **matrix, int nrh)
 {
 	int col_index;
 	for (col_index = 0; col_index <= nrh; col_index++)
@@ -1030,7 +1031,7 @@ void free_matrix(double **matrix, int nrh)
 }
 
 /* Allocates a double matrix with range [nrl..nrh][ncl..nch] */
-double **allocate_matrix(int nrl, int nrh, int ncl, int nch)
+__device__ double **allocate_matrix(int nrl, int nrh, int ncl, int nch)
 {
 	int i;
 	double **m;
@@ -1052,7 +1053,7 @@ double **allocate_matrix(int nrl, int nrh, int ncl, int nch)
 }
 
 
-void results(double *Tp, char *c, double *a)
+__device__ void results(double *Tp, char *c, double *a)
 {
 	int i;
 	double max, min;
@@ -1074,7 +1075,7 @@ void results(double *Tp, char *c, double *a)
 
 }
 
-void simplesrt(int n, double arr[])
+__device__ void simplesrt(int n, double arr[])
 {
 	int i, j;
 	double a;

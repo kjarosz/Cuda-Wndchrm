@@ -24,6 +24,8 @@
 ****************************************************************************/
 #ifndef _CVIP_texture
 #define _CVIP_texture
+
+#include "device_launch_parameters.h"
 /* [0] -> 0 degree, [1] -> 45 degree, [2] -> 90 degree, [3] -> 135 degree,
 [4] -> average, [5] -> range (max - min) */
 
@@ -46,7 +48,7 @@ typedef struct  {
 	float max_corr_coef; /* (14) Maximal Correlation Coefficient */
 } TEXTURE;
 
-TEXTURE * Extract_Texture_Features(int distance, int angle,
+__device__ TEXTURE * Extract_Texture_Features(int distance, int angle,
 	register u_int8_t **grays, int rows, int cols, int max_val);
 
 #endif

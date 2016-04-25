@@ -550,7 +550,7 @@ nbins -int- the number of bins for the histogram
 
 if one of the pointers is NULL, the corresponding value is not computed.
 */
-void ImageMatrix::BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *hist, int bins)
+__device__ void ImageMatrix::BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *hist, int bins)
 {
 	long pixel_index, num_pixels;
 	double *pixels;

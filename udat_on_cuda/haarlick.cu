@@ -144,16 +144,17 @@ __global__ void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out) {
 	out[21] = temp[19];
 	out[22] = temp[7];
 	out[23] = temp[21];
-	out[i][24] = temp[6];
-	out[i][25] = temp[20];
-	out[i][26] = temp[3];
-	out[i][27] = temp[17];
+	out[24] = temp[6];
+	out[25] = temp[20];
+	out[26] = temp[3];
+	out[27] = temp[17];
 }
 
 void allocate_haarlick_memory(ImageMatrix *matrix, double distance, double *out) {
 	// haarlick computation
 	double *d_distance, *d_out;
 	ImageMatrix *d_matrix;
+	/* removed currently because I believe the device is able to allocate its own memory for variables declared within a kernel function
 	TEXTURE *d_features;
 	int d_a, d_x, d_y;
 	unsigned char **d_p_gray;
@@ -174,6 +175,9 @@ void allocate_haarlick_memory(ImageMatrix *matrix, double distance, double *out)
 	cudaMalloc((void**)&d_min_value, sizeof(double));
 	cudaMalloc((void**)&d_max_value, sizeof(double));
 	cudaMalloc((void**)&d_features, sizeof(TEXTURE));
+	*/
+
+	// Allocate memory for variables on device
 	cudaMalloc((void**)&d_matrix, sizeof(ImageMatrix));
 	cudaMalloc((void**)&d_out, sizeof(double));
 	cudaMalloc((void**)&d_distance, sizeof(double));
@@ -184,6 +188,10 @@ void allocate_haarlick_memory(ImageMatrix *matrix, double distance, double *out)
 	cudaMemcpy(d_distance, &distance, sizeof(double), cudaMemcpyHostToDevice);
 	CUDA_haarlick2d<<<1, 1>>>(matrix, distance, out);
 	cudaMemcpy(out, d_out, sizeof(double), cudaMemcpyDeviceToHost);
+
+	cudaFree(d_matrix);
+	cudaFree(d_out);
+	cudaFree(d_distance);
 }
 
 
