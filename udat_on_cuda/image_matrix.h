@@ -36,7 +36,7 @@
 #ifdef BORLAND_C
 #include <vcl.h>
 #else  
-#include "colors/FuzzyCalc.h"
+#include "FuzzyCalc.h"
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) < (b)) ? (b) : (a))
 #endif

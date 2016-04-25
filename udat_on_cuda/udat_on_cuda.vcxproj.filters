@@ -42,7 +42,13 @@
     <ClInclude Include="haarlick.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\cuda_udat\UDAT\textures\haarlick\CVIPtexture.h">
+    <ClInclude Include="CVIPtexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FuzzyCalc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sndfile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -50,13 +56,16 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="haarlick.cpp">
+    <ClCompile Include="haarlick.cu">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\cuda_udat\UDAT\textures\haarlick\CVIPtexture.cpp">
+    <ClCompile Include="FuzzyCalc.cu">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\cuda_udat\UDAT\image_matrix.cpp">
+    <ClCompile Include="CVIPtexture.cu">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="image_matrix.cu">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

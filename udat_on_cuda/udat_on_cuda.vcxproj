@@ -151,21 +151,24 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\cuda_udat\UDAT\textures\haarlick\CVIPtexture.h" />
     <ClInclude Include="..\libs\fftw\64bit\fftw-3.2.2-dll64\fftw3.h" />
     <ClInclude Include="..\libs\libtiff\tiff.h" />
     <ClInclude Include="..\libs\libtiff\tiffconf.h" />
     <ClInclude Include="..\libs\libtiff\tiffio.h" />
     <ClInclude Include="..\libs\libtiff\tiffvers.h" />
+    <ClInclude Include="CVIPtexture.h" />
+    <ClInclude Include="FuzzyCalc.h" />
     <ClInclude Include="haarlick.h" />
     <ClInclude Include="image_matrix.h" />
     <ClInclude Include="signatures.h" />
+    <ClInclude Include="sndfile.h" />
     <ClInclude Include="zernike.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\cuda_udat\UDAT\image_matrix.cpp" />
-    <ClCompile Include="..\..\cuda_udat\UDAT\textures\haarlick\CVIPtexture.cpp" />
-    <ClCompile Include="haarlick.cpp" />
+    <ClCompile Include="CVIPtexture.cu" />
+    <ClCompile Include="FuzzyCalc.cu" />
+    <ClCompile Include="haarlick.cu" />
+    <ClCompile Include="image_matrix.cu" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
