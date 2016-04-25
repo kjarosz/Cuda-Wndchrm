@@ -864,12 +864,13 @@ void ImageMatrix::fractal2D(int bins, double *output)
 	{
 		double sum = 0.0;
 		for (x = 0; x<width; x++)
-		for (y = 0; y<height - k; y++)
-			sum += fabs(pixel(x, y, 0).intensity - pixel(x, y + k, 0).intensity);
+			for (y = 0; y<height - k; y++)
+				sum += fabs(pixel(x, y, 0).intensity - pixel(x, y + k, 0).intensity);
 		for (x = 0; x<width - k; x++)
-		for (y = 0; y<height; y++)
-			sum += fabs(pixel(x, y, 0).intensity - pixel(x + k, y, 0).intensity);
-		if (bin<bins) output[bin++] = sum / (width*(width - k) + height*(height - k));
+			for (y = 0; y<height; y++)
+				sum += fabs(pixel(x, y, 0).intensity - pixel(x + k, y, 0).intensity);
+		if (bin<bins) 
+			output[bin++] = sum / (width*(width - k) + height*(height - k));
 	}
 }
 

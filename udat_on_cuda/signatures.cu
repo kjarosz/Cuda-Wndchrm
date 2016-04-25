@@ -1,3 +1,4 @@
+#include "haarlick.h"
 #include "signatures.h"
 #include "cuda_runtime.h"
 
