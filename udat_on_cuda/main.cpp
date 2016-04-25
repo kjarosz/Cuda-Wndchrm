@@ -5,6 +5,7 @@
 
 
 #include "file_manip.h"
+#include "signatures.h"
 
 
 
@@ -72,10 +73,14 @@ int main(int argc, char *argv[])
 
   char *directory = argv[1];
   char **filenames;
-  int file_count = load_subdirectories(directory, filenames);
+  int filename_buffer_size;
+  int dir_count = load_subdirectories(directory, filenames, filename_buffer_size);
   
+  CUDASignatures signatures;
+  signatures.compute(filenames, dir_count);
+  signatures.save_in(directory);
 
+  free_filename_buffers(filenames, filename_buffer_size);
 
-  free_filename_buffers(filenames, file_count);
   return 0;
 }

@@ -49,3 +49,22 @@ void free_filename_buffers(char **&filenames, int count)
 }
 
 
+
+DIR * opendir(char *path)
+{
+  WIN32_FIND_DATA file_data;
+  WCHAR w_path[MAX_PATH];
+  HANDLE hDir;
+  unsigned int char_index;
+  for (char_index=0;char_index<strlen(path);char_index++)
+   w_path[char_index]=(WCHAR)(path[char_index]);
+  w_path[char_index]=(WCHAR)'\0';
+  hDir=FindFirstFile(w_path,&file_data);
+  FindClose(hDir);
+  if ((file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY) return(0);
+  w_path[char_index]=(WCHAR)'\\';
+  w_path[char_index+1]=(WCHAR)'*';
+  w_path[char_index+2]=(WCHAR)'\0';
+  hDir=FindFirstFile(w_path,&file_data);
+  return((DIR *)hDir);
+}
