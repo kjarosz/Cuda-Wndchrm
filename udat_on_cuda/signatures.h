@@ -15,10 +15,11 @@ public:
   void compute(ImageMatrix *images, int size);
 
 private:
-
+  
   
 private:
   void move_images_to_gpu(ImageMatrix *images, int size);
+  
 };
 
 

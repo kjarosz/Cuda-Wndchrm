@@ -165,7 +165,7 @@ public:
       {
         for (int x = 0; x < cols[i]; x++)
         {
-           if (images[i].pixel(x,y,0).intensity!=0)
+           if (images[i].pixel(x,y,0).intensity != 0)
            {  
               Y[i][size[i]] = y+1;
               X[i][size[i]] = x+1;
@@ -189,8 +189,8 @@ public:
 
    for(int i = 0; i < count; i++)
    {
-      size2=0;
-      for (a=0;a<size;a++)
+      size2[i]=0;
+      for (int a = 0; a < size; a++)
       { 
          X[size2] = (X[a] - moment10[i] / moment00[i]) / r;
          Y[size2] = (Y[a] - moment01[i] / moment00[i]) / r;

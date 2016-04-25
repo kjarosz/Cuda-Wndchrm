@@ -156,11 +156,13 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\libs\libtiff\tiffconf.h" />
     <ClInclude Include="..\libs\libtiff\tiffio.h" />
     <ClInclude Include="..\libs\libtiff\tiffvers.h" />
+    <ClInclude Include="file_manip.h" />
     <ClInclude Include="image_matrix.h" />
     <ClInclude Include="signatures.h" />
     <ClInclude Include="zernike.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="file_manip.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -169,6 +171,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="signatures.cu" />
+    <CudaCompile Include="zernike.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
