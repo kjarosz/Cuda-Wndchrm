@@ -29,15 +29,15 @@ __global__ void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out) {
 	if (distance <= 0) distance = 1;
 
 	p_gray = new unsigned char *[Im->height];
-	for (y = 0; y<Im[i]->height; y++)
-		p_gray[y] = new unsigned char[Im[i]->width];
+	for (y = 0; y<Im[i].height; y++)
+		p_gray[y] = new unsigned char[Im[i].width];
 	/* for more than 8 bits - normalize the image to (0,255) range */
 
-	Im[i]->BasicStatistics(NULL, NULL, NULL, &min_value, &max_value, NULL, 0);
-	for (y = 0; y<Im[i]->height; y++)
-		for (x = 0; x<Im[i]->width; x++)
-			if (Im[i]->bits>8) p_gray[y][x] = (unsigned char)((Im[i]->pixel(x, y, 0).intensity - min_value)*(255.0 / (max_value - min_value)));
-			else p_gray[y][x] = (unsigned char)(Im[i]->pixel(x, y, 0).intensity);
+	Im[i].BasicStatistics(NULL, NULL, NULL, &min_value, &max_value, NULL, 0);
+	for (y = 0; y<Im[i].height; y++)
+		for (x = 0; x<Im[i].width; x++)
+			if (Im[i].bits>8) p_gray[y][x] = (unsigned char)((Im[i].pixel(x, y, 0).intensity - min_value)*(255.0 / (max_value - min_value)));
+			else p_gray[y][x] = (unsigned char)(Im[i].pixel(x, y, 0).intensity);
 
 	for (a = 0; a<14; a++)
 	{
@@ -48,7 +48,7 @@ __global__ void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out) {
 
 	for (angle = 0; angle <= 135; angle = angle + 45)
 	{
-		features = Extract_Texture_Features((int)distance, angle, p_gray, Im[i]->height, Im[i]->width, (int)max_value);
+		features = Extract_Texture_Features((int)distance, angle, p_gray, Im[i].height, Im[i].width, (int)max_value);
 		/*  (1) Angular Second Moment */
 		sum[0] += features->ASM;
 		if (features->ASM<min[0]) min[0] = features->ASM;
@@ -108,7 +108,7 @@ __global__ void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out) {
 		free(features);
 	}
 
-	for (y = 0; y<Im[i]->height; y++)
+	for (y = 0; y<Im[i].height; y++)
 		delete p_gray[y];
 	delete p_gray;
 
@@ -120,30 +120,30 @@ __global__ void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out) {
 		temp[a + 14] = max[a] - min[a];
 	}
 
-	out[i][0] = temp[0];
-	out[i][1] = temp[14];
-	out[i][2] = temp[1];
-	out[i][3] = temp[15];
-	out[i][4] = temp[2];
-	out[i][5] = temp[16];
-	out[i][6] = temp[9];
-	out[i][7] = temp[23];
-	out[i][8] = temp[10];
-	out[i][9] = temp[24];
-	out[i][10] = temp[8];
-	out[i][11] = temp[22];
-	out[i][12] = temp[11];
-	out[i][13] = temp[25];
-	out[i][14] = temp[4];
-	out[i][15] = temp[18];
-	out[i][16] = temp[13];
-	out[i][17] = temp[27];
-	out[i][18] = temp[12];
-	out[i][19] = temp[26];
-	out[i][20] = temp[5];
-	out[i][21] = temp[19];
-	out[i][22] = temp[7];
-	out[i][23] = temp[21];
+	out[0] = temp[0];
+	out[i] = temp[14];
+	out[2] = temp[1];
+	out[3] = temp[15];
+	out[4] = temp[2];
+	out[5] = temp[16];
+	out[6] = temp[9];
+	out[7] = temp[23];
+	out[8] = temp[10];
+	out[9] = temp[24];
+	out[10] = temp[8];
+	out[11] = temp[22];
+	out[12] = temp[11];
+	out[13] = temp[25];
+	out[14] = temp[4];
+	out[15] = temp[18];
+	out[16] = temp[13];
+	out[17] = temp[27];
+	out[18] = temp[12];
+	out[19] = temp[26];
+	out[20] = temp[5];
+	out[21] = temp[19];
+	out[22] = temp[7];
+	out[23] = temp[21];
 	out[i][24] = temp[6];
 	out[i][25] = temp[20];
 	out[i][26] = temp[3];
@@ -164,24 +164,24 @@ void allocate_haarlick_memory(ImageMatrix *matrix, double distance, double *out)
 	size_t pitch;
 
 	cudaMallocPitch((void**)&d_p_gray, &pitch, matrix->width * sizeof(unsigned char), matrix->height);
-	cudaMalloc(d_a, sizeof(int));
-	cudaMalloc(d_x, sizeof(int));
-	cudaMalloc(d_y, sizeof(int));
-	cudaMalloc(d_angle, sizeof(long));
-	cudaMalloc(&d_min, sizeof(double));
-	cudaMalloc(&d_max, sizeof(double));
-	cudaMalloc(&d_sum, sizeof(double));
-	cudaMalloc(d_min_value, sizeof(double));
-	cudaMalloc(d_max_value, sizeof(double));
-	cudaMalloc(&d_features, sizeof(TEXTURE))
-	cudaMalloc(&d_matrix, sizeof(ImageMatrix));
-	cudaMalloc(&d_out, sizeof(double));
-	cudaMalloc(&d_distance, sizeof(double));
+	cudaMalloc((void**)d_a, sizeof(int));
+	cudaMalloc((void**)d_x, sizeof(int));
+	cudaMalloc((void**)d_y, sizeof(int));
+	cudaMalloc((void**)d_angle, sizeof(long));
+	cudaMalloc((void**)&d_min, sizeof(double));
+	cudaMalloc((void**)&d_max, sizeof(double));
+	cudaMalloc((void**)&d_sum, sizeof(double));
+	cudaMalloc((void**)&d_min_value, sizeof(double));
+	cudaMalloc((void**)&d_max_value, sizeof(double));
+	cudaMalloc((void**)&d_features, sizeof(TEXTURE));
+	cudaMalloc((void**)&d_matrix, sizeof(ImageMatrix));
+	cudaMalloc((void**)&d_out, sizeof(double));
+	cudaMalloc((void**)&d_distance, sizeof(double));
 
 
 	cudaMemcpy(d_matrix, matrix, sizeof(ImageMatrix), cudaMemcpyHostToDevice);
 	cudaMemcpy(d_out, out, sizeof(double), cudaMemcpyHostToDevice);
-	cudaMemcpy(d_distance, distance, sizeof(double), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_distance, &distance, sizeof(double), cudaMemcpyHostToDevice);
 	CUDA_haarlick2d<<<1, 1>>>(matrix, distance, out);
 	cudaMemcpy(out, d_out, sizeof(double), cudaMemcpyDeviceToHost);
 }

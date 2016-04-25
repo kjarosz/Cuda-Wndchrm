@@ -35,6 +35,9 @@
 #include "textures/tamura.h"
 #include "haarlick.h"
 #include "zernike.h"
+#include "cuda.h"
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
 
 #ifndef BORLAND_C
 #ifndef VISUAL_C
@@ -799,7 +802,7 @@ output -array of double- a pre-allocated array of 28 doubles
 void ImageMatrix::HaarlickTexture2D(double distance, double *out)
 {
 	if (distance <= 0) distance = 1;
-	haarlick2D(this, distance, out);
+	CUDA_haarlick2d<<<1, 1>>>(this, distance, out);
 }
 
 /* MultiScaleHistogram
