@@ -17,13 +17,6 @@ void print_help()
 
 
 
-void join_paths(char *output, char *p1, char *p2)
-{
-  sprintf(output, "%s\\%s", p1, p2);
-}
-
-
-
 int load_subdirectories(char *directory, char **&filenames, int &buffer_size)
 {
   buffer_size = 64;

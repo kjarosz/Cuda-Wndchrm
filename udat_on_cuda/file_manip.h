@@ -16,11 +16,17 @@ struct dirent
   char           d_name[256];
 };
 
+dirent dirent_data;
+
 
 
 char  **alloc_filename_buffers (int size);
 bool    extend_filename_buffers(char **&old_buffers, int old_size, int new_size);
 void    free_filename_buffers  (char **&filenames, int count);
+
+
+
+void    join_paths(char *output, char *p1, char *p2);
 
 
 

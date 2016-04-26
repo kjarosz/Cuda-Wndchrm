@@ -50,6 +50,13 @@ void free_filename_buffers(char **&filenames, int count)
 
 
 
+void join_paths(char *output, char *p1, char *p2)
+{
+  sprintf(output, "%s\\%s", p1, p2);
+}
+
+
+
 DIR * opendir(char *path)
 {
   WIN32_FIND_DATA file_data;
@@ -68,3 +75,28 @@ DIR * opendir(char *path)
   hDir=FindFirstFile(w_path,&file_data);
   return((DIR *)hDir);
 }
+
+
+
+dirent *readdir(DIR *class_dir)
+{
+  WIN32_FIND_DATA file_data;
+  int char_index=0;
+  if (!FindNextFile((HANDLE)class_dir,&file_data)) return(NULL);
+  while (file_data.cFileName[char_index])
+  {  
+    dirent_data.d_name[char_index] = (char)(file_data.cFileName[char_index]);
+    char_index++;
+  }
+  dirent_data.d_name[char_index]='\0';  /* end the string */
+  return(&dirent_data);
+}
+
+
+
+int closedir(DIR *dir)
+{
+  return FindClose((HANDLE)dir);
+}
+
+

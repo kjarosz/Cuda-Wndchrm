@@ -1,4 +1,5 @@
 #include <cstring>
+#include <cstdio>
 
 
 
@@ -9,7 +10,20 @@
 
 
 CUDASignatures::CUDASignatures()
-{ }
+  :image_matrices(0), 
+   matrix_container_size(INIT_MATRIX_CONTAINER_SIZE),
+   image_matrix_count(0)
+{ 
+  image_matrices = new ImageMatrix*[matrix_container_size];
+}
+
+
+
+CUDASignatures::~CUDASignatures()
+{
+  empty_matrix_container();
+  delete [] image_matrices;
+}
 
 
 
@@ -44,14 +58,33 @@ void CUDASignatures::reset_directory_tracker(char **directories, int count)
 bool CUDASignatures::read_next_batch()
 {
   dirent *entry;
-  while(entry = read_next_entry())
+  char filename_buffer[FILENAME_MAX];
+  while((entry = read_next_entry()) && !batch_capacity_reached())
   {
     if (entry->d_name[0] == '.')
       continue;
 
-    if (!supported_format(ent->d_name))
+    if (!supported_format(entry->d_name))
       continue;
+
+    join_paths(filename_buffer, directory_tracker.directory, entry->d_name);
+
+    load_image_matrix(filename_buffer);
   }
+
+  return batch_ready_to_compute();
+}
+
+
+
+bool CUDASignatures::batch_capacity_reached()
+{
+}
+
+
+
+bool CUDASignatures::batch_ready_to_compute()
+{
 }
 
 
@@ -83,3 +116,46 @@ dirent * CUDASignatures::read_next_entry()
 
   return entry;
 }
+
+
+
+void CUDASignatures::load_image_matrix(char *filename)
+{
+  if(image_matrix_count >= matrix_container_size)
+    double_matrix_container();
+
+  ImageMatrix *matrix;
+
+  // TODO: Load Image matrix;
+
+  image_matrices[image_matrix_count++] = matrix;
+}
+
+
+
+void CUDASignatures::double_matrix_container()
+{
+  ImageMatrix **new_container = new ImageMatrix*[matrix_container_size * 2];
+  memcpy(new_container, image_matrices, matrix_container_size * sizeof(ImageMatrix*));
+  delete [] image_matrices;
+  image_matrices = new_container;
+  matrix_container_size *= 2;
+}
+
+
+
+void CUDASignatures::empty_matrix_container()
+{
+  for(int i = 0; i < image_matrix_count; i++) 
+    delete image_matrices[i];
+  image_matrix_count = 0;
+}
+
+
+
+void CUDASignatures::compute_images_on_cuda()
+{
+
+}
+
+
