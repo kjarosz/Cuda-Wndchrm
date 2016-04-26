@@ -114,9 +114,6 @@ public:
 
 	void histogram(double *bins, unsigned short bins_num, int imhist);
 	void MultiScaleHistogram(double *out);
-	void FeatureStatistics(int *count, int *Euler, double *centroid_x, double *centroid_y, double *centroid_z, int *AreaMin, int *AreaMax,
-		double *AreaMean, int *AreaMedian, double *AreaVar, int *area_histogram, double *DistMin, double *DistMax,
-		double *DistMean, double *DistMedian, double *DistVar, int *dist_histogram, int num_bins);
 	void GaborFilters2D(double *ratios);
 	void HaarlickTexture2D(double distance, double *out);
 	void TamuraTexture2D(double *vec);

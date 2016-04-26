@@ -697,95 +697,6 @@ int compare_ints(const void *a, const void *b)
 	return(-1);
 }
 
-void ImageMatrix::FeatureStatistics(int *count, int *Euler, double *centroid_x, double *centroid_y, double *centroid_z, int *AreaMin, int *AreaMax,
-	double *AreaMean, int *AreaMedian, double *AreaVar, int *area_histogram, double *DistMin, double *DistMax,
-	double *DistMean, double *DistMedian, double *DistVar, int *dist_histogram, int num_bins)
-{
-	int object_index, inv_count;
-	double sum_areas, sum_dists;
-	ImageMatrix *BWImage, *BWInvert, *temp;
-	int *object_areas;
-	double *centroid_dists, sum_dist;
-
-	BWInvert = duplicate();   /* check if the background is brighter or dimmer */
-	BWInvert->invert();
-	BWInvert->OtsuBinaryMaskTransform();
-	inv_count = BWInvert->BWlabel(8);
-
-	BWImage = duplicate();
-	BWImage->OtsuBinaryMaskTransform();
-	BWImage->centroid(centroid_x, centroid_y, centroid_z);
-	*count = BWImage->BWlabel(8);
-	if (inv_count>*count)
-	{
-		temp = BWImage;
-		BWImage = BWInvert;
-		BWInvert = temp;
-		*count = inv_count;
-		BWImage->centroid(centroid_x, centroid_y, centroid_z);
-	}
-	delete BWInvert;
-	*Euler = EulerNumber(BWImage, *count) + 1;
-
-	/* calculate the areas */
-	sum_areas = 0;
-	sum_dists = 0;
-	object_areas = new int[*count];
-	centroid_dists = new double[*count];
-	for (object_index = 1; object_index <= *count; object_index++)
-	{
-		double x_centroid, y_centroid, z_centroid;
-		object_areas[object_index - 1] = FeatureCentroid(BWImage, object_index, &x_centroid, &y_centroid, &z_centroid);
-		centroid_dists[object_index - 1] = sqrt(pow(x_centroid - (*centroid_x), 2) + pow(y_centroid - (*centroid_y), 2));
-		sum_areas += object_areas[object_index - 1];
-		sum_dists += centroid_dists[object_index - 1];
-	}
-	/* compute area statistics */
-	qsort(object_areas, *count, sizeof(int), compare_ints);
-	*AreaMin = object_areas[0];
-	*AreaMax = object_areas[*count - 1];
-	if (*count>0) *AreaMean = sum_areas / (*count);
-	else *AreaMean = 0;
-	*AreaMedian = object_areas[(*count) / 2];
-	for (object_index = 0; object_index<num_bins; object_index++)
-		area_histogram[object_index] = 0;
-	/* compute the variance and the histogram */
-	sum_areas = 0;
-	if (*AreaMax - *AreaMin>0)
-	for (object_index = 1; object_index <= *count; object_index++)
-	{
-		sum_areas += pow(object_areas[object_index - 1] - *AreaMean, 2);
-		if (object_areas[object_index - 1] == *AreaMax) area_histogram[num_bins - 1] += 1;
-		else area_histogram[((object_areas[object_index - 1] - *AreaMin) / (*AreaMax - *AreaMin))*num_bins] += 1;
-	}
-	if (*count>1) *AreaVar = sum_areas / ((*count) - 1);
-	else *AreaVar = sum_areas;
-
-	/* compute distance statistics */
-	qsort(centroid_dists, *count, sizeof(double), compare_doubles);
-	*DistMin = centroid_dists[0];
-	*DistMax = centroid_dists[*count - 1];
-	if (*count>0) *DistMean = sum_dists / (*count);
-	else *DistMean = 0;
-	*DistMedian = centroid_dists[(*count) / 2];
-	for (object_index = 0; object_index<num_bins; object_index++)
-		dist_histogram[object_index] = 0;
-
-	/* compute the variance and the histogram */
-	sum_dist = 0;
-	for (object_index = 1; object_index <= *count; object_index++)
-	{
-		sum_dist += pow(centroid_dists[object_index - 1] - *DistMean, 2);
-		if (centroid_dists[object_index - 1] == *DistMax) dist_histogram[num_bins - 1] += 1;
-		else dist_histogram[(int)(((centroid_dists[object_index - 1] - *DistMin) / (*DistMax - *DistMin))*num_bins)] += 1;
-	}
-	if (*count>1) *DistVar = sum_dist / ((*count) - 1);
-	else *DistVar = sum_dist;
-
-	delete BWImage;
-	delete object_areas;
-	delete centroid_dists;
-}
 
 /* GaborFilters */
 /* ratios -array of double- a pre-allocated array of double[7]
@@ -876,7 +787,3 @@ void ImageMatrix::fractal2D(int bins, double *output)
 
 
 #pragma package(smart_init)
-
-
-
-
