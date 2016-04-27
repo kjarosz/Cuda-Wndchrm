@@ -10,9 +10,6 @@
     <Filter Include="Libraries">
       <UniqueIdentifier>{1a7fbad0-644f-43e3-9599-e6d007cadd06}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Libraries">
-      <UniqueIdentifier>{2c7fd581-1212-46c4-a7df-71bd154f702b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\textures">
       <UniqueIdentifier>{afd1a77e-35b9-4cff-9ae7-cc3de61d1e3e}</UniqueIdentifier>
     </Filter>
@@ -25,23 +22,14 @@
     <Filter Include="Header Files\textures\zernike">
       <UniqueIdentifier>{daa2efa6-65e9-4c19-9477-62fdd7883748}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\libs">
+      <UniqueIdentifier>{a8647e75-99b4-43a9-a86e-ce94716b7889}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\libs\libtiff">
+      <UniqueIdentifier>{fa18fbc8-6144-4be0-ad2a-282df21820c0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\libs\libtiff\tiffvers.h">
-      <Filter>Header Files\Libraries</Filter>
-    </ClInclude>
-    <ClInclude Include="..\libs\libtiff\tiffio.h">
-      <Filter>Header Files\Libraries</Filter>
-    </ClInclude>
-    <ClInclude Include="..\libs\libtiff\tiffconf.h">
-      <Filter>Header Files\Libraries</Filter>
-    </ClInclude>
-    <ClInclude Include="..\libs\libtiff\tiff.h">
-      <Filter>Header Files\Libraries</Filter>
-    </ClInclude>
-    <ClInclude Include="..\libs\fftw\64bit\fftw-3.2.2-dll64\fftw3.h">
-      <Filter>Header Files\Libraries</Filter>
-    </ClInclude>
     <ClInclude Include="signatures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -54,6 +42,18 @@
     <ClInclude Include="file_manip.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="libs\libtiff\tiff.h">
+      <Filter>Header Files\libs\libtiff</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\libtiff\tiffconf.h">
+      <Filter>Header Files\libs\libtiff</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\libtiff\tiffio.h">
+      <Filter>Header Files\libs\libtiff</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\libtiff\tiffvers.h">
+      <Filter>Header Files\libs\libtiff</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -64,19 +64,19 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\libs\fftw\64bit\fftw-3.2.2-dll64\libfftw3-3.lib">
-      <Filter>Libraries</Filter>
-    </Library>
-    <Library Include="..\libs\libtiff\libtiff.lib">
-      <Filter>Libraries</Filter>
-    </Library>
-  </ItemGroup>
-  <ItemGroup>
     <CudaCompile Include="signatures.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
     <CudaCompile Include="zernike.cu">
       <Filter>Source Files\textures\zernike</Filter>
     </CudaCompile>
+    <CudaCompile Include="image_matrix.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="libs\libtiff\libtiff.lib">
+      <Filter>Libraries</Filter>
+    </Library>
   </ItemGroup>
 </Project>

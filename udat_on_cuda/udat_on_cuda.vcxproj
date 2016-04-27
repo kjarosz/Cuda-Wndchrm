@@ -151,13 +151,12 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\libs\fftw\64bit\fftw-3.2.2-dll64\fftw3.h" />
-    <ClInclude Include="..\libs\libtiff\tiff.h" />
-    <ClInclude Include="..\libs\libtiff\tiffconf.h" />
-    <ClInclude Include="..\libs\libtiff\tiffio.h" />
-    <ClInclude Include="..\libs\libtiff\tiffvers.h" />
     <ClInclude Include="file_manip.h" />
     <ClInclude Include="image_matrix.h" />
+    <ClInclude Include="libs\libtiff\tiff.h" />
+    <ClInclude Include="libs\libtiff\tiffconf.h" />
+    <ClInclude Include="libs\libtiff\tiffio.h" />
+    <ClInclude Include="libs\libtiff\tiffvers.h" />
     <ClInclude Include="signatures.h" />
     <ClInclude Include="zernike.h" />
   </ItemGroup>
@@ -166,12 +165,12 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\libs\fftw\64bit\fftw-3.2.2-dll64\libfftw3-3.lib" />
-    <Library Include="..\libs\libtiff\libtiff.lib" />
-  </ItemGroup>
-  <ItemGroup>
+    <CudaCompile Include="image_matrix.cu" />
     <CudaCompile Include="signatures.cu" />
     <CudaCompile Include="zernike.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="libs\libtiff\libtiff.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
