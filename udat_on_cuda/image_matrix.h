@@ -33,9 +33,6 @@
 #define cmatrixH
 //---------------------------------------------------------------------------
 
-#ifdef BORLAND_C
-#include <vcl.h>
-#else  
 #include "FuzzyCalc.h"
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) < (b)) ? (b) : (a))
@@ -86,11 +83,6 @@ public:
 	int ColorMode;                                  /* can be cmRGB or cmHSV                */
 	unsigned short bits;                            /* the number of intensity bits (8,16, etc) */
 	int width, height, depth;                         /* width and height of the picture      */
-#ifdef BORLAND_C
-	int LoadImage(TPicture *picture, int ColorMode);
-	int LoadBMP(char *filename, int ColorMode);      /* load from a bitmap file              */
-	int LoadJPG(char *filename, int ColorMode);      /* load from a JPG file                 */
-#endif
 	int OpenImage(char *image_file_name, int downsample, rect *bounding_rect, double mean, double stddev, long DynamicRange, double otsu_mask); /* load an image of any supported format */
 	ImageMatrix();                                  /* basic constructor                    */
 	ImageMatrix(int width, int height, int depth);    /* construct a new empty matrix         */
@@ -111,14 +103,10 @@ public:
 	void rotate(double angle);                      /* rotate and image                     */
 	void convolve(ImageMatrix *filter);
 	void BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *histogram, int bins);
-
 	void histogram(double *bins, unsigned short bins_num, int imhist);
 	void MultiScaleHistogram(double *out);
-	void GaborFilters2D(double *ratios);
 	void HaarlickTexture2D(double distance, double *out);
-	void TamuraTexture2D(double *vec);
 	void zernike2D(double *zvalues, long *output_size);
-	void fractal2D(int bins, double *output);
 };
 
 
@@ -129,4 +117,3 @@ RGBcolor HSV2RGB(HSVcolor hsv);
 TColor RGB2COLOR(RGBcolor rgb);
 double COLOR2GRAY(TColor color);
 
-#endif

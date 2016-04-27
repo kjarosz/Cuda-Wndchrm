@@ -31,8 +31,6 @@
 #include <math.h>
 #include <stdio.h>
 #include "image_matrix.h"
-#include "textures/gabor.h"
-#include "textures/tamura.h"
 #include "haarlick.h"
 #include "zernike.h"
 #include "cuda.h"
@@ -44,11 +42,6 @@
 #include <stdlib.h>
 #include <string.h>
 #endif
-#endif
-
-#ifdef BORLAND_C
-#include "libtiff32/tiffio.h"
-#include <jpeg.hpp>
 #endif
 
 
@@ -152,69 +145,6 @@ double COLOR2GRAY(TColor color1)
 }
 
 
-#ifdef BORLAND_C
-
-//--------------------------------------------------------------------------
-int ImageMatrix::LoadImage(TPicture *picture, int ColorMode)
-{
-	int a, b, x, y;
-	pix_data pix;
-	width = picture->Width;
-	height = picture->Height;
-	depth = 1;   /* TPicture is a two-dimentional structure */
-	bits = 8;
-	this->ColorMode = ColorMode;
-	/* allocate memory for the image's pixels */
-	data = new pix_data[width*height*depth];
-	if (!data) return(0); /* memory allocation failed */
-	/* load the picture */
-	for (y = 0; y<height; y++)
-	for (x = 0; x<width; x++)
-	{
-		pix.clr.RGB.red = (byte)(picture->Bitmap->Canvas->Pixels[x][y] & 0xFF);               /* red value */
-		pix.clr.RGB.green = (byte)((picture->Bitmap->Canvas->Pixels[x][y] & 0xFF00) >> 8);    /* green value */
-		pix.clr.RGB.blue = (byte)((picture->Bitmap->Canvas->Pixels[x][y] & 0xFF0000) >> 16);  /* blue value */
-		if (ColorMode == cmHSV) pix.clr.HSV = RGB2HSV(pix.clr.RGB);
-		pix.intensity = COLOR2GRAY(picture->Bitmap->Canvas->Pixels[x][y]);
-		set(x, y, 0, pix);
-	}
-	return(1);
-}
-
-int ImageMatrix::LoadBMP(char *filename, int ColorMode)
-{
-	TPicture *picture;
-	int ret_val = 0;
-	picture = new TPicture;
-	if (FileExists(filename))
-	{
-		picture->LoadFromFile(filename);
-		ret_val = LoadImage(picture, ColorMode);
-	}
-	delete picture;
-	return(ret_val);
-}
-
-int ImageMatrix::LoadJPG(char *filename, int ColorMode)
-{
-	TJPEGImage *i;
-	TPicture *picture;
-	int ret_val;
-	i = new TJPEGImage();
-	try
-	{
-		i->LoadFromFile(filename);
-	}
-	catch (...) { return(0); }
-	picture = new TPicture();
-	picture->Bitmap->Assign(i);
-	ret_val = LoadImage(picture, ColorMode);
-	delete i;
-	delete picture;
-	return(ret_val);
-}
-
-#endif
 
 
 /*
@@ -229,14 +159,6 @@ DynamicRange -long- change to a new dynamic range. Ignore if 0.
 int ImageMatrix::OpenImage(char *image_file_name, int downsample, rect *bounding_rect, double mean, double stddev, long DynamicRange, double otsu_mask)
 {
 	int res = 0;
-#ifdef BORLAND_C
-	if (strstr(image_file_name, ".bmp") || strstr(image_file_name, ".BMP"))
-		res = LoadBMP(image_file_name, cmHSV);
-	else
-	if (strstr(image_file_name, ".jpg") || strstr(image_file_name, ".jpeg") || strstr(image_file_name, ".JPG"))
-		res = LoadJPG(image_file_name, cmHSV);
-	else
-#endif
 	if (strstr(image_file_name, ".tif") || strstr(image_file_name, ".TIF"))
 	{
 		res = LoadTIFF(image_file_name);
@@ -351,9 +273,9 @@ ImageMatrix::ImageMatrix(ImageMatrix *matrix, int x1, int y1, int x2, int y2, in
 	data = new pix_data[width*height*depth];
 
 	for (z = z1; z<z1 + depth; z++)
-	for (y = y1; y<y1 + height; y++)
-	for (x = x1; x<x1 + width; x++)
-		set(x - x1, y - y1, z - z1, matrix->pixel(x, y, z));
+		for (y = y1; y<y1 + height; y++)
+			for (x = x1; x<x1 + width; x++)
+				set(x - x1, y - y1, z - z1, matrix->pixel(x, y, z));
 }
 
 /* free the memory allocated in "ImageMatrix::LoadImage" */
@@ -608,9 +530,12 @@ void ImageMatrix::normalize(double min, double max, long range, double mean, dou
 	if (min >= 0 && max>0 && range>0)
 	for (x = 0; x<width*height*depth; x++)
 	{
-		if (data[x].intensity<min) data[x].intensity = 0;
-		else if (data[x].intensity>max) data[x].intensity = range;
-		else data[x].intensity = ((data[x].intensity - min) / (max - min))*range;
+		if (data[x].intensity<min) 
+			data[x].intensity = 0;
+		else if (data[x].intensity>max)
+			data[x].intensity = range;
+		else 
+			data[x].intensity = ((data[x].intensity - min) / (max - min))*range;
 	}
 
 	/* normalize to mean and stddev */
@@ -623,8 +548,10 @@ void ImageMatrix::normalize(double min, double max, long range, double mean, dou
 			data[x].intensity -= (original_mean - mean);
 			if (stddev>0)
 				data[x].intensity = mean + (data[x].intensity - mean)*(stddev / original_stddev);
-			if (data[x].intensity<0) data[x].intensity = 0;
-			if (data[x].intensity>pow(2.0, bits) - 1) data[x].intensity = pow(2.0, bits) - 1;
+			if (data[x].intensity<0) 
+				data[x].intensity = 0;
+			if (data[x].intensity>pow(2.0, bits) - 1)
+				data[x].intensity = pow(2.0, bits) - 1;
 		}
 		//BasicStatistics(&original_mean, NULL, &original_stddev, NULL, NULL, NULL, 0);		  
 		//printf("%f %f\n",original_mean,original_stddev);
@@ -634,7 +561,7 @@ void ImageMatrix::normalize(double min, double max, long range, double mean, dou
 
 
 /* get image histogram */
-void ImageMatrix::histogram(double *bins, unsigned short bins_num, int imhist)
+__device__ void ImageMatrix::histogram(double *bins, unsigned short bins_num, int imhist)
 {
 	long a;
 	double min = INF, max = -INF;
@@ -660,51 +587,22 @@ void ImageMatrix::histogram(double *bins, unsigned short bins_num, int imhist)
 
 	/* build the histogram */
 	for (a = 0; a<width*height*depth; a++)
-	if (data[a].intensity == max) bins[bins_num - 1] += 1;
-	else bins[(int)(((data[a].intensity - min) / (max - min))*bins_num)] += 1;
+		if (data[a].intensity == max) 
+			bins[bins_num - 1] += 1;
+		else 
+			bins[(int)(((data[a].intensity - min) / (max - min))*bins_num)] += 1;
 
 	return;
 }
 
 
-
-/*
-FeatureStatistics
-Find feature statistics. Before calling this function the image should be transformed into a binary
-image using "OtsuBinaryMaskTransform".
-
-count -int *- the number of objects detected in the binary image
-Euler -int *- the euler number (number of objects - number of holes
-centroid_x -int *- the x coordinate of the centroid of the binary image
-centroid_y -int *- the y coordinate of the centroid of the binary image
-AreaMin -int *- the smallest area
-AreaMax -int *- the largest area
-AreaMean -int *- the mean of the areas
-AreaMedian -int *- the median of the areas
-AreaVar -int *- the variance of the areas
-DistMin -int *- the smallest distance
-DistMax -int *- the largest distance
-DistMean -int *- the mean of the distance
-DistMedian -int *- the median of the distances
-DistVar -int *- the variance of the distances
-
-*/
-
-int compare_ints(const void *a, const void *b)
+__device__ int compare_ints(const void *a, const void *b)
 {
 	if (*((int *)a) > *((int *)b)) return(1);
 	if (*((int *)a) == *((int *)b)) return(0);
 	return(-1);
 }
 
-
-/* GaborFilters */
-/* ratios -array of double- a pre-allocated array of double[7]
-*/
-void ImageMatrix::GaborFilters2D(double *ratios)
-{
-	GaborTextureFilters2D(this, ratios);
-}
 
 
 /* haarlick
@@ -724,7 +622,7 @@ image through infinite series of histograms with sequentially increasing number 
 Here we used 4 histograms with number of bins being 3,5,7,9.
 out -array of double- a pre-allocated array of 24 bins
 */
-void ImageMatrix::MultiScaleHistogram(double *out)
+__device__ void ImageMatrix::MultiScaleHistogram(double *out)
 {
 	int a;
 	double max = 0;
@@ -738,15 +636,6 @@ void ImageMatrix::MultiScaleHistogram(double *out)
 		out[a] = out[a] / max;
 }
 
-/* TamuraTexture
-Tamura texture signatures: coarseness, directionality, contrast
-vec -array of double- a pre-allocated array of 6 doubles
-*/
-void ImageMatrix::TamuraTexture2D(double *vec)
-{
-	Tamura3Sigs2D(this, vec);
-}
-
 /* zernike
 zvalue -array of double- a pre-allocated array of double of a suficient size
 (the actual size is returned by "output_size))
@@ -755,34 +644,6 @@ output_size -* long- the number of enteries in the array "zvalues" (normally 72)
 void ImageMatrix::zernike2D(double *zvalues, long *output_size)
 {
 	mb_zernike2D(this, 0, 0, zvalues, output_size);
-}
-
-/* fractal
-brownian fractal analysis
-bins - the maximal order of the fractal
-output - array of the size k
-the code is based on: CM Wu, YC Chen and KS Hsieh, Texture features for classification of ultrasonic liver images, IEEE Trans Med Imag 11 (1992) (2), pp. 141Ð152.
-method of approaximation of CC Chen, JS Daponte and MD Fox, Fractal feature analysis and classification in medical imaging, IEEE Trans Med Imag 8 (1989) (2), pp. 133Ð142.
-*/
-
-void ImageMatrix::fractal2D(int bins, double *output)
-{
-	int x, y, k, bin = 0;
-	int K = min(width, height) / 5;
-	int step = (long)floor((double)(K / bins));
-	if (step<1) step = 1;   /* avoid an infinite loop if the image is small */
-	for (k = 1; k<K; k = k + step)
-	{
-		double sum = 0.0;
-		for (x = 0; x<width; x++)
-			for (y = 0; y<height - k; y++)
-				sum += fabs(pixel(x, y, 0).intensity - pixel(x, y + k, 0).intensity);
-		for (x = 0; x<width - k; x++)
-			for (y = 0; y<height; y++)
-				sum += fabs(pixel(x, y, 0).intensity - pixel(x + k, y, 0).intensity);
-		if (bin<bins) 
-			output[bin++] = sum / (width*(width - k) + height*(height - k));
-	}
 }
 
 

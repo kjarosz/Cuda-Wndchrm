@@ -36,8 +36,10 @@ __global__ void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out) {
 	Im[i].BasicStatistics(NULL, NULL, NULL, &min_value, &max_value, NULL, 0);
 	for (y = 0; y<Im[i].height; y++)
 		for (x = 0; x<Im[i].width; x++)
-			if (Im[i].bits>8) p_gray[y][x] = (unsigned char)((Im[i].pixel(x, y, 0).intensity - min_value)*(255.0 / (max_value - min_value)));
-			else p_gray[y][x] = (unsigned char)(Im[i].pixel(x, y, 0).intensity);
+			if (Im[i].bits>8) 
+				p_gray[y][x] = (unsigned char)((Im[i].pixel(x, y, 0).intensity - min_value)*(255.0 / (max_value - min_value)));
+			else 
+				p_gray[y][x] = (unsigned char)(Im[i].pixel(x, y, 0).intensity);
 
 	for (a = 0; a<14; a++)
 	{
@@ -121,7 +123,7 @@ __global__ void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out) {
 	}
 
 	out[0] = temp[0];
-	out[i] = temp[14];
+	out[1] = temp[14];
 	out[2] = temp[1];
 	out[3] = temp[15];
 	out[4] = temp[2];
