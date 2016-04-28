@@ -221,7 +221,6 @@ void CUDASignatures::compute_signatures_on_cuda()
 
 void CUDASignatures::compute_zernike_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes)
 {
-
   double *d;
   double *r;
 
@@ -231,7 +230,7 @@ void CUDASignatures::compute_zernike_on_cuda(pix_data **images, int *widths, int
   cudaMemset(d, 0, image_matrix_count * sizeof(double));
   cudaMemset(r, 0, image_matrix_count * sizeof(double));
 
-  zernike<<< 1, image_matrix_count >>>(images, widths, heights, depths, image_matrix_count, 
+  zernike<<< 1, image_matrix_count >>>(images, widths, heights, depths, 
                                        d, r, outputs, sizes);
 
   cudaFree(r);
