@@ -29,14 +29,15 @@
 
 
 //---------------------------------------------------------------------------
-#ifndef cmatrixH
-#define cmatrixH
+#ifndef IMAGE_MATRIX_H
+#define IMAGE_MATRIX_H
 //---------------------------------------------------------------------------
 
 #include "FuzzyCalc.h"
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) < (b)) ? (b) : (a))
-#endif
 
 #define cmRGB 1
 #define cmHSV 2
@@ -83,13 +84,20 @@ public:
 	int ColorMode;                                  /* can be cmRGB or cmHSV                */
 	unsigned short bits;                            /* the number of intensity bits (8,16, etc) */
 	int width, height, depth;                         /* width and height of the picture      */
-	int OpenImage(char *image_file_name, int downsample, rect *bounding_rect, double mean, double stddev, long DynamicRange, double otsu_mask); /* load an image of any supported format */
+	int LoadTIFF(char *filename);
+	/* load an image of any supported format */
+	int OpenImage(char *image_file_name, int downsample,
+		rect *bounding_rect, double mean,
+		double stddev, long DynamicRange,
+		double otsu_mask);
+
 	ImageMatrix();                                  /* basic constructor                    */
 	ImageMatrix(int width, int height, int depth);    /* construct a new empty matrix         */
 	ImageMatrix(ImageMatrix *matrix, int x1, int y1, int x2, int y2, int z1, int z2);  /* create a new matrix which is part of the original one */
 	~ImageMatrix();                                 /* destructor */
 	ImageMatrix *duplicate();                       /* create a new identical matrix        */
-	pix_data pixel(int x, int y, int z);              /* get a pixel value                    */
+	__device__ pix_data pixel(int x, int y, int z);              /* get a pixel value                    */
+
 	void set(int x, int y, int z, pix_data val);      /* assign a pixel value                 */
 	void SetInt(int x, int y, int z, double val);     /* set only the intensity of the pixel  */
 	void Initialize();                              /* initialize the image                 */
@@ -102,11 +110,13 @@ public:
 	void Downsample(double x_ratio, double y_ratio);/* downsample an image                  */
 	void rotate(double angle);                      /* rotate and image                     */
 	void convolve(ImageMatrix *filter);
-	void BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *histogram, int bins);
-	void histogram(double *bins, unsigned short bins_num, int imhist);
-	void MultiScaleHistogram(double *out);
-	void HaarlickTexture2D(double distance, double *out);
-	void zernike2D(double *zvalues, long *output_size);
+	__device__ void BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *histogram, int bins);
+
+	double Otsu();
+	void Mask(double threshold);
+	__device__ void histogram(double *bins, unsigned short bins_num, int imhist);
+
+
 };
 
 
@@ -117,3 +127,4 @@ RGBcolor HSV2RGB(HSVcolor hsv);
 TColor RGB2COLOR(RGBcolor rgb);
 double COLOR2GRAY(TColor color);
 
+#endif

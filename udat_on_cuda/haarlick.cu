@@ -17,7 +17,7 @@
 output -array of double- a pre-allocated array of 28 doubles
 */
 
-__global__ void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out) {
+__global__ void CUDA_haarlick2d(pix_data *pixels, double distance, double *out, int height, int width, int depth, unsigned short int bits) {
 	const int i = threadIdx.x * blockDim.x + threadIdx.x;
 	int a, x, y;
 	unsigned char **p_gray;
@@ -28,15 +28,15 @@ __global__ void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out) {
 
 	if (distance <= 0) distance = 1;
 
-	p_gray = new unsigned char *[Im->height];
-	for (y = 0; y<Im[i].height; y++)
-		p_gray[y] = new unsigned char[Im[i].width];
+	p_gray = new unsigned char *[height];
+	for (y = 0; y<height; y++)
+		p_gray[y] = new unsigned char[width];
 	/* for more than 8 bits - normalize the image to (0,255) range */
 
-	Im[i].BasicStatistics(NULL, NULL, NULL, &min_value, &max_value, NULL, 0);
-	for (y = 0; y<Im[i].height; y++)
-		for (x = 0; x<Im[i].width; x++)
-			if (Im[i].bits>8) 
+	BasicStatistics(pixels, &min_value, &max_value, 0, height*width*depth);
+	for (y = 0; y<height; y++)
+		for (x = 0; x<width; x++)
+			if (bits>8) 
 				p_gray[y][x] = (unsigned char)((Im[i].pixel(x, y, 0).intensity - min_value)*(255.0 / (max_value - min_value)));
 			else 
 				p_gray[y][x] = (unsigned char)(Im[i].pixel(x, y, 0).intensity);
@@ -50,7 +50,7 @@ __global__ void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out) {
 
 	for (angle = 0; angle <= 135; angle = angle + 45)
 	{
-		features = Extract_Texture_Features((int)distance, angle, p_gray, Im[i].height, Im[i].width, (int)max_value);
+		features = Extract_Texture_Features((int)distance, angle, p_gray, height, width, (int)max_value);
 		/*  (1) Angular Second Moment */
 		sum[0] += features->ASM;
 		if (features->ASM<min[0]) min[0] = features->ASM;
@@ -110,7 +110,7 @@ __global__ void CUDA_haarlick2d(ImageMatrix *Im, double distance, double *out) {
 		free(features);
 	}
 
-	for (y = 0; y<Im[i].height; y++)
+	for (y = 0; y<height; y++)
 		delete p_gray[y];
 	delete p_gray;
 
@@ -156,6 +156,7 @@ void allocate_haarlick_memory(ImageMatrix *matrix, double distance, double *out)
 	// haarlick computation
 	double *d_distance, *d_out;
 	ImageMatrix *d_matrix;
+	TEXTURE *d_texture;
 	/* removed currently because I believe the device is able to allocate its own memory for variables declared within a kernel function
 	TEXTURE *d_features;
 	int d_a, d_x, d_y;
@@ -183,12 +184,13 @@ void allocate_haarlick_memory(ImageMatrix *matrix, double distance, double *out)
 	cudaMalloc((void**)&d_matrix, sizeof(ImageMatrix));
 	cudaMalloc((void**)&d_out, sizeof(double));
 	cudaMalloc((void**)&d_distance, sizeof(double));
+	cudaMalloc((void**)&d_texture, sizeof(TEXTURE));
 
 
 	cudaMemcpy(d_matrix, matrix, sizeof(ImageMatrix), cudaMemcpyHostToDevice);
 	cudaMemcpy(d_out, out, sizeof(double), cudaMemcpyHostToDevice);
 	cudaMemcpy(d_distance, &distance, sizeof(double), cudaMemcpyHostToDevice);
-	CUDA_haarlick2d<<<1, 1>>>(matrix, distance, out);
+	//CUDA_haarlick2d<<<1, 1>>>(matrix, distance, out);
 	cudaMemcpy(out, d_out, sizeof(double), cudaMemcpyDeviceToHost);
 
 	cudaFree(d_matrix);
@@ -197,4 +199,32 @@ void allocate_haarlick_memory(ImageMatrix *matrix, double distance, double *out)
 }
 
 
+__device__ void BasicStatistics(pix_data *color_data, double *min, double *max, int bins, int num_pixels)
+{
+	long pixel_index, num_pixels;
+	double *pixels;
+	double min1 = INF, max1 = -INF, mean_sum = 0;
+
+	pixels = new double[num_pixels];
+
+	/* compute the average, min and max */
+	for (pixel_index = 0; pixel_index<num_pixels; pixel_index++)
+	{
+		mean_sum += color_data[pixel_index].intensity;
+		if (color_data[pixel_index].intensity>max1)
+			max1 = color_data[pixel_index].intensity;
+		if (color_data[pixel_index].intensity<min1)
+			min1 = color_data[pixel_index].intensity;
+		pixels[pixel_index] = color_data[pixel_index].intensity;
+	}
+	if (max) *max = max1;
+	if (min) *min = min1;
+
+	delete pixels;
+}
+
+__device__ pix_data get_pixel(pix_data *data, int x, int y, int z, int width, int height)
+{
+	return(data[z*width*height + y*width + x]);
+}
 #pragma package(smart_init)

@@ -76,39 +76,39 @@
 #define SWAP(a,b) {y=(a);(a)=(b);(b)=y;}
 #define PGM_MAXMAXVAL 255
 
-__device__ double f1_asm(double **P, int Ng);
-__device__ double f2_contrast(double **P, int Ng);
-__device__ double f3_corr(double **P, int Ng);
-__device__ double f4_var(double **P, int Ng);
-__device__ double f5_idm(double **P, int Ng);
-__device__ double f6_savg(double **P, int Ng);
-__device__ double f7_svar(double **P, int Ng, double S);
-__device__ double f8_sentropy(double **P, int Ng);
-__device__ double f9_entropy(double **P, int Ng);
-__device__ double f10_dvar(double **P, int Ng);
-__device__ double f11_dentropy(double **P, int Ng);
-__device__ double f12_icorr(double **P, int Ng);
-__device__ double f13_icorr(double **P, int Ng);
-__device__ double f14_maxcorr(double **P, int Ng);
+__device__ __host__ double f1_asm(double **P, int Ng);
+__device__ __host__ double f2_contrast(double **P, int Ng);
+__device__ __host__ double f3_corr(double **P, int Ng);
+__device__ __host__ double f4_var(double **P, int Ng);
+__device__ __host__ double f5_idm(double **P, int Ng);
+__device__ __host__ double f6_savg(double **P, int Ng);
+__device__ __host__ double f7_svar(double **P, int Ng, double S);
+__device__ __host__ double f8_sentropy(double **P, int Ng);
+__device__ __host__ double f9_entropy(double **P, int Ng);
+__device__ __host__ double f10_dvar(double **P, int Ng);
+__device__ __host__ double f11_dentropy(double **P, int Ng);
+__device__ __host__ double f12_icorr(double **P, int Ng);
+__device__ __host__ double f13_icorr(double **P, int Ng);
+__device__ __host__ double f14_maxcorr(double **P, int Ng);
 
 
-__device__ double *allocate_vector(int nl, int nh);
-__device__ double **allocate_matrix(int nrl, int nrh, int ncl, int nch);
-__device__ void free_matrix(double **matrix, int nrh);
+__device__ __host__ double *allocate_vector(int nl, int nh);
+__device__ __host__ double **allocate_matrix(int nrl, int nrh, int ncl, int nch);
+__device__ __host__ void free_matrix(double **matrix, int nrh);
 
-__device__ double** CoOcMat_Angle_0(int distance, u_int8_t **grays,
+__device__ __host__ double** CoOcMat_Angle_0(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count);
-__device__ double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
+__device__ __host__ double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count);
-__device__ double** CoOcMat_Angle_90(int distance, u_int8_t **grays,
+__device__ __host__ double** CoOcMat_Angle_90(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count);
-__device__ double** CoOcMat_Angle_135(int distance, u_int8_t **grays,
+__device__ __host__ double** CoOcMat_Angle_135(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count);
 
 
 /* support functions to compute f14_maxcorr */
 
-__device__ void mkbalanced(double **a, int n)
+__device__ __host__ void mkbalanced(double **a, int n)
 {
 	int last, j, i;
 	double s, r, g, f, c, sqrdx;
@@ -158,7 +158,7 @@ __device__ void mkbalanced(double **a, int n)
 }
 
 
-__device__ void reduction(double **a, int n)
+__device__ __host__ void reduction(double **a, int n)
 {
 	int m, j, i;
 	double y, x;
@@ -201,7 +201,7 @@ __device__ void reduction(double **a, int n)
 	}
 }
 
-__device__ int hessenberg(double **a, int n, double wr[], double wi[])
+__device__ __host__ int hessenberg(double **a, int n, double wr[], double wi[])
 {
 	int nn, m, l, k, j, its, i, mmin;
 	double z, y, x, w, v, u, t, s, r = 0.0, q = 0.0, p = 0.0, anorm;
@@ -365,7 +365,7 @@ __device__ int hessenberg(double **a, int n, double wr[], double wi[])
 
 
 
-__device__ TEXTURE * Extract_Texture_Features(int distance, int angle,
+__device__ __host__ TEXTURE * Extract_Texture_Features(int distance, int angle,
 	register u_int8_t **grays, int rows, int cols, int max_val)
 {
 	int tone_LUT[PGM_MAXMAXVAL + 1]; /* LUT mapping gray tone(0-255) to matrix indicies */
@@ -375,11 +375,7 @@ __device__ TEXTURE * Extract_Texture_Features(int distance, int angle,
 	double **P_matrix;
 	double sum_entropy;
 	TEXTURE *Texture;
-	Texture = (TEXTURE *)calloc(1, sizeof(TEXTURE));
-	if (!Texture) {
-		printf("\nERROR in TEXTURE structure allocate\n");
-		exit(1);
-	}
+	Texture = (TEXTURE*)malloc(sizeof(TEXTURE));
 
 	/* Determine the number of different gray tones (not maxval) */
 	for (row = PGM_MAXMAXVAL; row >= 0; --row)
@@ -407,7 +403,6 @@ __device__ TEXTURE * Extract_Texture_Features(int distance, int angle,
 	else if (angle == 135)
 		P_matrix = CoOcMat_Angle_135(distance, grays, rows, cols, tone_LUT, tone_count);
 	else {
-		fprintf(stderr, "Cannot created co-occurence matrix for angle %d. Unsupported angle.\n", angle);
 		return NULL;
 	}
 
@@ -436,7 +431,7 @@ __device__ TEXTURE * Extract_Texture_Features(int distance, int angle,
 }
 
 /* Compute gray-tone spatial dependence matrix */
-__device__ double** CoOcMat_Angle_0(int distance, u_int8_t **grays,
+__device__ __host__ double** CoOcMat_Angle_0(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count)
 {
 	int d = distance;
@@ -477,7 +472,7 @@ __device__ double** CoOcMat_Angle_0(int distance, u_int8_t **grays,
 	return matrix;
 }
 
-__device__ double** CoOcMat_Angle_90(int distance, u_int8_t **grays,
+__device__ __host__ double** CoOcMat_Angle_90(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count)
 {
 	int d = distance;
@@ -517,7 +512,7 @@ __device__ double** CoOcMat_Angle_90(int distance, u_int8_t **grays,
 	return matrix;
 }
 
-__device__ double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
+__device__ __host__ double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count)
 {
 	int d = distance;
@@ -557,7 +552,7 @@ __device__ double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
 	return matrix;
 }
 
-__device__ double** CoOcMat_Angle_135(int distance, u_int8_t **grays,
+__device__ __host__ double** CoOcMat_Angle_135(int distance, u_int8_t **grays,
 	int rows, int cols, int* tone_LUT, int tone_count)
 {
 	int d = distance;
@@ -612,7 +607,7 @@ of gray-levels.
 * gray-tone transitions. Hence the P matrix for such an image will have
 * fewer entries of large magnitude.
 */
-__device__ double f1_asm(double **P, int Ng) {
+__device__ __host__ double f1_asm(double **P, int Ng) {
 	int i, j;
 	double sum = 0;
 
@@ -629,7 +624,7 @@ __device__ double f1_asm(double **P, int Ng) {
 * measure of the contrast or the amount of local variations present in an
 * image.
 */
-__device__ double f2_contrast(double **P, int Ng) {
+__device__ __host__ double f2_contrast(double **P, int Ng) {
 	int i, j, n;
 	double sum = 0, bigsum = 0;
 
@@ -651,7 +646,7 @@ __device__ double f2_contrast(double **P, int Ng) {
 * This correlation feature is a measure of gray-tone linear-dependencies
 * in the image.
 */
-__device__ double f3_corr(double **P, int Ng) {
+__device__ __host__ double f3_corr(double **P, int Ng) {
 	int i, j;
 	double sum_sqrx = 0, sum_sqry = 0, tmp, *px;
 	double meanx = 0, meany = 0, stddevx, stddevy;
@@ -696,7 +691,7 @@ __device__ double f3_corr(double **P, int Ng) {
 }
 
 /* Sum of Squares: Variance */
-__device__ double f4_var(double **P, int Ng) {
+__device__ __host__ double f4_var(double **P, int Ng) {
 	int i, j;
 	double mean = 0, var = 0;
 
@@ -717,7 +712,7 @@ __device__ double f4_var(double **P, int Ng) {
 }
 
 /* Inverse Difference Moment */
-__device__ double f5_idm(double **P, int Ng) {
+__device__ __host__ double f5_idm(double **P, int Ng) {
 	int i, j;
 	double idm = 0;
 
@@ -729,7 +724,7 @@ __device__ double f5_idm(double **P, int Ng) {
 }
 
 /* Sum Average */
-__device__ double f6_savg(double **P, int Ng) {
+__device__ __host__ double f6_savg(double **P, int Ng) {
 	int i, j;
 	double savg = 0;
 	double *Pxpy = allocate_vector(0, 2 * Ng);
@@ -753,7 +748,7 @@ __device__ double f6_savg(double **P, int Ng) {
 }
 
 /* Sum Variance */
-__device__ double f7_svar(double **P, int Ng, double S) {
+__device__ __host__ double f7_svar(double **P, int Ng, double S) {
 	int i, j;
 	double var = 0;
 	double *Pxpy = allocate_vector(0, 2 * Ng);
@@ -777,7 +772,7 @@ __device__ double f7_svar(double **P, int Ng, double S) {
 }
 
 /* Sum Entropy */
-__device__ double f8_sentropy(double **P, int Ng) {
+__device__ __host__ double f8_sentropy(double **P, int Ng) {
 	int i, j;
 	double sentropy = 0;
 	double *Pxpy = allocate_vector(0, 2 * Ng);
@@ -798,7 +793,7 @@ __device__ double f8_sentropy(double **P, int Ng) {
 }
 
 /* Entropy */
-__device__ double f9_entropy(double **P, int Ng) {
+__device__ __host__ double f9_entropy(double **P, int Ng) {
 	int i, j;
 	double entropy = 0;
 
@@ -811,7 +806,7 @@ __device__ double f9_entropy(double **P, int Ng) {
 }
 
 /* Difference Variance */
-__device__ double f10_dvar(double **P, int Ng) {
+__device__ __host__ double f10_dvar(double **P, int Ng) {
 	int i, j;
 	double sum = 0, sum_sqr = 0, var = 0;
 	double *Pxpy = allocate_vector(0, 2 * Ng);
@@ -841,7 +836,7 @@ __device__ double f10_dvar(double **P, int Ng) {
 }
 
 /* Difference Entropy */
-__device__ double f11_dentropy(double **P, int Ng) {
+__device__ __host__ double f11_dentropy(double **P, int Ng) {
 	int i, j;
 	double sum = 0;
 	double *Pxpy = allocate_vector(0, 2 * Ng);
@@ -862,7 +857,7 @@ __device__ double f11_dentropy(double **P, int Ng) {
 }
 
 /* Information Measures of Correlation */
-__device__ double f12_icorr(double **P, int Ng) {
+__device__ __host__ double f12_icorr(double **P, int Ng) {
 	int i, j;
 	double *px, *py;
 	double hx = 0, hy = 0, hxy = 0, hxy1 = 0, hxy2 = 0;
@@ -903,7 +898,7 @@ __device__ double f12_icorr(double **P, int Ng) {
 }
 
 /* Information Measures of Correlation */
-__device__ double f13_icorr(double **P, int Ng) {
+__device__ __host__ double f13_icorr(double **P, int Ng) {
 	int i, j;
 	double *px, *py;
 	double hx = 0, hy = 0, hxy = 0, hxy1 = 0, hxy2 = 0;
@@ -943,7 +938,7 @@ __device__ double f13_icorr(double **P, int Ng) {
 }
 
 /* Returns the Maximal Correlation Coefficient */
-__device__ double f14_maxcorr(double **P, int Ng) {
+__device__ __host__ double f14_maxcorr(double **P, int Ng) {
 	int i, j, k;
 	double *px, *py, **Q;
 	double *x, *iy, tmp;
@@ -1012,17 +1007,18 @@ __device__ double f14_maxcorr(double **P, int Ng) {
 	return f;
 }
 
-__device__ double *allocate_vector(int nl, int nh) {
+__device__ __host__ double *allocate_vector(int nl, int nh) {
 	double *v;
 
-	v = (double *)calloc(1, (unsigned)(nh - nl + 1) * sizeof (double));
-	if (!v) fprintf(stderr, "memory allocation failure (allocate_vector) "), exit(1);
+	v = (double *)malloc((unsigned)(nh - nl + 1) * sizeof (double));
+	if (!v)
+		return NULL;
 
 	return v - nl;
 }
 
 /* free matrix */
-__device__ void free_matrix(double **matrix, int nrh)
+__device__ __host__ void free_matrix(double **matrix, int nrh)
 {
 	int col_index;
 	for (col_index = 0; col_index <= nrh; col_index++)
@@ -1031,20 +1027,22 @@ __device__ void free_matrix(double **matrix, int nrh)
 }
 
 /* Allocates a double matrix with range [nrl..nrh][ncl..nch] */
-__device__ double **allocate_matrix(int nrl, int nrh, int ncl, int nch)
+__device__ __host__ double **allocate_matrix(int nrl, int nrh, int ncl, int nch)
 {
 	int i;
 	double **m;
 
 	/* allocate pointers to rows */
 	m = (double **)malloc((unsigned)(nrh - nrl + 1) * sizeof (double *));
-	if (!m) fprintf(stderr, "memory allocation failure (allocate_matrix 1) "), exit(1);
+	if (!m) 
+		return NULL;
 	m -= ncl;
 
 	/* allocate rows and set pointers to them */
 	for (i = nrl; i <= nrh; i++) {
 		m[i] = (double *)malloc((unsigned)(nch - ncl + 1) * sizeof (double));
-		if (!m[i]) fprintf(stderr, "memory allocation failure (allocate_matrix 2) "), exit(2);
+		if (!m[i])
+			return NULL;
 		m[i] -= ncl;
 	}
 
@@ -1053,7 +1051,7 @@ __device__ double **allocate_matrix(int nrl, int nrh, int ncl, int nch)
 }
 
 
-__device__ void results(double *Tp, char *c, double *a)
+__device__ __host__ void results(double *Tp, char *c, double *a)
 {
 	int i;
 	double max, min;
@@ -1071,11 +1069,9 @@ __device__ void results(double *Tp, char *c, double *a)
 	*Tp = (a[0] + a[1] + a[2] + a[3]) / 4;
 	*Tp++;
 	*Tp = max - min;
-
-
 }
 
-__device__ void simplesrt(int n, double arr[])
+__device__ __host__ void simplesrt(int n, double arr[])
 {
 	int i, j;
 	double a;

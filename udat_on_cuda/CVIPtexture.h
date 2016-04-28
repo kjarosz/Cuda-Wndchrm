@@ -48,7 +48,7 @@ typedef struct  {
 	float max_corr_coef; /* (14) Maximal Correlation Coefficient */
 } TEXTURE;
 
-__device__ TEXTURE * Extract_Texture_Features(int distance, int angle,
+__device__ __host__ TEXTURE * Extract_Texture_Features(int distance, int angle,
 	register u_int8_t **grays, int rows, int cols, int max_val);
 
 #endif

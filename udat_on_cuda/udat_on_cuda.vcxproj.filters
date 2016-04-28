@@ -7,11 +7,11 @@
     <Filter Include="Header Files">
       <UniqueIdentifier>{f87524b7-b50f-4ab7-84c8-e5b910898b07}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Libraries">
-      <UniqueIdentifier>{1a7fbad0-644f-43e3-9599-e6d007cadd06}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Libraries">
       <UniqueIdentifier>{2c7fd581-1212-46c4-a7df-71bd154f702b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs">
+      <UniqueIdentifier>{1a7fbad0-644f-43e3-9599-e6d007cadd06}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -56,29 +56,29 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="haarlick.cu">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FuzzyCalc.cu">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CVIPtexture.cu">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="image_matrix.cu">
+    <ClCompile Include="FuzzyCalc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\libs\fftw\64bit\fftw-3.2.2-dll64\libfftw3-3.lib">
-      <Filter>Libraries</Filter>
+      <Filter>libs</Filter>
     </Library>
     <Library Include="..\libs\libtiff\libtiff.lib">
-      <Filter>Libraries</Filter>
+      <Filter>libs</Filter>
     </Library>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="signatures.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="haarlick.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="CVIPtexture.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="image_matrix.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
   </ItemGroup>

@@ -31,11 +31,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "image_matrix.h"
-#include "haarlick.h"
-#include "zernike.h"
-#include "cuda.h"
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
+
 
 #ifndef BORLAND_C
 #ifndef VISUAL_C
@@ -44,11 +40,24 @@
 #endif
 #endif
 
+#include "libs/libtiff/tiffio.h"
+
+#ifdef BORLAND_C
+#include "libs/libtiff/tiffio.h"
+#include <jpeg.hpp>
+#endif
+
 
 #ifdef VISUAL_C
-#include "libtiff32/tiffio.h"
+#include "libs/libtiff/tiffio.h"
 #include <stdlib.h>
 #endif
+
+#include "cuda.h"
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+#include "device_functions.h"
+
 
 #define SOUND_FILES
 #ifndef WIN32
@@ -56,7 +65,6 @@
 #define __int64 uint64_t
 #endif
 #endif
-#include "sndfile.h"
 
 #define MIN(a,b) (a<b?a:b)
 #define MAX(a,b) (a>b?a:b)
@@ -127,23 +135,181 @@ HSVcolor RGB2HSV(RGBcolor rgb)
 }
 
 
+
+#ifdef BORLAND_C
+
 //--------------------------------------------------------------------------
-TColor RGB2COLOR(RGBcolor rgb)
+int ImageMatrix::LoadImage(TPicture *picture, int ColorMode)
 {
-	return((TColor)(rgb.blue * 65536 + rgb.green * 256 + rgb.red));
+	int a, b, x, y;
+	pix_data pix;
+	width = picture->Width;
+	height = picture->Height;
+	depth = 1;   /* TPicture is a two-dimentional structure */
+	bits = 8;
+	this->ColorMode = ColorMode;
+	/* allocate memory for the image's pixels */
+	data = new pix_data[width*height*depth];
+	if (!data) return(0); /* memory allocation failed */
+	/* load the picture */
+	for (y = 0; y<height; y++)
+	for (x = 0; x<width; x++)
+	{
+		pix.clr.RGB.red = (byte)(picture->Bitmap->Canvas->Pixels[x][y] & 0xFF);               /* red value */
+		pix.clr.RGB.green = (byte)((picture->Bitmap->Canvas->Pixels[x][y] & 0xFF00) >> 8);    /* green value */
+		pix.clr.RGB.blue = (byte)((picture->Bitmap->Canvas->Pixels[x][y] & 0xFF0000) >> 16);  /* blue value */
+		if (ColorMode == cmHSV) pix.clr.HSV = RGB2HSV(pix.clr.RGB);
+		pix.intensity = COLOR2GRAY(picture->Bitmap->Canvas->Pixels[x][y]);
+		set(x, y, 0, pix);
+	}
+	return(1);
 }
 
-double COLOR2GRAY(TColor color1)
+int ImageMatrix::LoadBMP(char *filename, int ColorMode)
 {
-	double r, g, b;
-
-	r = (byte)(color1 & 0xFF);
-	g = (byte)((color1 & 0xFF00) >> 8);
-	b = (byte)((color1 & 0xFF0000) >> 16);
-
-	return((0.3*r + 0.59*g + 0.11*b));
+	TPicture *picture;
+	int ret_val = 0;
+	picture = new TPicture;
+	if (FileExists(filename))
+	{
+		picture->LoadFromFile(filename);
+		ret_val = LoadImage(picture, ColorMode);
+	}
+	delete picture;
+	return(ret_val);
 }
 
+int ImageMatrix::LoadJPG(char *filename, int ColorMode)
+{
+	TJPEGImage *i;
+	TPicture *picture;
+	int ret_val;
+	i = new TJPEGImage();
+	try
+	{
+		i->LoadFromFile(filename);
+	}
+	catch (...) { return(0); }
+	picture = new TPicture();
+	picture->Bitmap->Assign(i);
+	ret_val = LoadImage(picture, ColorMode);
+	delete i;
+	delete picture;
+	return(ret_val);
+}
+
+#endif
+
+
+
+/* LoadTIFF
+filename -char *- full path to the image file
+*/
+int ImageMatrix::LoadTIFF(char *filename)
+{
+	//#ifndef BORLAND_C
+	unsigned long h, w, x, y, z;   /* (originally it's tdir_t) */
+	unsigned short int spp, bps;
+	TIFF *tif = NULL;
+	//tdata_t buf;
+	unsigned char *buf8 = NULL;
+	unsigned short *buf16 = NULL;
+	float *buf_float = NULL;
+	double max_val;
+	pix_data pix;
+	if (tif = TIFFOpen(filename, "r"))
+	{
+		TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
+		width = w;
+		TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
+		height = h;
+		TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bps);
+		bits = bps;
+		if (bits != 8 && bits != 16 && bits != 32) { printf("Unsupported bits per pixel (%d) in file '%s'\n", bits, filename); TIFFClose(tif);  return(0); }  /* unsupported numbers of bits per pixel */
+		TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &spp);
+		if (!spp) spp = 1;  /* assume one sample per pixel if nothing is specified */
+		if ((depth = TIFFNumberOfDirectories(tif)) < 0) { TIFFClose(tif); return(0); }   /* get the number of slices (Zs) */
+
+		/* allocate the data */
+		data = new pix_data[width*height*depth];
+		if (!data) { TIFFClose(tif); return(0); } /* memory allocation failed */
+
+		max_val = pow(2.0, (double)bits) - 1;
+		if (bps == 32 && spp == 1) max_val = 1.0;  /* max value of a floaiting point image */
+		/* read TIFF header and determine image size */
+		if (bits == 8) buf8 = (unsigned char *)_TIFFmalloc(TIFFScanlineSize(tif)*spp);
+		if (bits == 16) buf16 = (unsigned short *)_TIFFmalloc(TIFFScanlineSize(tif)*sizeof(unsigned short)*spp);
+		if (bits == 32) buf_float = (float *)_TIFFmalloc(TIFFScanlineSize(tif)*sizeof(float)*spp);
+		for (z = 0; z<(unsigned long)depth; z++)
+		{
+			TIFFSetDirectory(tif, z);
+			for (y = 0; y < (unsigned long)height; y++)
+			{
+				int col;
+				if (bits == 8) TIFFReadScanline(tif, buf8, y);
+				if (bits == 16) TIFFReadScanline(tif, buf16, y);
+				if (bits == 32) TIFFReadScanline(tif, buf_float, y);
+				x = 0; col = 0;
+				while (x<(unsigned long)width)
+				{
+					unsigned char byte_data;
+					unsigned short short_data;
+					float float_data;
+					double val;
+					int sample_index;
+					for (sample_index = 0; sample_index<spp; sample_index++)
+					{
+						if (bits == 8)
+						{
+							byte_data = buf8[col + sample_index];
+							val = (double)byte_data;
+						}
+						if (bits == 16)
+						{
+							short_data = buf16[col + sample_index];
+							val = (double)(short_data);
+						}
+						if (bits == 32)
+						{
+							float_data = buf_float[col + sample_index];
+							val = (double)(float_data);
+							if (max_val == 1.0) val *= 255;   /* change to 0,255 for compatability with algorithms that use integers */
+						}
+						if (spp == 3 || spp == 4)  /* RGB image or RGB+alpha */
+						{
+							if (sample_index == 0) pix.clr.RGB.red = (unsigned char)(255 * (val / max_val));
+							if (sample_index == 1) pix.clr.RGB.green = (unsigned char)(255 * (val / max_val));
+							if (sample_index == 2) pix.clr.RGB.blue = (unsigned char)(255 * (val / max_val));
+						}
+					}
+					if (spp == 3 || spp == 4)
+					{
+						pix.intensity = COLOR2GRAY(RGB2COLOR(pix.clr.RGB));     // pix.clr.RGB.red*0.3+pix.clr.RGB.green*0.59+pix.clr.RGB.blue*0.11;
+						if (ColorMode == cmHSV) pix.clr.HSV = RGB2HSV(pix.clr.RGB);
+					}
+					if (spp == 1)
+					{
+						pix.clr.RGB.red = (unsigned char)(255 * (val / max_val));
+						pix.clr.RGB.green = (unsigned char)(255 * (val / max_val));
+						pix.clr.RGB.blue = (unsigned char)(255 * (val / max_val));
+						pix.intensity = val;
+					}
+					set(x, y, z, pix);
+					x++;
+					col += spp;
+				}
+			}
+		}
+		if (spp == 3 || spp == 4) bits = 8;   /* set color images to 8-bits */
+		if (buf8) _TIFFfree(buf8);
+		if (buf16) _TIFFfree(buf16);
+		if (buf_float) _TIFFfree(buf_float);
+		TIFFClose(tif);
+	}
+	else return(0);
+	//#endif
+	return(1);
+}
 
 
 
@@ -159,14 +325,19 @@ DynamicRange -long- change to a new dynamic range. Ignore if 0.
 int ImageMatrix::OpenImage(char *image_file_name, int downsample, rect *bounding_rect, double mean, double stddev, long DynamicRange, double otsu_mask)
 {
 	int res = 0;
+#ifdef BORLAND_C
+	if (strstr(image_file_name, ".bmp") || strstr(image_file_name, ".BMP"))
+		res = LoadBMP(image_file_name, cmHSV);
+	else
+	if (strstr(image_file_name, ".jpg") || strstr(image_file_name, ".jpeg") || strstr(image_file_name, ".JPG"))
+		res = LoadJPG(image_file_name, cmHSV);
+	else
+#endif
 	if (strstr(image_file_name, ".tif") || strstr(image_file_name, ".TIF"))
 	{
 		res = LoadTIFF(image_file_name);
 	}
 	//#endif
-	else
-	if (strstr(image_file_name, ".ppm") || strstr(image_file_name, ".PPM"))
-		res = LoadPPM(image_file_name, cmHSV);
 	else /* dicom, jpeg, any other file format */
 	if (strstr(image_file_name, ".dcm") || strstr(image_file_name, ".DCM") || strstr(image_file_name, ".jpg") || strstr(image_file_name, ".JPG"))
 	{
@@ -183,7 +354,6 @@ int ImageMatrix::OpenImage(char *image_file_name, int downsample, rect *bounding
 #endif
 		system(buffer);
 	}
-	else if (strstr(image_file_name, ".wav") || strstr(image_file_name, ".WAV")) res = LoadWav(image_file_name);
 
 	if (res)  /* add the image only if it was loaded properly */
 	{
@@ -204,7 +374,8 @@ int ImageMatrix::OpenImage(char *image_file_name, int downsample, rect *bounding
 			Downsample(((double)downsample) / 100.0, ((double)downsample) / 100.0);   /* downsample the image */
 		if (mean>0)  /* normalize to a given mean and standard deviation */
 			normalize(-1, -1, -1, mean, stddev);
-		if (otsu_mask>0) Mask(Otsu()*otsu_mask);    /* mask using the otsu threshold */
+		if (otsu_mask>0)
+			Mask(Otsu()*otsu_mask);    /* mask using the otsu threshold */
 	}
 	/*
 	{   ImageMatrix *color_mask;
@@ -273,9 +444,9 @@ ImageMatrix::ImageMatrix(ImageMatrix *matrix, int x1, int y1, int x2, int y2, in
 	data = new pix_data[width*height*depth];
 
 	for (z = z1; z<z1 + depth; z++)
-		for (y = y1; y<y1 + height; y++)
-			for (x = x1; x<x1 + width; x++)
-				set(x - x1, y - y1, z - z1, matrix->pixel(x, y, z));
+	for (y = y1; y<y1 + height; y++)
+	for (x = x1; x<x1 + width; x++)
+		set(x - x1, y - y1, z - z1, matrix->pixel(x, y, z));
 }
 
 /* free the memory allocated in "ImageMatrix::LoadImage" */
@@ -472,7 +643,7 @@ nbins -int- the number of bins for the histogram
 
 if one of the pointers is NULL, the corresponding value is not computed.
 */
-__device__ void ImageMatrix::BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *hist, int bins)
+__device__ void ImageMatrix::BasicStatistics(double *min, double *max, int bins)
 {
 	long pixel_index, num_pixels;
 	double *pixels;
@@ -495,24 +666,6 @@ __device__ void ImageMatrix::BasicStatistics(double *mean, double *median, doubl
 	if (min) *min = min1;
 	if (mean || std) *mean = mean_sum / num_pixels;
 
-	/* calculate the standard deviation */
-	if (std)
-	{
-		*std = 0;
-		for (pixel_index = 0; pixel_index<num_pixels; pixel_index++)
-			*std = *std + pow(data[pixel_index].intensity - *mean, 2);
-		*std = sqrt(*std / (num_pixels - 1));
-	}
-
-	if (hist)  /* do the histogram only if needed */
-		histogram(hist, bins, 0);
-
-	/* find the median */
-	if (median)
-	{
-		qsort(pixels, num_pixels, sizeof(double), compare_doubles);
-		*median = pixels[num_pixels / 2];
-	}
 	delete pixels;
 }
 
@@ -530,12 +683,9 @@ void ImageMatrix::normalize(double min, double max, long range, double mean, dou
 	if (min >= 0 && max>0 && range>0)
 	for (x = 0; x<width*height*depth; x++)
 	{
-		if (data[x].intensity<min) 
-			data[x].intensity = 0;
-		else if (data[x].intensity>max)
-			data[x].intensity = range;
-		else 
-			data[x].intensity = ((data[x].intensity - min) / (max - min))*range;
+		if (data[x].intensity<min) data[x].intensity = 0;
+		else if (data[x].intensity>max) data[x].intensity = range;
+		else data[x].intensity = ((data[x].intensity - min) / (max - min))*range;
 	}
 
 	/* normalize to mean and stddev */
@@ -548,14 +698,44 @@ void ImageMatrix::normalize(double min, double max, long range, double mean, dou
 			data[x].intensity -= (original_mean - mean);
 			if (stddev>0)
 				data[x].intensity = mean + (data[x].intensity - mean)*(stddev / original_stddev);
-			if (data[x].intensity<0) 
-				data[x].intensity = 0;
-			if (data[x].intensity>pow(2.0, bits) - 1)
-				data[x].intensity = pow(2.0, bits) - 1;
+			if (data[x].intensity<0) data[x].intensity = 0;
+			if (data[x].intensity>pow(2.0, bits) - 1) data[x].intensity = pow(2.0, bits) - 1;
 		}
 		//BasicStatistics(&original_mean, NULL, &original_stddev, NULL, NULL, NULL, 0);		  
 		//printf("%f %f\n",original_mean,original_stddev);
 	}
+}
+
+
+
+
+/*
+FeatureStatistics
+Find feature statistics. Before calling this function the image should be transformed into a binary
+image using "OtsuBinaryMaskTransform".
+
+count -int *- the number of objects detected in the binary image
+Euler -int *- the euler number (number of objects - number of holes
+centroid_x -int *- the x coordinate of the centroid of the binary image
+centroid_y -int *- the y coordinate of the centroid of the binary image
+AreaMin -int *- the smallest area
+AreaMax -int *- the largest area
+AreaMean -int *- the mean of the areas
+AreaMedian -int *- the median of the areas
+AreaVar -int *- the variance of the areas
+DistMin -int *- the smallest distance
+DistMax -int *- the largest distance
+DistMean -int *- the mean of the distance
+DistMedian -int *- the median of the distances
+DistVar -int *- the variance of the distances
+
+*/
+
+int compare_ints(const void *a, const void *b)
+{
+	if (*((int *)a) > *((int *)b)) return(1);
+	if (*((int *)a) == *((int *)b)) return(0);
+	return(-1);
 }
 
 
@@ -569,7 +749,7 @@ __device__ void ImageMatrix::histogram(double *bins, unsigned short bins_num, in
 	if (imhist == 1)    /* similar to the Matlab imhist */
 	{
 		min = 0;
-		max = pow(2.0, bits) - 1;
+		max = pow(2.0, (double)bits) - 1;
 	}
 	else
 	{
@@ -587,64 +767,68 @@ __device__ void ImageMatrix::histogram(double *bins, unsigned short bins_num, in
 
 	/* build the histogram */
 	for (a = 0; a<width*height*depth; a++)
-		if (data[a].intensity == max) 
-			bins[bins_num - 1] += 1;
-		else 
-			bins[(int)(((data[a].intensity - min) / (max - min))*bins_num)] += 1;
+	if (data[a].intensity == max) bins[bins_num - 1] += 1;
+	else bins[(int)(((data[a].intensity - min) / (max - min))*bins_num)] += 1;
 
 	return;
 }
 
 
-__device__ int compare_ints(const void *a, const void *b)
-{
-	if (*((int *)a) > *((int *)b)) return(1);
-	if (*((int *)a) == *((int *)b)) return(0);
-	return(-1);
-}
 
-
-
-/* haarlick
-output -array of double- a pre-allocated array of 28 doubles
+//-----------------------------------------------------------------------------------
+/* Otsu
+Find otsu threshold
 */
-void ImageMatrix::HaarlickTexture2D(double distance, double *out)
+double ImageMatrix::Otsu()
 {
-	if (distance <= 0) distance = 1;
-	CUDA_haarlick2d<<<1, 1>>>(this, distance, out);
+	long a;
+	double hist[256], omega[256], mu[256], sigma_b2[256], maxval = -INF, sum, count;
+	double max = pow(2.0, bits) - 1;
+	histogram(hist, 256, 1);
+	omega[0] = hist[0] / (width*height);
+	mu[0] = 1 * hist[0] / (width*height);
+	for (a = 1; a<256; a++)
+	{
+		omega[a] = omega[a - 1] + hist[a] / (width*height);
+		mu[a] = mu[a - 1] + (a + 1)*hist[a] / (width*height);
+	}
+	for (a = 0; a<256; a++)
+	{
+		if (omega[a] == 0 || 1 - omega[a] == 0) sigma_b2[a] = 0;
+		else sigma_b2[a] = pow(mu[255] * omega[a] - mu[a], 2) / (omega[a] * (1 - omega[a]));
+		if (sigma_b2[a]>maxval) maxval = sigma_b2[a];
+	}
+	sum = 0.0;
+	count = 0.0;
+	for (a = 0; a<256; a++)
+	if (sigma_b2[a] == maxval)
+	{
+		sum += a;
+		count++;
+	}
+	return((pow(2.0, bits) / 256.0)*((sum / count) / max));
 }
 
-/* MultiScaleHistogram
-histograms into 3,5,7,9 bins
-Function computes signatures based on "multiscale histograms" idea.
-Idea of multiscale histogram came from the belief of a unique representativity of an
-image through infinite series of histograms with sequentially increasing number of bins.
-Here we used 4 histograms with number of bins being 3,5,7,9.
-out -array of double- a pre-allocated array of 24 bins
+
+
+//-----------------------------------------------------------------------------------
+/*
+Mask
+Set to zero all pixels that are lower than the threshold.
+The threshold is a value within the interval (0,1) and is a fraction to the dynamic range
 */
-__device__ void ImageMatrix::MultiScaleHistogram(double *out)
+void ImageMatrix::Mask(double threshold)
 {
-	int a;
-	double max = 0;
-	histogram(out, 3, 0);
-	histogram(&(out[3]), 5, 0);
-	histogram(&(out[8]), 7, 0);
-	histogram(&(out[15]), 9, 0);
-	for (a = 0; a<24; a++)
-	if (out[a]>max) max = out[a];
-	for (a = 0; a<24; a++)
-		out[a] = out[a] / max;
+	double max = pow(2.0, bits) - 1;
+	for (long a = 0; a<width*height*depth; a++)
+	if (data[a].intensity <= threshold*max)
+	{
+		data[a].intensity = 0.0;
+		data[a].clr.RGB.red = data[a].clr.RGB.green = data[a].clr.RGB.blue = 0;
+	}
+	//	 else data[a].intensity-=threshold*max;
 }
 
-/* zernike
-zvalue -array of double- a pre-allocated array of double of a suficient size
-(the actual size is returned by "output_size))
-output_size -* long- the number of enteries in the array "zvalues" (normally 72)
-*/
-void ImageMatrix::zernike2D(double *zvalues, long *output_size)
-{
-	mb_zernike2D(this, 0, 0, zvalues, output_size);
-}
 
 
 #pragma package(smart_init)
