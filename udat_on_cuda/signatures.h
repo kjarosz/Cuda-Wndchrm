@@ -48,7 +48,6 @@ private:
   void reset_directory_tracker(char **directories, int count);
   bool read_next_batch();
   bool batch_capacity_reached();
-  bool batch_ready_to_compute();
   dirent *read_next_entry();
 
   void load_image_matrix(char *filename);

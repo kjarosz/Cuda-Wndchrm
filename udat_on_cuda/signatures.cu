@@ -11,6 +11,8 @@
 #include "cuda_runtime.h"
 
 
+#define MAX_MATRIX_SIZE 1073741824 // ~1gb of free space limit for number of matrices
+
 
 CUDASignatures::CUDASignatures()
 :image_matrices(0), 
@@ -75,23 +77,24 @@ bool CUDASignatures::read_next_batch()
     load_image_matrix(filename_buffer);
   }
 
-  return batch_ready_to_compute();
+  return (image_matrix_count > 0);
 }
 
 
-
+/*
+batch_capacity_reached
+*/
 bool CUDASignatures::batch_capacity_reached()
 {
-  return true;
+	int bytes_taken = 0;
+
+	for (int i = 0; i < image_matrix_count; i++)
+	{
+		bytes_taken += image_matrices[i]->width * image_matrices[i]->height * sizeof(pix_data);
+	}
+	
+	return (bytes_taken < MAX_MATRIX_SIZE);
 }
-
-
-
-bool CUDASignatures::batch_ready_to_compute()
-{
-  return true;
-}
-
 
 
 dirent * CUDASignatures::read_next_entry()
