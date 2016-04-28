@@ -4,6 +4,7 @@
 
 
 #include "file_manip.h"
+#include "textures/zernike/zernike.h"
 #include "haarlick.h"
 #include "signatures.h"
 #include "cuda_runtime.h"
@@ -190,12 +191,16 @@ void CUDASignatures::compute_signatures_on_cuda()
   cudaMemcpy(cPixels,  pixels,  image_matrix_count * sizeof(pix_data*), cudaMemcpyHostToDevice);
 
   double *cOutputs = 0;
-  cudaMalloc(&cOutputs,  MAX_OUTPUT_SIZE * image_matrix_count * sizeof(double));
+  cudaMalloc(&cOutputs, MAX_OUTPUT_SIZE * image_matrix_count * sizeof(double));
 
-  zernike<<< 1, image_matrix_count>>>();
-  // Call algorithms here.
+  long *cSizes = 0;
+  cudaMalloc(&cSizes, image_matrix_count * sizeof(long));
 
-  // Save signatures and stuff locally to save later.
+  // Execute the features.
+  compute_zernike_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes);
+
+  cudaFree(cSizes);
+  cudaFree(cOutputs);
 
   for(int i = 0; i < image_matrix_count; i++)
   {
@@ -214,3 +219,21 @@ void CUDASignatures::compute_signatures_on_cuda()
 
 
 
+void CUDASignatures::compute_zernike_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes)
+{
+
+  double *d;
+  double *r;
+
+  cudaMalloc(&d, image_matrix_count * sizeof(double));
+  cudaMalloc(&r, image_matrix_count * sizeof(double));
+
+  cudaMemset(d, 0, image_matrix_count * sizeof(double));
+  cudaMemset(r, 0, image_matrix_count * sizeof(double));
+
+  zernike<<< 1, image_matrix_count >>>(images, widths, heights, depths, image_matrix_count, 
+                                       d, r, outputs, sizes);
+
+  cudaFree(r);
+  cudaFree(d);
+}

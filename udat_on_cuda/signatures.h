@@ -56,6 +56,9 @@ private:
   void empty_matrix_container();
   
   void compute_signatures_on_cuda();
+
+  // All CUDA functions.
+  void compute_zernike_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes);
   
 private:
   DirectoryTracker directory_tracker;
