@@ -1,4 +1,5 @@
 #include "zernike.h"
+#include "signatures.h"
 
 
 
@@ -68,7 +69,8 @@
   // Accumulator for complex moments
   thrust::complex<double> sum = thrust::complex<double>(0.0, 0.0);
   thrust::complex<double> ctemp = thrust::complex<double>(0.0, 0.0);
-  for (int i = 0; i < size; i++) {
+  for (int i = 0; i < size; i++) 
+  {
     double x = X[i];
     double y = Y[i];
     double p = P[i];
@@ -115,113 +117,80 @@
 /* ************************************************************************* */
    __global__ 
    void zernike (pix_data **images, 
-                 int *widths, int *heights, int *depths, int count, 
-                 double *d, double *r, double *zvalues, 
-                 long *output_size)
+                 int *widths, int *heights, int *depths, 
+                 double *D, double *R, 
+                 double *zvalues, long *output_size)
 /* ************************************************************************* */
-{
-   int n,l;
-   int size2,size3,a;
+{  
+   int img_idx = blockDim.x * blockIdx.x + threadIdx.x;
 
-   int *size = new int[count];
-   int *size2 = new int[count];
-   int *size3 = new int[count];
+   if (D[img_idx] <= 0) 
+      D[img_idx] = 15;
 
-   int *rows = new int[count];
-   int *cols = new int[count];
-
-   double **X = new double*[count];
-   double **Y = new double*[count];
-   double **P = new double*[count];
-
-   double *psum = new double[count];
-   for (int i = 0; i < count; i++)
-   {
-      psum[i] = 0;
-
-      if (d[i] <= 0) 
-        d[i] = 15;
-
-      if (r[i] <= 0)
-      {  
-         rows[i] = images[i].height;
-         cols[i] = images[i].width;
-         r[i]    = rows[i] / 2;
-      }
-
-      Y[i] = new double[rows[i]*cols[i]];
-      X[i] = new double[rows[i]*cols[i]];
-      P[i] = new double[rows[i]*cols[i]];
-
-      /* Find all non-zero pixel coordinates and values */
-      size[i] = 0;
-      for (int y = 0; y < rows[i]; y++)
-      {
-        for (int x = 0; x < cols[i]; x++)
-        {
-           if (images[i].pixel(x,y,0).intensity != 0)
-           {  
-              Y[i][size[i]] = y+1;
-              X[i][size[i]] = x+1;
-              P[i][size[i]] = images[i].pixel(x,y,0).intensity;
-              psum[i] += images[i].pixel(x,y,0).intensity;
-              size[i]++;
-           }
-        }
-      }
+   int rows, cols;
+   if (R[img_idx] <= 0)
+   {  
+      rows = heights[img_idx];
+      cols = widths[img_idx];
+      R[img_idx] = rows/2;
    }
 
    /* Normalize the coordinates to the center of mass and normalize
       pixel distances using the maximum radius argument (R) */
-   double *moment10 = new double[count];
-   double *moment00 = new double[count];
-   double *moment01 = new double[count];
+   double moment10 = image_moments(images[img_idx], widths[img_idx], heights[img_idx], 1, 0);
+   double moment00 = image_moments(images[img_idx], widths[img_idx], heights[img_idx], 0, 0);
+   double moment01 = image_moments(images[img_idx], widths[img_idx], heights[img_idx], 0, 1);
 
-   mb_imgmoments(images, 1, 0, moment10);
-   mb_imgmoments(images, 0, 0, moment00);
-   mb_imgmoments(images, 0, 1, moment01);
+   double *Y = new double[rows*cols];
+   double *X = new double[rows*cols];
+   double *P = new double[rows*cols];
 
-   for(int i = 0; i < count; i++)
+   /* Find all non-zero pixel coordinates and values */
+   int size=0;
+   double psum=0;
+   for (int y=0; y < rows; y++)
    {
-      size2[i]=0;
-      for (int a = 0; a < size; a++)
-      { 
-         X[size2] = (X[a] - moment10[i] / moment00[i]) / r;
-         Y[size2] = (Y[a] - moment01[i] / moment00[i]) / r;
-         P[size2] = P[a] / psum;
-         if (sqrt(X[size2]*X[size2]+Y[size2]*Y[size2])<=1) size2=size2++;
-      }
+     for (int x=0; x < cols; x++)
+     {
+        pix_data pixel = get_pixel(images[img_idx], widths[img_idx], heights[img_idx], x, y, 0);
+        if (pixel.intensity!=0)
+        {  
+           Y[size] = y+1;
+           X[size] = x+1;
+           P[size] = pixel.intensity;
+           psum   += pixel.intensity;
+           size++;
+        }
+     }
    }
 
-   delete [] moment10;
-   delete [] moment00;
-   delete [] moment01;
+   int size2=0;
+   for (int a=0; a < size; a++)
+   {  
+      X[size2] = (X[a]-moment10/moment00)/R[img_idx];
+      Y[size2] = (Y[a]-moment01/moment00)/R[img_idx];
+      P[size2] = P[a]/psum;
+      if ( sqrt( X[size2] * X[size2] + Y[size2] * Y[size2] ) <= 1) 
+         size2=size2++;
+   }
 
-   size3=0;
-   for (n=0;n<=D;n++)
-     for (l=0;l<=n;l++)
+   int size3=0;
+   for (int n=0; n <= D[img_idx]; n++)
+   {
+     for (int l=0; l <= n ; l++)
+     {
        if (((n-l) % 2) ==0)
-       {  double preal,pimag;
-          mb_Znl(n,l,X,Y,P,size2,&preal,&pimag);
-          zvalues[size3++]=fabs(sqrt(preal*preal+pimag*pimag));
+       {  
+          double preal,pimag;
+          znl(n,l,X,Y,P,size2,&preal,&pimag);
+          zvalues[img_idx * MAX_OUTPUT_SIZE + size3++]=fabs(sqrt(preal*preal+pimag*pimag));
        }
-   *output_size=size3;
-
-   for (int i = 0; i < count; i++)
-   {
-      delete [] Y[i];
-      delete [] X[i];
-      delete [] P[i];
+     }
    }
+   output_size[img_idx] = size3;
 
-   delete [] Y;
-   delete [] X;
-   delete [] P;
+   delete Y;
+   delete X;
+   delete P;
 
-   delete [] rows;
-   delete [] cols;
-
-   delete [] size;
-   delete [] size2;
-   delete [] size3;
 }

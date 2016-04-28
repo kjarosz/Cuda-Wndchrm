@@ -13,8 +13,7 @@ __device__ double image_moments (pix_data *image, int width, int height, int x, 
 __device__ void   znl           (long n, long l, double *X, double *Y, double *P, 
                                  int size, double *out_r, double *out_i);
 __global__ void   zernike       (pix_data **images, int *widths, int *heights, int *depths, 
-                                 int size, double *d, double *r, double *zvalues, 
-                                 long *output_size);
+                                 double *d, double *r, double *zvalues, long *output_size);
 
 
 
