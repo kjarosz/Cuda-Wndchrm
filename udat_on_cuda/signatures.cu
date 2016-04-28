@@ -4,6 +4,7 @@
 
 
 #include "file_manip.h"
+#include "haarlick.h"
 #include "signatures.h"
 #include "cuda_runtime.h"
 
