@@ -152,45 +152,6 @@ __global__ void haarlick(pix_data *pixels, double *distance, double *out, int *h
 	out[27] = temp[17];
 }
 
-void allocate_haarlick_memory(ImageMatrix *matrix, double distance, double *out) {
-	// haarlick computation
-	double *d_distance, *d_out;
-	/* removed currently because I believe the device is able to allocate its own memory for variables declared within a kernel function
-	TEXTURE *d_features;
-	int d_a, d_x, d_y;
-	unsigned char **d_p_gray;
-	TEXTURE *d_features;
-	long d_angle;
-	double d_min[14], d_max[14], d_sum[14];
-	double d_min_value = INF, d_max_value = -INF;//max_value=pow(2,Im->bits)-1;
-	size_t pitch;
-
-	cudaMallocPitch((void**)&d_p_gray, &pitch, matrix->width * sizeof(unsigned char), matrix->height);
-	cudaMalloc((void**)d_a, sizeof(int));
-	cudaMalloc((void**)d_x, sizeof(int));
-	cudaMalloc((void**)d_y, sizeof(int));
-	cudaMalloc((void**)d_angle, sizeof(long));
-	cudaMalloc((void**)&d_min, sizeof(double));
-	cudaMalloc((void**)&d_max, sizeof(double));
-	cudaMalloc((void**)&d_sum, sizeof(double));
-	cudaMalloc((void**)&d_min_value, sizeof(double));
-	cudaMalloc((void**)&d_max_value, sizeof(double));
-	cudaMalloc((void**)&d_features, sizeof(TEXTURE));
-	*/
-
-	// Allocate memory for variables on device
-	cudaMalloc((void**)&d_out, sizeof(double));
-	cudaMalloc((void**)&d_distance, sizeof(double));
-
-	cudaMemcpy(d_out, out, sizeof(double), cudaMemcpyHostToDevice);
-	cudaMemcpy(d_distance, &distance, sizeof(double), cudaMemcpyHostToDevice);
-	//CUDA_haarlick2d<<<1, 1>>>(matrix, distance, out);
-	cudaMemcpy(out, d_out, sizeof(double), cudaMemcpyDeviceToHost);
-
-	cudaFree(d_out);
-	cudaFree(d_distance);
-}
-
 
 __device__ void BasicStatistics(pix_data *color_data, double *min, double *max, int bins, int num_pixels)
 {

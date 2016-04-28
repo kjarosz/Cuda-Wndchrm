@@ -241,9 +241,7 @@ void CUDASignatures::compute_zernike_on_cuda(pix_data **images, int *widths, int
 
 void CUDASignatures::compute_haarlick_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long*sizes)
 {
-	double *cDistances;
-
-	cudaMalloc(&cDistances, image_matrix_count * sizeof(double));
+	__device__ const int cDistances = 0;
 
 	haarlick<<< 1, image_matrix_count >>>(images, cDistances, outputs, heights, widths, depths, bits);
 
