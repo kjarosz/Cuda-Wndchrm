@@ -33,6 +33,8 @@
 #define IMAGE_MATRIX_H
 //---------------------------------------------------------------------------
 
+#include "cuda_runtime.h"
+
 #ifdef BORLAND_C
 #include <vcl.h>
 #else  
@@ -78,6 +80,9 @@ typedef struct
 }
 rect;
 
+__host__ __device__ pix_data get_pixel(pix_data *pixels, int x, int y, int z);
+__host__ __device__ void     set_pixel(pix_data *pixels, int x, int y, int z, pix_data &new_pix);
+
 class ImageMatrix
 {
 private:
@@ -85,13 +90,9 @@ private:
 public:
 	int ColorMode;                                  /* can be cmRGB or cmHSV                */
 	unsigned short bits;                            /* the number of intensity bits (8,16, etc) */
-	int width, height, depth;                         /* width and height of the picture      */
+	int width, height, depth;                       /* width and height of the picture      */
   int LoadTIFF(char *filename);
-  /* load an image of any supported format */
-	int OpenImage(char *image_file_name, int downsample, 
-                rect *bounding_rect, double mean, 
-                double stddev, long DynamicRange, 
-                double otsu_mask); 
+	int OpenImage(char *image_file_name);           /* load an image of any supported format */
 
 	ImageMatrix();                                  /* basic constructor                    */
 	ImageMatrix(int width, int height, int depth);    /* construct a new empty matrix         */

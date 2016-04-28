@@ -65,6 +65,29 @@
 #define MIN(a,b) (a<b?a:b)
 #define MAX(a,b) (a>b?a:b)
 
+/* ***************************************************************************** */
+    __host__ __device__ pix_data get_pixel(pix_data *pixels, 
+                                           int x, int y, int z, 
+                                           int width, int height)
+/* ***************************************************************************** */
+{
+  return pixels[z * width * height + y * width + x];
+}
+
+
+
+/* ***************************************************************************** */
+    __host__ __device__ void set_pixel(pix_data *pixels, 
+                                       int x, int y, int z, 
+                                       int width, int height, 
+                                       pix_data new_pixel)
+/* ***************************************************************************** */
+{
+  pixels[z * width * height + y * width + x] = new_pixel;
+}
+
+
+
 RGBcolor HSV2RGB(HSVcolor hsv)
 {
 	RGBcolor rgb;
@@ -308,7 +331,7 @@ mean -double- a mean value to normalize for.
 stddev -double- standard deviation to normalize for.
 DynamicRange -long- change to a new dynamic range. Ignore if 0.
 */
-int ImageMatrix::OpenImage(char *image_file_name, int downsample, rect *bounding_rect, double mean, double stddev, long DynamicRange, double otsu_mask)
+int ImageMatrix::OpenImage(char *image_file_name) //, int downsample, rect *bounding_rect, double mean, double stddev, long DynamicRange, double otsu_mask)
 {
 	int res = 0;
 #ifdef BORLAND_C
@@ -341,28 +364,30 @@ int ImageMatrix::OpenImage(char *image_file_name, int downsample, rect *bounding
 		system(buffer);
 	}
 
-	if (res)  /* add the image only if it was loaded properly */
+  /*
+	if (res)  // add the image only if it was loaded properly 
 	{
-		if (DynamicRange) SetDynamicRange(DynamicRange);    /* change the dynamic range of the image (if needed)    */
-		if (bounding_rect && bounding_rect->x >= 0)                    /* compute features only from an area of the image     */
+		if (DynamicRange) SetDynamicRange(DynamicRange);    // change the dynamic range of the image (if needed)    
+		if (bounding_rect && bounding_rect->x >= 0)                    // compute features only from an area of the image     
 		{
 			ImageMatrix *temp;
 			temp = new ImageMatrix(this, bounding_rect->x, bounding_rect->y, bounding_rect->x + bounding_rect->w - 1, bounding_rect->y + bounding_rect->h - 1, 0, depth - 1);
 			delete data;
 			width = temp->width; height = temp->height;
-			if (!(data = new pix_data[width*height*depth])) return(0);  /* allocate new memory */
+			if (!(data = new pix_data[width*height*depth])) return(0);  // allocate new memory 
 			memcpy(data, temp->data, width*height*depth*sizeof(pix_data));
 			//         for (int a=0;a<width*height*depth;a++)
 			//		   data[a]=temp->data[a];
 			delete temp;
 		}
-		if (downsample>0 && downsample<100)  /* downsample by a given factor */
-			Downsample(((double)downsample) / 100.0, ((double)downsample) / 100.0);   /* downsample the image */
-		if (mean>0)  /* normalize to a given mean and standard deviation */
+		if (downsample>0 && downsample<100)  // downsample by a given factor 
+			Downsample(((double)downsample) / 100.0, ((double)downsample) / 100.0);   // downsample the image 
+		if (mean>0)  // normalize to a given mean and standard deviation 
 			normalize(-1, -1, -1, mean, stddev);
 		if (otsu_mask>0) 
-      Mask(Otsu()*otsu_mask);    /* mask using the otsu threshold */
+      Mask(Otsu()*otsu_mask);    // mask using the otsu threshold 
 	}
+  */
 	/*
 	{   ImageMatrix *color_mask;
 	pix_data blank_pix;
@@ -629,7 +654,7 @@ nbins -int- the number of bins for the histogram
 
 if one of the pointers is NULL, the corresponding value is not computed.
 */
-__device__ void ImageMatrix::BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *hist, int bins)
+__host__ __device__ void ImageMatrix::BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *hist, int bins)
 {
 	long pixel_index, num_pixels;
 	double *pixels;

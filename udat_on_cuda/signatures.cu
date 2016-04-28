@@ -10,9 +10,9 @@
 
 
 CUDASignatures::CUDASignatures()
-  :image_matrices(0), 
-   matrix_container_size(INIT_MATRIX_CONTAINER_SIZE),
-   image_matrix_count(0)
+:image_matrices(0), 
+ matrix_container_size(INIT_MATRIX_CONTAINER_SIZE),
+ image_matrix_count(0)
 { 
   image_matrices = new ImageMatrix*[matrix_container_size];
 }
@@ -79,12 +79,14 @@ bool CUDASignatures::read_next_batch()
 
 bool CUDASignatures::batch_capacity_reached()
 {
+  return true;
 }
 
 
 
 bool CUDASignatures::batch_ready_to_compute()
 {
+  return true;
 }
 
 
@@ -124,10 +126,8 @@ void CUDASignatures::load_image_matrix(char *filename)
   if(image_matrix_count >= matrix_container_size)
     double_matrix_container();
 
-  ImageMatrix *matrix;
-
-  // TODO: Load Image matrix;
-
+  ImageMatrix *matrix = new ImageMatrix();
+  matrix->OpenImage(filename);
   image_matrices[image_matrix_count++] = matrix;
 }
 
@@ -153,9 +153,63 @@ void CUDASignatures::empty_matrix_container()
 
 
 
-void CUDASignatures::compute_images_on_cuda()
+void CUDASignatures::compute_signatures_on_cuda()
 {
+  // Arrange data in RAM
+  pix_data **pixels  = new pix_data*[image_matrix_count];
+  int *widths  = new int[image_matrix_count];
+  int *heights = new int[image_matrix_count];
+  int *depths  = new int[image_matrix_count];
 
+  for(int i = 0; i < image_matrix_count; i++)
+  {
+    widths[i]  = image_matrices[i]->width;
+    heights[i] = image_matrices[i]->height;
+    depths[i]  = image_matrices[i]->depth;
+
+    int size = widths[i] * heights[i] * depths[i];
+    pix_data *pixel_array;
+    cudaMalloc(&pixel_array, size * sizeof(pix_data));
+    cudaMemcpy(pixel_array, image_matrices[i]->pixel, size * sizeof(pix_data), cudaMemcpyHostToDevice);
+    pixels[i] = pixel_array;
+  }
+
+  // Move data from RAM to VRAM
+  pix_data **cPixels = 0; 
+  int *cWidths = 0, *cHeights = 0, *cDepths = 0;
+
+  cudaMalloc(&cPixels,  image_matrix_count * sizeof(pix_data*));
+  cudaMalloc(&cWidths,  image_matrix_count * sizeof(int));
+  cudaMalloc(&cHeights, image_matrix_count * sizeof(int));
+  cudaMalloc(&cDepths,  image_matrix_count * sizeof(int));
+
+  cudaMemcpy(cWidths,  widths,  image_matrix_count * sizeof(int),       cudaMemcpyHostToDevice);
+  cudaMemcpy(cHeights, heights, image_matrix_count * sizeof(int),       cudaMemcpyHostToDevice);
+  cudaMemcpy(cDepths,  depths,  image_matrix_count * sizeof(int),       cudaMemcpyHostToDevice);
+  cudaMemcpy(cPixels,  pixels,  image_matrix_count * sizeof(pix_data*), cudaMemcpyHostToDevice);
+
+  double *cOutputs = 0;
+  cudaMalloc(&cOutputs,  MAX_OUTPUT_SIZE * image_matrix_count * sizeof(double));
+
+  zernike<<< 1, image_matrix_count>>>();
+  // Call algorithms here.
+
+  // Save signatures and stuff locally to save later.
+
+  for(int i = 0; i < image_matrix_count; i++)
+  {
+    cudaFree(pixels[i]);
+  }
+  cudaFree(cPixels);
+  cudaFree(cDepths);
+  cudaFree(cHeights);
+  cudaFree(cWidths);
+
+  delete [] pixels;
+  delete [] depths;
+  delete [] heights;
+  delete [] widths;
 }
+
 
 

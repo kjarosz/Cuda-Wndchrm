@@ -9,6 +9,7 @@
 
 
 const int INIT_MATRIX_CONTAINER_SIZE = 16;
+const int MAX_OUTPUT_SIZE            = 72;
 
 
 
@@ -54,7 +55,7 @@ private:
   void double_matrix_container();
   void empty_matrix_container();
   
-  void compute_images_on_cuda();
+  void compute_signatures_on_cuda();
   
 private:
   DirectoryTracker directory_tracker;

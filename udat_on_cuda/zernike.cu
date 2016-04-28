@@ -1,19 +1,13 @@
 #include "zernike.h"
 
 
-#include <thrust/complex.h>
 
-class ImageMatrix
-{
-public:
-   int width;
-   int height;
-};
+#include <thrust/complex.h>
 
 
 
 /* ************************************************************************* */
-   __host__ __device__  double  factorial(double n)
+   __device__  double  factorial(double n)
 /* ************************************************************************* */
 {
   if (n<0)
@@ -29,19 +23,17 @@ public:
 
 
 /* ************************************************************************* */
-   __host__ __device__ void mb_imgmoments(ImageMatrix *images, int x, int y,
-                                            double *moments)
+   __device__ double image_moments(pix_data *image, int width, int height,
+                                   int x, int y)
 /* ************************************************************************* */
 // Calculates the moment MXY for IMAGE
 /* ************************************************************************* */
 {
-  int i = blockDim.x * blockIdx.x + threadIdx.x;
-
   double sum = 0;
   /* Generate a matrix with the y coordinates of each pixel. */
-  for (int col = 0; col < images[i].width; col++) 
+  for (int col = 0; col < width; col++) 
   {
-    for (int row = 0; row < images[i].height; row++)
+    for (int row = 0; row < height; row++)
     {
       double xStuff = pow((double)(col + 1), (double)x);
 
@@ -53,19 +45,19 @@ public:
           xStuff = pow((double)(col + 1), (double)y) * xStuff;
       }
 
-      sum += xStuff * images[i].pixel(col, row, 0).intensity;
+      sum += xStuff * get_pixel(image, col, row, 0).intensity;
     }
   }
 
-  moments[i] = sum;
+  return sum;
 }
 
 
 
 /* ************************************************************************* */
-   __host__ __device__ void mb_Znl(long n, long l, double *X, double *Y, 
-                                   double *P, int size, double *out_r, 
-                                   double *out_i)
+   __device__ void znl(long n, long l, double *X, double *Y, 
+                       double *P, int size, double *out_r, 
+                       double *out_i)
 /* ************************************************************************* */
 // Zernike moment generating function.  The moment of degree n and
 // angular dependence l for the pixels defined by coordinate vectors
@@ -121,9 +113,11 @@ public:
 
 
 /* ************************************************************************* */
-   void mb_zernike2D(ImageMatrix *images, int count, 
-                     double *d, double *r, double *zvalues, 
-                     long *output_size)
+   __device__ 
+   void zernike (pix_data **images, 
+                 int *widths, int *heights, int *depths, int count, 
+                 double *d, double *r, double *zvalues, 
+                 long *output_size)
 /* ************************************************************************* */
 {
    int n,l;

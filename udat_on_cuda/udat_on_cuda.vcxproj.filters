@@ -28,6 +28,12 @@
     <Filter Include="Header Files\libs\libtiff">
       <UniqueIdentifier>{fa18fbc8-6144-4be0-ad2a-282df21820c0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\colors">
+      <UniqueIdentifier>{ba0bf78f-fe6b-4298-911a-c3068d56ba66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\colors">
+      <UniqueIdentifier>{935213f5-5c0d-49c3-b7e3-d95fadfa9ec9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="signatures.h">
@@ -54,6 +60,9 @@
     <ClInclude Include="libs\libtiff\tiffvers.h">
       <Filter>Header Files\libs\libtiff</Filter>
     </ClInclude>
+    <ClInclude Include="colors\FuzzyCalc.h">
+      <Filter>Header Files\colors</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -61,6 +70,9 @@
     </ClCompile>
     <ClCompile Include="file_manip.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="colors\FuzzyCalc.cpp">
+      <Filter>Source Files\colors</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
