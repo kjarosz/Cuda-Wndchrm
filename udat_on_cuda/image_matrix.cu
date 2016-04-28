@@ -30,14 +30,12 @@
 
 #include <math.h>
 #include <stdio.h>
+
 #include "image_matrix.h"
-<<<<<<< HEAD
 #include "cuda.h"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-=======
-
->>>>>>> origin/haarlick
+#include "device_functions.h"
 
 #ifndef BORLAND_C
 #ifndef VISUAL_C
@@ -59,15 +57,6 @@
 #include <stdlib.h>
 #endif
 
-<<<<<<< HEAD
-=======
-#include "cuda.h"
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include "device_functions.h"
-
-
->>>>>>> origin/haarlick
 #define SOUND_FILES
 #ifndef WIN32
 #ifndef VISUAL_C
@@ -78,7 +67,6 @@
 #define MIN(a,b) (a<b?a:b)
 #define MAX(a,b) (a>b?a:b)
 
-<<<<<<< HEAD
 /* ***************************************************************************** */
     __host__ __device__ pix_data get_pixel(pix_data *pixels, 
                                            int x, int y, int z, 
@@ -102,8 +90,6 @@
 
 
 
-=======
->>>>>>> origin/haarlick
 RGBcolor HSV2RGB(HSVcolor hsv)
 {
 	RGBcolor rgb;
@@ -238,7 +224,6 @@ int ImageMatrix::LoadJPG(char *filename, int ColorMode)
 
 
 /* LoadTIFF
-<<<<<<< HEAD
    filename -char *- full path to the image file
 */
 int ImageMatrix::LoadTIFF(char *filename)
@@ -335,114 +320,6 @@ int ImageMatrix::LoadTIFF(char *filename)
    else return(0);
 //#endif
    return(1);
-=======
-filename -char *- full path to the image file
-*/
-int ImageMatrix::LoadTIFF(char *filename)
-{
-	//#ifndef BORLAND_C
-	unsigned long h, w, x, y, z;   /* (originally it's tdir_t) */
-	unsigned short int spp, bps;
-	TIFF *tif = NULL;
-	//tdata_t buf;
-	unsigned char *buf8 = NULL;
-	unsigned short *buf16 = NULL;
-	float *buf_float = NULL;
-	double max_val;
-	pix_data pix;
-	if (tif = TIFFOpen(filename, "r"))
-	{
-		TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
-		width = w;
-		TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
-		height = h;
-		TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bps);
-		bits = bps;
-		if (bits != 8 && bits != 16 && bits != 32) { printf("Unsupported bits per pixel (%d) in file '%s'\n", bits, filename); TIFFClose(tif);  return(0); }  /* unsupported numbers of bits per pixel */
-		TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &spp);
-		if (!spp) spp = 1;  /* assume one sample per pixel if nothing is specified */
-		if ((depth = TIFFNumberOfDirectories(tif)) < 0) { TIFFClose(tif); return(0); }   /* get the number of slices (Zs) */
-
-		/* allocate the data */
-		data = new pix_data[width*height*depth];
-		if (!data) { TIFFClose(tif); return(0); } /* memory allocation failed */
-
-		max_val = pow(2.0, (double)bits) - 1;
-		if (bps == 32 && spp == 1) max_val = 1.0;  /* max value of a floaiting point image */
-		/* read TIFF header and determine image size */
-		if (bits == 8) buf8 = (unsigned char *)_TIFFmalloc(TIFFScanlineSize(tif)*spp);
-		if (bits == 16) buf16 = (unsigned short *)_TIFFmalloc(TIFFScanlineSize(tif)*sizeof(unsigned short)*spp);
-		if (bits == 32) buf_float = (float *)_TIFFmalloc(TIFFScanlineSize(tif)*sizeof(float)*spp);
-		for (z = 0; z<(unsigned long)depth; z++)
-		{
-			TIFFSetDirectory(tif, z);
-			for (y = 0; y < (unsigned long)height; y++)
-			{
-				int col;
-				if (bits == 8) TIFFReadScanline(tif, buf8, y);
-				if (bits == 16) TIFFReadScanline(tif, buf16, y);
-				if (bits == 32) TIFFReadScanline(tif, buf_float, y);
-				x = 0; col = 0;
-				while (x<(unsigned long)width)
-				{
-					unsigned char byte_data;
-					unsigned short short_data;
-					float float_data;
-					double val;
-					int sample_index;
-					for (sample_index = 0; sample_index<spp; sample_index++)
-					{
-						if (bits == 8)
-						{
-							byte_data = buf8[col + sample_index];
-							val = (double)byte_data;
-						}
-						if (bits == 16)
-						{
-							short_data = buf16[col + sample_index];
-							val = (double)(short_data);
-						}
-						if (bits == 32)
-						{
-							float_data = buf_float[col + sample_index];
-							val = (double)(float_data);
-							if (max_val == 1.0) val *= 255;   /* change to 0,255 for compatability with algorithms that use integers */
-						}
-						if (spp == 3 || spp == 4)  /* RGB image or RGB+alpha */
-						{
-							if (sample_index == 0) pix.clr.RGB.red = (unsigned char)(255 * (val / max_val));
-							if (sample_index == 1) pix.clr.RGB.green = (unsigned char)(255 * (val / max_val));
-							if (sample_index == 2) pix.clr.RGB.blue = (unsigned char)(255 * (val / max_val));
-						}
-					}
-					if (spp == 3 || spp == 4)
-					{
-						pix.intensity = COLOR2GRAY(RGB2COLOR(pix.clr.RGB));     // pix.clr.RGB.red*0.3+pix.clr.RGB.green*0.59+pix.clr.RGB.blue*0.11;
-						if (ColorMode == cmHSV) pix.clr.HSV = RGB2HSV(pix.clr.RGB);
-					}
-					if (spp == 1)
-					{
-						pix.clr.RGB.red = (unsigned char)(255 * (val / max_val));
-						pix.clr.RGB.green = (unsigned char)(255 * (val / max_val));
-						pix.clr.RGB.blue = (unsigned char)(255 * (val / max_val));
-						pix.intensity = val;
-					}
-					set(x, y, z, pix);
-					x++;
-					col += spp;
-				}
-			}
-		}
-		if (spp == 3 || spp == 4) bits = 8;   /* set color images to 8-bits */
-		if (buf8) _TIFFfree(buf8);
-		if (buf16) _TIFFfree(buf16);
-		if (buf_float) _TIFFfree(buf_float);
-		TIFFClose(tif);
-	}
-	else return(0);
-	//#endif
-	return(1);
->>>>>>> origin/haarlick
 }
 
 
@@ -456,11 +333,7 @@ mean -double- a mean value to normalize for.
 stddev -double- standard deviation to normalize for.
 DynamicRange -long- change to a new dynamic range. Ignore if 0.
 */
-<<<<<<< HEAD
 int ImageMatrix::OpenImage(char *image_file_name) //, int downsample, rect *bounding_rect, double mean, double stddev, long DynamicRange, double otsu_mask)
-=======
-int ImageMatrix::OpenImage(char *image_file_name, int downsample, rect *bounding_rect, double mean, double stddev, long DynamicRange, double otsu_mask)
->>>>>>> origin/haarlick
 {
 	int res = 0;
 #ifdef BORLAND_C
@@ -493,34 +366,22 @@ int ImageMatrix::OpenImage(char *image_file_name, int downsample, rect *bounding
 		system(buffer);
 	}
 
-<<<<<<< HEAD
   /*
 	if (res)  // add the image only if it was loaded properly 
 	{
 		if (DynamicRange) SetDynamicRange(DynamicRange);    // change the dynamic range of the image (if needed)    
 		if (bounding_rect && bounding_rect->x >= 0)                    // compute features only from an area of the image     
-=======
-	if (res)  /* add the image only if it was loaded properly */
-	{
-		if (DynamicRange) SetDynamicRange(DynamicRange);    /* change the dynamic range of the image (if needed)    */
-		if (bounding_rect && bounding_rect->x >= 0)                    /* compute features only from an area of the image     */
->>>>>>> origin/haarlick
 		{
 			ImageMatrix *temp;
 			temp = new ImageMatrix(this, bounding_rect->x, bounding_rect->y, bounding_rect->x + bounding_rect->w - 1, bounding_rect->y + bounding_rect->h - 1, 0, depth - 1);
 			delete data;
 			width = temp->width; height = temp->height;
-<<<<<<< HEAD
 			if (!(data = new pix_data[width*height*depth])) return(0);  // allocate new memory 
-=======
-			if (!(data = new pix_data[width*height*depth])) return(0);  /* allocate new memory */
->>>>>>> origin/haarlick
 			memcpy(data, temp->data, width*height*depth*sizeof(pix_data));
 			//         for (int a=0;a<width*height*depth;a++)
 			//		   data[a]=temp->data[a];
 			delete temp;
 		}
-<<<<<<< HEAD
 		if (downsample>0 && downsample<100)  // downsample by a given factor 
 			Downsample(((double)downsample) / 100.0, ((double)downsample) / 100.0);   // downsample the image 
 		if (mean>0)  // normalize to a given mean and standard deviation 
@@ -529,15 +390,6 @@ int ImageMatrix::OpenImage(char *image_file_name, int downsample, rect *bounding
       Mask(Otsu()*otsu_mask);    // mask using the otsu threshold 
 	}
   */
-=======
-		if (downsample>0 && downsample<100)  /* downsample by a given factor */
-			Downsample(((double)downsample) / 100.0, ((double)downsample) / 100.0);   /* downsample the image */
-		if (mean>0)  /* normalize to a given mean and standard deviation */
-			normalize(-1, -1, -1, mean, stddev);
-		if (otsu_mask>0)
-			Mask(Otsu()*otsu_mask);    /* mask using the otsu threshold */
-	}
->>>>>>> origin/haarlick
 	/*
 	{   ImageMatrix *color_mask;
 	pix_data blank_pix;
@@ -804,11 +656,7 @@ nbins -int- the number of bins for the histogram
 
 if one of the pointers is NULL, the corresponding value is not computed.
 */
-<<<<<<< HEAD
-__host__ __device__ void ImageMatrix::BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *hist, int bins)
-=======
-__device__ void ImageMatrix::BasicStatistics(double *min, double *max, int bins)
->>>>>>> origin/haarlick
+void ImageMatrix::BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *hist, int bins)
 {
 	long pixel_index, num_pixels;
 	double *pixels;
@@ -831,7 +679,6 @@ __device__ void ImageMatrix::BasicStatistics(double *min, double *max, int bins)
 	if (min) *min = min1;
 	if (mean || std) *mean = mean_sum / num_pixels;
 
-<<<<<<< HEAD
 	/* calculate the standard deviation */
 	if (std)
 	{
@@ -850,8 +697,6 @@ __device__ void ImageMatrix::BasicStatistics(double *min, double *max, int bins)
 		qsort(pixels, num_pixels, sizeof(double), compare_doubles);
 		*median = pixels[num_pixels / 2];
 	}
-=======
->>>>>>> origin/haarlick
 	delete pixels;
 }
 
@@ -927,7 +772,6 @@ int compare_ints(const void *a, const void *b)
 
 
 /* get image histogram */
-<<<<<<< HEAD
 void ImageMatrix::histogram(double *bins,unsigned short bins_num, int imhist)
 {  long a;
    double min=INF,max=-INF;
@@ -954,45 +798,12 @@ void ImageMatrix::histogram(double *bins,unsigned short bins_num, int imhist)
      else bins[(int)(((data[a].intensity-min)/(max-min))*bins_num)]+=1;
 	
    return;
-=======
-__device__ void ImageMatrix::histogram(double *bins, unsigned short bins_num, int imhist)
-{
-	long a;
-	double min = INF, max = -INF;
-	/* find the minimum and maximum */
-	if (imhist == 1)    /* similar to the Matlab imhist */
-	{
-		min = 0;
-		max = pow(2.0, (double)bits) - 1;
-	}
-	else
-	{
-		for (a = 0; a<width*height*depth; a++)
-		{
-			if (data[a].intensity>max)
-				max = data[a].intensity;
-			if (data[a].intensity<min)
-				min = data[a].intensity;
-		}
-	}
-	/* initialize the bins */
-	for (a = 0; a<bins_num; a++)
-		bins[a] = 0;
-
-	/* build the histogram */
-	for (a = 0; a<width*height*depth; a++)
-	if (data[a].intensity == max) bins[bins_num - 1] += 1;
-	else bins[(int)(((data[a].intensity - min) / (max - min))*bins_num)] += 1;
-
-	return;
->>>>>>> origin/haarlick
 }
 
 
 
 //-----------------------------------------------------------------------------------
 /* Otsu
-<<<<<<< HEAD
    Find otsu threshold
 */
 double ImageMatrix::Otsu()
@@ -1019,45 +830,12 @@ double ImageMatrix::Otsu()
         count++;
      }	 
    return((pow(2.0,bits)/256.0)*((sum/count)/max));
-=======
-Find otsu threshold
-*/
-double ImageMatrix::Otsu()
-{
-	long a;
-	double hist[256], omega[256], mu[256], sigma_b2[256], maxval = -INF, sum, count;
-	double max = pow(2.0, bits) - 1;
-	histogram(hist, 256, 1);
-	omega[0] = hist[0] / (width*height);
-	mu[0] = 1 * hist[0] / (width*height);
-	for (a = 1; a<256; a++)
-	{
-		omega[a] = omega[a - 1] + hist[a] / (width*height);
-		mu[a] = mu[a - 1] + (a + 1)*hist[a] / (width*height);
-	}
-	for (a = 0; a<256; a++)
-	{
-		if (omega[a] == 0 || 1 - omega[a] == 0) sigma_b2[a] = 0;
-		else sigma_b2[a] = pow(mu[255] * omega[a] - mu[a], 2) / (omega[a] * (1 - omega[a]));
-		if (sigma_b2[a]>maxval) maxval = sigma_b2[a];
-	}
-	sum = 0.0;
-	count = 0.0;
-	for (a = 0; a<256; a++)
-	if (sigma_b2[a] == maxval)
-	{
-		sum += a;
-		count++;
-	}
-	return((pow(2.0, bits) / 256.0)*((sum / count) / max));
->>>>>>> origin/haarlick
 }
 
 
 
 //-----------------------------------------------------------------------------------
 /*
-<<<<<<< HEAD
   Mask
   Set to zero all pixels that are lower than the threshold. 
   The threshold is a value within the interval (0,1) and is a fraction to the dynamic range
@@ -1070,28 +848,8 @@ void ImageMatrix::Mask(double threshold)
         data[a].clr.RGB.red=data[a].clr.RGB.green=data[a].clr.RGB.blue=0;  
      }
 //	 else data[a].intensity-=threshold*max;
-=======
-Mask
-Set to zero all pixels that are lower than the threshold.
-The threshold is a value within the interval (0,1) and is a fraction to the dynamic range
-*/
-void ImageMatrix::Mask(double threshold)
-{
-	double max = pow(2.0, bits) - 1;
-	for (long a = 0; a<width*height*depth; a++)
-	if (data[a].intensity <= threshold*max)
-	{
-		data[a].intensity = 0.0;
-		data[a].clr.RGB.red = data[a].clr.RGB.green = data[a].clr.RGB.blue = 0;
-	}
-	//	 else data[a].intensity-=threshold*max;
->>>>>>> origin/haarlick
 }
 
 
 
-<<<<<<< HEAD
 #pragma package(smart_init)
-=======
-#pragma package(smart_init)
->>>>>>> origin/haarlick

@@ -33,23 +33,11 @@
 #define IMAGE_MATRIX_H
 //---------------------------------------------------------------------------
 
-<<<<<<< HEAD
-#include "cuda_runtime.h"
-
-#ifdef BORLAND_C
-#include <vcl.h>
-#else  
-#include "colors/FuzzyCalc.h"
-#define min(a,b) (((a) < (b)) ? (a) : (b))
-#define max(a,b) (((a) < (b)) ? (b) : (a))
-#endif
-=======
 #include "FuzzyCalc.h"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) < (b)) ? (b) : (a))
->>>>>>> origin/haarlick
 
 #define cmRGB 1
 #define cmHSV 2
@@ -87,12 +75,9 @@ typedef struct
 	int x, y, w, h;
 }
 rect;
-<<<<<<< HEAD
 
 __host__ __device__ pix_data get_pixel(pix_data *pixels, int x, int y, int z);
 __host__ __device__ void     set_pixel(pix_data *pixels, int x, int y, int z, pix_data &new_pix);
-=======
->>>>>>> origin/haarlick
 
 class ImageMatrix
 {
@@ -101,30 +86,17 @@ private:
 public:
 	int ColorMode;                                  /* can be cmRGB or cmHSV                */
 	unsigned short bits;                            /* the number of intensity bits (8,16, etc) */
-<<<<<<< HEAD
 	int width, height, depth;                       /* width and height of the picture      */
   int LoadTIFF(char *filename);
 	int OpenImage(char *image_file_name);           /* load an image of any supported format */
-=======
-	int width, height, depth;                         /* width and height of the picture      */
-	int LoadTIFF(char *filename);
-	/* load an image of any supported format */
-	int OpenImage(char *image_file_name, int downsample,
-		rect *bounding_rect, double mean,
-		double stddev, long DynamicRange,
-		double otsu_mask);
->>>>>>> origin/haarlick
 
 	ImageMatrix();                                  /* basic constructor                    */
 	ImageMatrix(int width, int height, int depth);    /* construct a new empty matrix         */
 	ImageMatrix(ImageMatrix *matrix, int x1, int y1, int x2, int y2, int z1, int z2);  /* create a new matrix which is part of the original one */
 	~ImageMatrix();                                 /* destructor */
 	ImageMatrix *duplicate();                       /* create a new identical matrix        */
-<<<<<<< HEAD
-	pix_data pixel(int x, int y, int z);              /* get a pixel value                    */
-=======
-	__device__ pix_data pixel(int x, int y, int z);              /* get a pixel value                    */
->>>>>>> origin/haarlick
+
+  pix_data pixel(int x, int y, int z);
 
 	void set(int x, int y, int z, pix_data val);      /* assign a pixel value                 */
 	void SetInt(int x, int y, int z, double val);     /* set only the intensity of the pixel  */
@@ -138,19 +110,11 @@ public:
 	void Downsample(double x_ratio, double y_ratio);/* downsample an image                  */
 	void rotate(double angle);                      /* rotate and image                     */
 	void convolve(ImageMatrix *filter);
-<<<<<<< HEAD
 	void BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *histogram, int bins);
 	
   double Otsu();
 	void Mask(double threshold);   
   void histogram(double *bins,unsigned short bins_num, int imhist);
-=======
-	__device__ void BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *histogram, int bins);
-
-	double Otsu();
-	void Mask(double threshold);
-	__device__ void histogram(double *bins, unsigned short bins_num, int imhist);
->>>>>>> origin/haarlick
 
 
 };
@@ -163,9 +127,5 @@ RGBcolor HSV2RGB(HSVcolor hsv);
 TColor RGB2COLOR(RGBcolor rgb);
 double COLOR2GRAY(TColor color);
 
-<<<<<<< HEAD
 
 #endif // IMAGE_MATRIX_H
-=======
-#endif
->>>>>>> origin/haarlick

@@ -32,7 +32,7 @@ void CUDASignatures::compute(char **directories, int count)
 {
   reset_directory_tracker(directories, count);
   while(read_next_batch())
-    compute_images_on_cuda();
+    compute_signatures_on_cuda();
 }
 
 
