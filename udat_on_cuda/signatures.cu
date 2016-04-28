@@ -198,6 +198,7 @@ void CUDASignatures::compute_signatures_on_cuda()
 
   // Execute the features.
   compute_zernike_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes);
+  compute_haarlick_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes);
 
   cudaFree(cSizes);
   cudaFree(cOutputs);
@@ -237,3 +238,15 @@ void CUDASignatures::compute_zernike_on_cuda(pix_data **images, int *widths, int
   cudaFree(r);
   cudaFree(d);
 }
+
+void CUDASignatures::compute_haarlick_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long*sizes)
+{
+	double *cDistances;
+
+	cudaMalloc(&cDistances, image_matrix_count * sizeof(double));
+
+	haarlick<<< 1, image_matrix_count >>>(images, cDistances, outputs, heights, widths, depths, bits);
+
+	cudaFree(cDistances);
+}
+
