@@ -69,8 +69,8 @@
 
 /* ***************************************************************************** */
     __host__ __device__ pix_data get_pixel(pix_data *pixels, 
-                                           int x, int y, int z, 
-                                           int width, int height)
+                                          int width, int height,
+                                          int x, int y, int z )
 /* ***************************************************************************** */
 {
   return pixels[z * width * height + y * width + x];
@@ -80,8 +80,8 @@
 
 /* ***************************************************************************** */
     __host__ __device__ void set_pixel(pix_data *pixels, 
-                                       int x, int y, int z, 
                                        int width, int height, 
+                                       int x, int y, int z, 
                                        pix_data new_pixel)
 /* ***************************************************************************** */
 {
