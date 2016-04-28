@@ -75,6 +75,9 @@
     <ClInclude Include="CVIPtexture.h">
       <Filter>Header Files\textures\haarlick</Filter>
     </ClInclude>
+    <ClInclude Include="histogram.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -102,6 +105,9 @@
     </CudaCompile>
     <CudaCompile Include="CVIPtexture.cu">
       <Filter>Source Files\textures\haarlick</Filter>
+    </CudaCompile>
+    <CudaCompile Include="histogram.cu">
+      <Filter>Source Files</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>

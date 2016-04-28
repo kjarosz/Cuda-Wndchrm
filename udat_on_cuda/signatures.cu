@@ -6,6 +6,7 @@
 #include "file_manip.h"
 #include "textures/zernike/zernike.h"
 #include "haarlick.h"
+#include "histogram.h"
 #include "signatures.h"
 #include "cuda_runtime.h"
 
@@ -203,6 +204,7 @@ void CUDASignatures::compute_signatures_on_cuda()
   // Execute the features.
   compute_zernike_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes);
   compute_haarlick_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes, cBits);
+  compute_histogram_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes, cBits);
 
   cudaFree(cSizes);
   cudaFree(cOutputs);
@@ -249,5 +251,10 @@ void CUDASignatures::compute_haarlick_on_cuda(pix_data **images, int *widths, in
 
 	haarlick<<< 1, image_matrix_count >>>(images, cDistances, outputs, heights, widths, depths, bits);
 
+}
+
+void CUDASignatures::compute_histogram_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits)
+{
+	multiscalehistogram<<< 1, image_matrix_count >>>(images, outputs, widths, heights, depths, bits);
 }
 
