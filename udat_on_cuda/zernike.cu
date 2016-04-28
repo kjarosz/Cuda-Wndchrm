@@ -46,7 +46,7 @@
           xStuff = pow((double)(col + 1), (double)y) * xStuff;
       }
 
-      sum += xStuff * get_pixel(image, col, row, 0).intensity;
+      sum += xStuff * get_pixel(image, width, height, col, row, 0).intensity;
     }
   }
 
