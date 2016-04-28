@@ -37,9 +37,9 @@ __global__ void CUDA_haarlick2d(pix_data *pixels, double distance, double *out, 
 	for (y = 0; y<height; y++)
 		for (x = 0; x<width; x++)
 			if (bits>8) 
-				p_gray[y][x] = (unsigned char)((Im[i].pixel(x, y, 0).intensity - min_value)*(255.0 / (max_value - min_value)));
+				p_gray[y][x] = (unsigned char)((get_pixel(pixels, x, y, 0, width, height).intensity - min_value)*(255.0 / (max_value - min_value)));
 			else 
-				p_gray[y][x] = (unsigned char)(Im[i].pixel(x, y, 0).intensity);
+				p_gray[y][x] = (unsigned char)(get_pixel(pixels, x, y, 0, width, height).intensity);
 
 	for (a = 0; a<14; a++)
 	{
@@ -201,7 +201,7 @@ void allocate_haarlick_memory(ImageMatrix *matrix, double distance, double *out)
 
 __device__ void BasicStatistics(pix_data *color_data, double *min, double *max, int bins, int num_pixels)
 {
-	long pixel_index, num_pixels;
+	long pixel_index;
 	double *pixels;
 	double min1 = INF, max1 = -INF, mean_sum = 0;
 
@@ -223,8 +223,4 @@ __device__ void BasicStatistics(pix_data *color_data, double *min, double *max, 
 	delete pixels;
 }
 
-__device__ pix_data get_pixel(pix_data *data, int x, int y, int z, int width, int height)
-{
-	return(data[z*width*height + y*width + x]);
-}
 #pragma package(smart_init)

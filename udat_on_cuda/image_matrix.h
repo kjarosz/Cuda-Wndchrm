@@ -76,7 +76,7 @@ typedef struct
 }
 rect;
 
-__host__ __device__ pix_data get_pixel(pix_data *pixels, int x, int y, int z);
+__host__ __device__ pix_data get_pixel(pix_data *pixels, int x, int y, int z, int width, int height);
 __host__ __device__ void     set_pixel(pix_data *pixels, int x, int y, int z, pix_data &new_pix);
 
 class ImageMatrix
