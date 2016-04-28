@@ -113,7 +113,7 @@
 
 
 /* ************************************************************************* */
-   __device__ 
+   __global__ 
    void zernike (pix_data **images, 
                  int *widths, int *heights, int *depths, int count, 
                  double *d, double *r, double *zvalues, 
