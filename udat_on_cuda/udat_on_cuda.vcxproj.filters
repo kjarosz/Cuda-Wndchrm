@@ -34,6 +34,12 @@
     <Filter Include="Header Files\colors">
       <UniqueIdentifier>{935213f5-5c0d-49c3-b7e3-d95fadfa9ec9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\textures\haarlick">
+      <UniqueIdentifier>{d738fb09-a893-490a-b8b5-91f3c37754cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\textures\haarlick">
+      <UniqueIdentifier>{35f87a2e-c8bb-4aa3-9612-653cb77acdbf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="signatures.h">
@@ -63,6 +69,12 @@
     <ClInclude Include="colors\FuzzyCalc.h">
       <Filter>Header Files\colors</Filter>
     </ClInclude>
+    <ClInclude Include="haarlick.h">
+      <Filter>Header Files\textures\haarlick</Filter>
+    </ClInclude>
+    <ClInclude Include="CVIPtexture.h">
+      <Filter>Header Files\textures\haarlick</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -84,6 +96,12 @@
     </CudaCompile>
     <CudaCompile Include="image_matrix.cu">
       <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="haarlick.cu">
+      <Filter>Source Files\textures\haarlick</Filter>
+    </CudaCompile>
+    <CudaCompile Include="CVIPtexture.cu">
+      <Filter>Source Files\textures\haarlick</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
