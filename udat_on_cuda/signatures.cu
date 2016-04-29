@@ -1,5 +1,6 @@
 #include <cstring>
 #include <cstdio>
+#include <fstream>
 
 
 
@@ -8,6 +9,135 @@
 #include "haarlick.h"
 #include "signatures.h"
 #include "cuda_runtime.h"
+
+
+
+Signatures::~Signatures()
+{ 
+  clear();
+}
+
+
+
+void Signatures::add_signature(const char *filename, const char *sig_name, double value)
+{
+  Signature *sig = 0;
+  for(int i = 0; i < signatures.size(); i++)
+  {
+    if(strcmp(signatures[i]->name, sig_name) == 0)
+    {
+      sig = signatures[i];
+      break;
+    }
+  }
+
+  if(!sig)
+  {
+    int sig_name_len = strlen(sig_name);
+    sig = new Signature();
+    sig->name = new char[sig_name_len + 1];
+    strcpy(sig->name, sig_name);
+    signatures.push_back(sig);
+  }
+
+  bool found = false;
+  for(int i = 0; i < sig->filenames.size(); i++)
+  {
+    if(strcmp(sig->filenames[i], filename) == 0)
+    {
+      found = true;
+      sig->values[i] = value;
+    }
+  }
+
+  if(!found)
+  {
+    char *fname = new char[FILENAME_MAX];
+    sig->filenames.push_back(fname);
+    sig->values.push_back(value);
+  }
+}
+
+
+
+void Signatures::clear()
+{
+  for (Signature *sig: signatures)
+  {
+    delete [] sig->name;
+    for(char * fname: sig->filenames)
+      delete [] fname;
+    delete sig;
+  }
+  signatures.clear();
+}
+
+
+
+std::vector<std::string> Signatures::get_sig_names()
+{
+  std::vector<std::string> sig_names;
+  for(Signature *sig: signatures)
+    sig_names.push_back(std::string(sig->name));
+  return sig_names;
+}
+
+
+
+std::vector<std::string> Signatures::get_filenames()
+{
+  std::vector<std::string> filenames;
+  for(Signature *sig: signatures)
+  {
+    for(char *fname: sig->filenames)
+    {
+      bool found = false;
+      for(std::string filename: filenames)
+      {
+        if(filename.compare(fname) == 0)
+        {
+          found = true;
+          break;
+        }
+      }
+
+      if(!found)
+      {
+        filenames.push_back(std::string(fname));
+      }
+    }
+  }
+  return filenames;
+}
+
+
+
+double Signatures::get_signature(const char *filename, const char *sig_name)
+{
+  Signature *sig;
+  for(Signature *signature: signatures)
+  {
+    if(strcmp(signature->name, sig_name) == 0)
+    {
+      sig = signature;
+      break;
+    }
+  }
+
+  double value = NAN;
+  if(sig)
+  {
+    for(int i = 0; i < sig->filenames.size(); i++) 
+    {
+      if(strcmp(sig->filenames[i], filename) == 0)
+      {
+        value = sig->values[i];
+        break;
+      }
+    }
+  }
+  return value;
+}
 
 
 
@@ -25,6 +155,44 @@ CUDASignatures::~CUDASignatures()
 {
   empty_matrix_container();
   delete [] image_matrices;
+}
+
+
+
+void CUDASignatures::save_in(char *directory)
+{
+  char buffer[FILENAME_MAX];
+  join_paths(buffer, directory, "output.csv");
+
+  std::ofstream output(buffer);
+  if (!output.good())
+  {
+    printf("Failed to open file \"%s\"", buffer);
+    return;
+  }
+
+  std::vector<std::string> signature_names = signatures.get_sig_names();
+  std::vector<std::string> filenames       = signatures.get_filenames();
+
+  output << "filename";
+  for(int i = 0; i < signature_names.size(); i++)
+    output << ',' << signature_names[i]; 
+  output << std::endl;
+
+  for(std::string filename: filenames)
+  {
+    output << filename;
+
+    for(std::string signature_name: signature_names)
+    {
+      output << ',' << signatures.get_signature(filename.c_str(), signature_name.c_str());
+    }
+
+    output << std::endl;
+  }
+
+  output.flush();
+  output.close();
 }
 
 
@@ -71,24 +239,24 @@ bool CUDASignatures::read_next_batch()
 
     join_paths(filename_buffer, directory_tracker.directory, entry->d_name);
 
+    printf("Loading image \"%s\"\n", filename_buffer);
     load_image_matrix(filename_buffer);
   }
 
-  return batch_ready_to_compute();
+  return (image_matrix_count > 0);
 }
 
 
+#define MAX_MATRIX_SIZE 1073741824
 
 bool CUDASignatures::batch_capacity_reached()
 {
-  return true;
-}
-
-
-
-bool CUDASignatures::batch_ready_to_compute()
-{
-  return true;
+  long bytes_taken = 0;
+  for (int i = 0; i < image_matrix_count; i++)
+  {
+    bytes_taken += image_matrices[i]->width * image_matrices[i]->height * sizeof(pix_data);
+  }
+  return (bytes_taken < MAX_MATRIX_SIZE);
 }
 
 
@@ -157,6 +325,8 @@ void CUDASignatures::empty_matrix_container()
 
 void CUDASignatures::compute_signatures_on_cuda()
 {
+  printf("Computing signatures for %i images on CUDA:\n", image_matrix_count);
+
   // Arrange data in RAM
   pix_data **pixels  = new pix_data*[image_matrix_count];
   int *widths  = new int[image_matrix_count];
@@ -172,7 +342,7 @@ void CUDASignatures::compute_signatures_on_cuda()
     int size = widths[i] * heights[i] * depths[i];
     pix_data *pixel_array;
     cudaMalloc(&pixel_array, size * sizeof(pix_data));
-    cudaMemcpy(pixel_array, image_matrices[i]->pixel, size * sizeof(pix_data), cudaMemcpyHostToDevice);
+    cudaMemcpy(pixel_array, image_matrices[i]->data, size * sizeof(pix_data), cudaMemcpyHostToDevice);
     pixels[i] = pixel_array;
   }
 
@@ -190,6 +360,8 @@ void CUDASignatures::compute_signatures_on_cuda()
   cudaMemcpy(cDepths,  depths,  image_matrix_count * sizeof(int),       cudaMemcpyHostToDevice);
   cudaMemcpy(cPixels,  pixels,  image_matrix_count * sizeof(pix_data*), cudaMemcpyHostToDevice);
 
+  signatures.clear();
+
   double *cOutputs = 0;
   cudaMalloc(&cOutputs, MAX_OUTPUT_SIZE * image_matrix_count * sizeof(double));
 
@@ -197,6 +369,7 @@ void CUDASignatures::compute_signatures_on_cuda()
   cudaMalloc(&cSizes, image_matrix_count * sizeof(long));
 
   // Execute the features.
+  printf("Performing Zernike texture analysis\n");
   compute_zernike_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes);
 
   cudaFree(cSizes);
@@ -215,6 +388,11 @@ void CUDASignatures::compute_signatures_on_cuda()
   delete [] depths;
   delete [] heights;
   delete [] widths;
+
+  printf("Signatures computed\n");
+  printf("============================================================\n");
+
+  empty_matrix_container();
 }
 
 
@@ -232,6 +410,16 @@ void CUDASignatures::compute_zernike_on_cuda(pix_data **images, int *widths, int
 
   zernike<<< 1, image_matrix_count >>>(images, widths, heights, depths, 
                                        d, r, outputs, sizes);
+
+  char buffer[64];
+  for(int i = 0; i < image_matrix_count; i++)
+  {
+    for(int j = 0; j < sizes[i]; j++)
+    {
+      sprintf(buffer, "Zernike bin %i", j);
+      signatures.add_signature(image_matrices[i]->source_file, buffer, outputs[MAX_OUTPUT_SIZE * i + j]);
+    }
+  }
 
   cudaFree(r);
   cudaFree(d);

@@ -87,6 +87,9 @@
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <CudaCompile>
+      <GenerateRelocatableDeviceCode>Yes</GenerateRelocatableDeviceCode>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -159,7 +162,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="libs\libtiff\tiffio.h" />
     <ClInclude Include="libs\libtiff\tiffvers.h" />
     <ClInclude Include="signatures.h" />
-    <ClInclude Include="zernike.h" />
+    <ClInclude Include="textures\zernike\zernike.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="colors\FuzzyCalc.cpp" />
@@ -169,7 +172,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   <ItemGroup>
     <CudaCompile Include="image_matrix.cu" />
     <CudaCompile Include="signatures.cu" />
-    <CudaCompile Include="zernike.cu" />
+    <CudaCompile Include="textures\zernike\zernike.cu" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="libs\libtiff\libtiff.lib" />

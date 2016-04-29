@@ -64,14 +64,24 @@ int main(int argc, char *argv[])
   if (argc < 2)
     print_help();
 
+  printf("Getting directories\n");
+
   char *directory = argv[1];
   char **filenames;
   int filename_buffer_size;
   int dir_count = load_subdirectories(directory, filenames, filename_buffer_size);
+
+  printf("Found %i directories\n", dir_count);
   
   CUDASignatures signatures;
+
+  printf("Computing signatures\n");
   signatures.compute(filenames, dir_count);
+
+  printf("Saving signatures to file\n");
   signatures.save_in(directory);
+
+  printf("Done\n");
 
   free_filename_buffers(filenames, filename_buffer_size);
 

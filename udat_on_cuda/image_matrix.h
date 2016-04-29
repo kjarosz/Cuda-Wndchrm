@@ -33,6 +33,7 @@
 #define IMAGE_MATRIX_H
 //---------------------------------------------------------------------------
 
+#include <cstdio>
 #include "FuzzyCalc.h"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
@@ -81,7 +82,8 @@ __host__ __device__ void     set_pixel(pix_data *pixels, int width, int height, 
 
 class ImageMatrix
 {
-private:
+public:
+  char source_file[FILENAME_MAX];
 	pix_data *data;                                 /* data of the colors                   */
 public:
 	int ColorMode;                                  /* can be cmRGB or cmHSV                */

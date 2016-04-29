@@ -42,9 +42,6 @@
     <ClInclude Include="image_matrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="zernike.h">
-      <Filter>Header Files\textures\zernike</Filter>
-    </ClInclude>
     <ClInclude Include="file_manip.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -63,6 +60,9 @@
     <ClInclude Include="colors\FuzzyCalc.h">
       <Filter>Header Files\colors</Filter>
     </ClInclude>
+    <ClInclude Include="textures\zernike\zernike.h">
+      <Filter>Header Files\textures\zernike</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -79,11 +79,11 @@
     <CudaCompile Include="signatures.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
-    <CudaCompile Include="zernike.cu">
-      <Filter>Source Files\textures\zernike</Filter>
-    </CudaCompile>
     <CudaCompile Include="image_matrix.cu">
       <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="textures\zernike\zernike.cu">
+      <Filter>Source Files\textures\zernike</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>

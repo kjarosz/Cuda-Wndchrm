@@ -82,7 +82,7 @@
     __host__ __device__ void set_pixel(pix_data *pixels, 
                                        int width, int height, 
                                        int x, int y, int z, 
-                                       pix_data new_pixel)
+                                       pix_data &new_pixel)
 /* ***************************************************************************** */
 {
   pixels[z * width * height + y * width + x] = new_pixel;
@@ -153,6 +153,21 @@ HSVcolor RGB2HSV(RGBcolor rgb)
 		hsv.hue = (byte)(h *(240.0 / 360.0));
 	}
 	return(hsv);
+}
+
+
+TColor RGB2COLOR(RGBcolor rgb)
+{  return((TColor)(rgb.blue*65536+rgb.green*256+rgb.red));
+}
+
+double COLOR2GRAY(TColor color1)
+{  double r,g,b;
+
+   r=(byte)(color1 & 0xFF);
+   g=(byte)((color1 & 0xFF00)>>8);
+   b=(byte)((color1 & 0xFF0000)>>16);
+
+   return((0.3*r+0.59*g+0.11*b));
 }
 
 
@@ -365,6 +380,11 @@ int ImageMatrix::OpenImage(char *image_file_name) //, int downsample, rect *boun
 #endif
 		system(buffer);
 	}
+
+  if (res)
+  {
+    strcpy(source_file, image_file_name);
+  }
 
   /*
 	if (res)  // add the image only if it was loaded properly 

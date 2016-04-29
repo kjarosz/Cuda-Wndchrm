@@ -3,6 +3,12 @@
 
 
 
+#include <string>
+#include <vector>
+#include <map>
+
+
+
 #include "image_matrix.h"
 #include "file_manip.h"
 
@@ -20,6 +26,39 @@ struct DirectoryTracker
   int current_dir;
   char *directory;
   DIR *opened_dir;
+};
+
+
+
+class Signatures
+{
+public:
+  Signatures() {};
+  ~Signatures();
+
+  void   add_signature(const char *filename, const char *sig_name, double value);
+  double get_signature(const char *filename, const char *sig_name);
+
+  void clear();
+
+  std::vector<std::string> get_sig_names();
+  std::vector<std::string> get_filenames();
+
+private:
+  Signatures(const Signatures &other);
+  Signatures &operator=(const Signatures &other);
+
+
+private:
+  struct Signature
+  {
+    char *name;
+    std::vector<char *> filenames;
+    std::vector<double> values;
+  };
+
+  std::vector<Signature *> signatures;
+
 };
 
 
@@ -48,7 +87,6 @@ private:
   void reset_directory_tracker(char **directories, int count);
   bool read_next_batch();
   bool batch_capacity_reached();
-  bool batch_ready_to_compute();
   dirent *read_next_entry();
 
   void load_image_matrix(char *filename);
@@ -60,12 +98,18 @@ private:
   // All CUDA functions.
   void compute_zernike_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes);
   
+  void allocate_signature_buffers();
+  void add_signatures(double *output, long size);
+  void deallocate_signature_buffers();
+
 private:
   DirectoryTracker directory_tracker;
   
   ImageMatrix **image_matrices;
   int matrix_container_size;
   int image_matrix_count;
+
+  Signatures signatures;
 };
 
 

@@ -3,7 +3,7 @@
 
 
 
-#include "image_matrix.h"
+#include "../../image_matrix.h"
 #include "cuda_runtime.h"
 
 
