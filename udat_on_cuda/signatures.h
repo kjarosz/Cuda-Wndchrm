@@ -25,14 +25,16 @@ public:
   double get_signature(int         col,      const char *filename) const;
   double get_signature(int         col,      int         row     ) const;
 
-  void   get_sig_name(int col, char *output);
-  void   get_col_name(int row, char *output);
+  // Remove functions at some point?
 
   int    get_signature_index(const char *name) const;
   int    get_filename_index (const char *name) const;
 
-  int    get_row_count() const;
-  int    get_col_count() const;
+  void   get_sig_name(int col, char *output);
+  void   get_file_name(int row, char *output);
+
+  int    get_sig_count() const;
+  int    get_file_count() const;
 
   void   clear();
 
@@ -48,6 +50,7 @@ private:
   int insert_new_signature(const char *name);
   int insert_new_filename (const char *name);
 
+  char **expand_array(char **arr, int len, int new_len);
   void expand_signature_container();
   void expand_filename_container();
   void expand_value_array(const int new_col_len, const int new_row_len);

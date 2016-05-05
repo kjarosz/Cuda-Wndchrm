@@ -96,12 +96,32 @@ int Signatures::get_filename_index(const char *name) const
 
 
 
-int Signatures::find_in_array(char **arr, int len, const char *element) const
+void Signatures::get_sig_name(int col, char *output)
 {
-  for(int i = 0; i < len; i++)
-    if(strcmp(arr[i], element) == 0)
-      return i;
-  return -1;
+  if(col < col_len)
+    strcpy(output, sigs[col]);
+}
+
+
+
+void Signatures::get_file_name(int row, char *output)
+{
+  if(row < row_len)
+    strcpy(output, files[row]);
+}
+
+
+
+int Signatures::get_sig_count() const
+{
+  return row_n;
+}
+
+
+
+int Signatures::get_file_count() const
+{
+  return col_n;
 }
 
 
@@ -135,6 +155,16 @@ std::vector<std::string> Signatures::get_sig_names() const
 std::vector<std::string> Signatures::get_filenames() const
 {
   return get_array_copy(files, row_n);
+}
+
+
+
+int Signatures::find_in_array(char **arr, int len, const char *element) const
+{
+  for(int i = 0; i < len; i++)
+    if(strcmp(arr[i], element) == 0)
+      return i;
+  return -1;
 }
 
 
@@ -173,7 +203,7 @@ int Signatures::insert_new_filename(const char *name)
 
 
 
-char **expand_array(char **arr, int len, int new_len)
+char **Signatures::expand_array(char **arr, int len, int new_len)
 {
   char **new_arr = new char*[new_len];
   memset(new_arr, 0, new_len * sizeof(char *));
