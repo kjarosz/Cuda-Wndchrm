@@ -30,6 +30,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <algorithm>
 
 #include "image_matrix.h"
 #include "cuda.h"
@@ -617,10 +618,10 @@ void ImageMatrix::rotate(double angle)
 	y2 = (int)(height * cos(rad_angle) + width * sin(rad_angle));
 	x3 = (int)(width * cos(rad_angle));
 	y3 = (int)(width * sin(rad_angle));
-	minx = min(0, min(x1, min(x2, x3)));
-	miny = min(0, min(y1, min(y2, y3)));
-	maxx = max(x1, max(x2, x3));
-	maxy = max(y1, max(y2, y3));
+	minx = std::min<int>(0, std::min<int>(x1, std::min<int>(x2, x3)));
+	miny = std::min<int>(0, std::min<int>(y1, std::min<int>(y2, y3)));
+	maxx = std::max<int>(x1, std::max<int>(x2, x3));
+	maxy = std::max<int>(y1, std::max<int>(y2, y3));
 	new_width = maxx - minx;
 	new_height = maxy - miny;
 
