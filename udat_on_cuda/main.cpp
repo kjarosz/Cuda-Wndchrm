@@ -5,7 +5,7 @@
 
 
 #include "file_manip.h"
-#include "signatures.h"
+#include "cuda_signatures.h"
 
 
 
