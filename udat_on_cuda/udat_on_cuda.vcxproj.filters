@@ -63,6 +63,12 @@
     <ClInclude Include="textures\zernike\zernike.h">
       <Filter>Header Files\textures\zernike</Filter>
     </ClInclude>
+    <ClInclude Include="cuda_signatures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -84,6 +90,9 @@
     </CudaCompile>
     <CudaCompile Include="textures\zernike\zernike.cu">
       <Filter>Source Files\textures\zernike</Filter>
+    </CudaCompile>
+    <CudaCompile Include="cuda_signatures.cu">
+      <Filter>Source Files</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
