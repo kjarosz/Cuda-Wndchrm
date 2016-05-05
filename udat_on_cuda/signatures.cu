@@ -15,11 +15,13 @@
 Signatures::Signatures()
 : col_len(INIT_SIG_CONTAINER_SIZE), 
   row_len(INIT_MATRIX_CONTAINER_SIZE), 
-  col_n(0), row_n(0)
+  col_n(0), row_n(0),
+  sigs(new char*[col_len]),
+  files(new char*[row_len]),
+  values(new double[row_len * col_len])
 {
-  sigs = new char*[col_len];
-  files = new char*[row_len];
-  values = new double[row_len * col_len];
+  memset(sigs,  0, col_len * sizeof(char *));
+  memset(files, 0, row_len * sizeof(char *));
   std::fill_n(values, row_len * col_len, NAN);
 }
 
@@ -128,17 +130,19 @@ int Signatures::get_file_count() const
 
 void Signatures::clear()
 {
-  for(int i = 0; i < col_len; i++)
+  for(int i = 0; i < col_n; i++)
   {
     delete [] sigs[i];
     sigs[i] = 0;
   }
 
-  for(int i = 0; i < row_len; i++)
+  for(int i = 0; i < row_n; i++)
   {
     delete [] files[i];
     files[i] = 0;
   }
+  
+  col_n = row_n = 0;
 
   std::fill_n(values, row_len * col_len, NAN);
 }
@@ -174,6 +178,7 @@ int Signatures::insert_new_signature(const char *name)
   if(col_n >= col_len)
     expand_signature_container();
 
+  // Clear out values in this column
   for(int i = 0; i < row_n; i++)
     values[i * col_len + col_n] = NAN;
 
@@ -191,6 +196,7 @@ int Signatures::insert_new_filename(const char *name)
   if(row_n >= row_len)
     expand_filename_container();
 
+  // Clear out values in the row
   for(int i = 0; i < col_n; i++)
     values[row_n * col_len + i] = NAN;
 
@@ -257,7 +263,7 @@ void Signatures::expand_value_array(int d_row_len, int d_col_len)
 
 inline std::vector<std::string> Signatures::get_array_copy(char **arr, int len) const
 {
-  std::vector<std::string> arrcopy(len);
+  std::vector<std::string> arrcopy;
   for (int i = 0; i < len; i++)
     arrcopy.push_back(std::string(arr[i]));
   return arrcopy;

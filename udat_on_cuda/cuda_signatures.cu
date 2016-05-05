@@ -41,18 +41,16 @@ void CUDASignatures::save_in(char *directory)
   std::vector<std::string> filenames       = signatures.get_filenames();
 
   output << "filename";
-  for(int i = 0; i < signature_names.size(); i++)
-    output << ',' << signature_names[i]; 
+  for(std::string signature: signature_names)
+    output << ',' << signature; 
   output << std::endl;
 
-  for(std::string filename: filenames)
+  for(int i = 0; i < filenames.size(); i++)
   {
-    output << filename;
+    output << filenames[i];
 
-    for(std::string signature_name: signature_names)
-    {
-      output << ',' << signatures.get_signature(filename.c_str(), signature_name.c_str());
-    }
+    for(int j = 0; j < signature_names.size(); j++) 
+      output << ',' << signatures.get_signature(j, i);
 
     output << std::endl;
   }
@@ -63,9 +61,9 @@ void CUDASignatures::save_in(char *directory)
 
 
 
-void CUDASignatures::compute(char **directories, int count)
+void CUDASignatures::compute(char *root_dir, char **directories, int count)
 {
-  reset_directory_tracker(directories, count);
+  reset_directory_tracker(root_dir, directories, count);
   while(read_next_batch())
     compute_signatures_on_cuda();
 }
@@ -81,8 +79,9 @@ bool CUDASignatures::supported_format(char *filename)
 
 
 
-void CUDASignatures::reset_directory_tracker(char **directories, int count)
+void CUDASignatures::reset_directory_tracker(char *root_dir, char **directories, int count)
 {
+  directory_tracker.root_dir    = root_dir;
   directory_tracker.directories = directories;
   directory_tracker.current_dir = 0;
   directory_tracker.count       = count;
@@ -94,7 +93,8 @@ void CUDASignatures::reset_directory_tracker(char **directories, int count)
 bool CUDASignatures::read_next_batch()
 {
   dirent *entry;
-  char filename_buffer[FILENAME_MAX];
+  char image_directory[FILENAME_MAX];
+  char image_filename[FILENAME_MAX];
   while((entry = read_next_entry()) && !batch_capacity_reached())
   {
     if (entry->d_name[0] == '.')
@@ -102,11 +102,13 @@ bool CUDASignatures::read_next_batch()
 
     if (!supported_format(entry->d_name))
       continue;
+    
+    char *loaded_dir = directory_tracker.directories[directory_tracker.current_dir];
+    join_paths(image_directory, directory_tracker.root_dir, loaded_dir);
+    join_paths(image_filename, image_directory, entry->d_name);
 
-    join_paths(filename_buffer, directory_tracker.directory, entry->d_name);
-
-    printf("Loading image \"%s\"\n", filename_buffer);
-    load_image_matrix(filename_buffer);
+    printf("Loading image \"%s\"\n", image_filename);
+    load_image_matrix(image_filename);
   }
 
   return (image_matrix_count > 0);
@@ -122,7 +124,7 @@ bool CUDASignatures::batch_capacity_reached()
   {
     bytes_taken += image_matrices[i]->width * image_matrices[i]->height * sizeof(pix_data);
   }
-  return (bytes_taken < MAX_MATRIX_SIZE);
+  return (bytes_taken >= MAX_MATRIX_SIZE);
 }
 
 
@@ -130,24 +132,27 @@ bool CUDASignatures::batch_capacity_reached()
 dirent * CUDASignatures::read_next_entry()
 {
   dirent *entry = 0;
+  char buffer[FILENAME_MAX];
 
   bool done = false;
   while(!done && directory_tracker.current_dir < directory_tracker.count)
   { 
     if(!directory_tracker.opened_dir)
     {
-      directory_tracker.opened_dir = opendir(
-        directory_tracker.directories[directory_tracker.current_dir]);
+      char *dir = directory_tracker.directories[directory_tracker.current_dir];
+      join_paths(buffer, directory_tracker.root_dir, dir);
+      directory_tracker.opened_dir = opendir( buffer );
     }
 
     entry = readdir(directory_tracker.opened_dir);
-    if (!entry)
+    if (entry)
     {
       done = true;
     } 
     else
     {
       closedir(directory_tracker.opened_dir);
+      directory_tracker.opened_dir = 0;
       directory_tracker.current_dir++;
     }
   }
@@ -277,15 +282,28 @@ void CUDASignatures::compute_zernike_on_cuda(pix_data **images, int *widths, int
   zernike<<< 1, image_matrix_count >>>(images, widths, heights, depths, 
                                        d, r, outputs, sizes);
 
+  int outs_size = MAX_OUTPUT_SIZE * image_matrix_count;
+  double *outs = new double[MAX_OUTPUT_SIZE * image_matrix_count];
+
+  int   sizes_size = image_matrix_count;
+  long *lSizes     = new long[image_matrix_count];
+
+  cudaMemcpy(outs, outputs, outs_size * sizeof(double), cudaMemcpyDeviceToHost);
+  cudaMemcpy(lSizes, sizes, sizes_size * sizeof(long), cudaMemcpyDeviceToHost);
+
   char buffer[64];
   for(int i = 0; i < image_matrix_count; i++)
   {
-    for(int j = 0; j < sizes[i]; j++)
+    for(int j = 0; j < lSizes[i]; j++)
     {
       sprintf(buffer, "Zernike bin %i", j);
-      signatures.add_signature(image_matrices[i]->source_file, buffer, outputs[MAX_OUTPUT_SIZE * i + j]);
+      double value = outs[i * MAX_OUTPUT_SIZE + j];
+      signatures.add_signature(buffer, image_matrices[i]->source_file, value);
     }
   }
+
+  delete [] outs;
+  delete [] lSizes;
 
   cudaFree(r);
   cudaFree(d);

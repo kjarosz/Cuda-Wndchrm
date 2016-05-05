@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
   CUDASignatures signatures;
 
   printf("Computing signatures\n");
-  signatures.compute(filenames, dir_count);
+  signatures.compute(directory, filenames, dir_count);
 
   printf("Saving signatures to file\n");
   signatures.save_in(directory);

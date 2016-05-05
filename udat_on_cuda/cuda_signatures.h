@@ -12,6 +12,7 @@
 
 struct DirectoryTracker
 {
+  char *root_dir;
   char **directories;
   int count;
   int current_dir;
@@ -27,7 +28,7 @@ public:
   CUDASignatures();
   ~CUDASignatures();
 
-  void compute(char **directories, int count);
+  void compute(char *root_dir, char **directories, int count);
 
   void save_in(char *directory);
 
@@ -42,7 +43,7 @@ private:
 private:
   bool supported_format(char *filename);
 
-  void reset_directory_tracker(char **directories, int count);
+  void reset_directory_tracker(char *root_dir, char **directories, int count);
   bool read_next_batch();
   bool batch_capacity_reached();
   dirent *read_next_entry();
