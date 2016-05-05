@@ -15,6 +15,10 @@
 
 
 const int INIT_MATRIX_CONTAINER_SIZE = 16;
+const int INIT_SIG_CONTAINER_SIZE    = 64;
+
+const int SIGNATURE_NAME_LENGTH      = 80;
+
 const int MAX_OUTPUT_SIZE            = 72;
 
 
@@ -33,32 +37,58 @@ struct DirectoryTracker
 class Signatures
 {
 public:
-  Signatures() {};
+  Signatures();
   ~Signatures();
 
-  void   add_signature(const char *filename, const char *sig_name, double value);
-  double get_signature(const char *filename, const char *sig_name);
+  void   add_signature(const char *sig_name, const char *filename, double value);
 
-  void clear();
+  double get_signature(const char *sig_name, const char *filename) const;
+  double get_signature(const char *sig_name, int         row     ) const;
+  double get_signature(int         col,      const char *filename) const;
+  double get_signature(int         col,      int         row     ) const;
 
-  std::vector<std::string> get_sig_names();
-  std::vector<std::string> get_filenames();
+  void   get_sig_name(int col, char *output);
+  void   get_col_name(int row, char *output);
+
+  int    get_signature_index(const char *name) const;
+  int    get_filename_index (const char *name) const;
+
+  int    get_row_count() const;
+  int    get_col_count() const;
+
+  void   clear();
+
+  std::vector<std::string> get_sig_names() const;
+  std::vector<std::string> get_filenames() const;
 
 private:
   Signatures(const Signatures &other);
   Signatures &operator=(const Signatures &other);
 
+  int find_in_array(char **arr, int len, const char *element) const;
+
+  int insert_new_signature(const char *name);
+  int insert_new_filename (const char *name);
+
+  void expand_signature_container();
+  void expand_filename_container();
+  void expand_value_array(const int new_col_len, const int new_row_len);
+
+  inline std::vector<std::string> get_array_copy(char **arr, int len) const;
 
 private:
-  struct Signature
-  {
-    char *name;
-    std::vector<char *> filenames;
-    std::vector<double> values;
-  };
 
-  std::vector<Signature *> signatures;
+  // Size of the containers.
+  int col_len;
+  int row_len;
 
+  // Number of actual values in the containers.
+  int col_n;
+  int row_n;
+
+  char **sigs;    // Columns
+  char **files;   // Rows
+  double *values; // Data matrix
 };
 
 

@@ -12,6 +12,17 @@
 
 
 
+Signatures::Signatures()
+: row_len(INIT_MATRIX_CONTAINER_SIZE), 
+  col_len(INIT_SIG_CONTAINER_SIZE)
+{
+  sigs = new char*[col_len];
+  files = new char*[row_len];
+  values = new double[row_len * col_len];
+}
+
+
+
 Signatures::~Signatures()
 { 
   clear();
@@ -19,124 +30,185 @@ Signatures::~Signatures()
 
 
 
-void Signatures::add_signature(const char *filename, const char *sig_name, double value)
+void Signatures::add_signature(const char *sig_name, const char *filename, double value)
 {
-  Signature *sig = 0;
-  for(int i = 0; i < signatures.size(); i++)
-  {
-    if(strcmp(signatures[i]->name, sig_name) == 0)
-    {
-      sig = signatures[i];
-      break;
-    }
-  }
+  int col = get_signature_index(sig_name);
+  if(col < 0)
+    col = insert_new_signature(sig_name);
 
-  if(!sig)
-  {
-    int sig_name_len = strlen(sig_name);
-    sig = new Signature();
-    sig->name = new char[sig_name_len + 1];
-    strcpy(sig->name, sig_name);
-    signatures.push_back(sig);
-  }
+  int row = get_filename_index(filename);
+  if(row < 0)
+    row = insert_new_filename(filename);
 
-  bool found = false;
-  for(int i = 0; i < sig->filenames.size(); i++)
-  {
-    if(strcmp(sig->filenames[i], filename) == 0)
-    {
-      found = true;
-      sig->values[i] = value;
-    }
-  }
+  values[row * col_len + col] = value;
+}
 
-  if(!found)
-  {
-    char *fname = new char[FILENAME_MAX];
-    sig->filenames.push_back(fname);
-    sig->values.push_back(value);
-  }
+
+
+double Signatures::get_signature(const char *sig_name, const char *filename) const
+{
+  return get_signature(get_signature_index(sig_name),
+                       get_filename_index (filename));
+}
+
+
+
+double Signatures::get_signature(int col, const char *filename) const
+{
+  return get_signature(col, get_filename_index(filename));
+}
+
+
+
+double Signatures::get_signature(const char *sig_name, int row) const
+{
+  return get_signature(get_signature_index(sig_name), row);
+}
+
+
+
+double Signatures::get_signature(int col, int row) const
+{
+  if(col < 0 || col >= col_len || row < 0 || row >= row_len)
+    return NAN;
+
+  return values[row * col_len + col];
+}
+
+
+
+int Signatures::get_signature_index(const char *name) const
+{
+  return find_in_array(sigs, col_n, name);
+}
+
+
+
+int Signatures::get_filename_index(const char *name) const
+{
+  return find_in_array(files, row_n, name);
+}
+
+
+
+int Signatures::find_in_array(char **arr, int len, const char *element) const
+{
+  for(int i = 0; i < len; i++)
+    if(strcmp(arr[i], element) == 0)
+      return i;
+  return -1;
 }
 
 
 
 void Signatures::clear()
 {
-  for (Signature *sig: signatures)
+  for(int i = 0; i < col_len; i++)
   {
-    delete [] sig->name;
-    for(char * fname: sig->filenames)
-      delete [] fname;
-    delete sig;
+    delete [] sigs[i];
+    sigs[i] = 0;
   }
-  signatures.clear();
+
+  for(int i = 0; i < row_len; i++)
+  {
+    delete [] files[i];
+    files[i] = 0;
+  }
+
+  std::fill_n(values, row_len * col_len, NAN);
 }
 
 
 
-std::vector<std::string> Signatures::get_sig_names()
+std::vector<std::string> Signatures::get_sig_names() const
 {
-  std::vector<std::string> sig_names;
-  for(Signature *sig: signatures)
-    sig_names.push_back(std::string(sig->name));
-  return sig_names;
+  return get_array_copy(sigs, col_n);
 }
 
 
 
-std::vector<std::string> Signatures::get_filenames()
+std::vector<std::string> Signatures::get_filenames() const
 {
-  std::vector<std::string> filenames;
-  for(Signature *sig: signatures)
-  {
-    for(char *fname: sig->filenames)
-    {
-      bool found = false;
-      for(std::string filename: filenames)
-      {
-        if(filename.compare(fname) == 0)
-        {
-          found = true;
-          break;
-        }
-      }
-
-      if(!found)
-      {
-        filenames.push_back(std::string(fname));
-      }
-    }
-  }
-  return filenames;
+  return get_array_copy(files, row_n);
 }
 
 
 
-double Signatures::get_signature(const char *filename, const char *sig_name)
+int Signatures::insert_new_signature(const char *name) 
 {
-  Signature *sig;
-  for(Signature *signature: signatures)
-  {
-    if(strcmp(signature->name, sig_name) == 0)
-    {
-      sig = signature;
-      break;
-    }
-  }
+  if(col_n >= col_len)
+    expand_signature_container();
 
-  double value = NAN;
-  if(sig)
-  {
-    for(int i = 0; i < sig->filenames.size(); i++) 
-    {
-      if(strcmp(sig->filenames[i], filename) == 0)
-      {
-        value = sig->values[i];
-        break;
-      }
-    }
-  }
-  return value;
+  for(int i = 0; i < row_n; i++)
+    values[i * col_len + col_n] = NAN;
+
+  sigs[col_n] = new char[SIGNATURE_NAME_LENGTH];
+  strcpy(sigs[col_n], name);
+
+  col_n++;
+  return col_n - 1;
+}
+
+
+
+char **expand_array(char **arr, int len, int new_len)
+{
+  char **new_arr = new char*[new_len];
+  memset(new_arr, 0, new_len * sizeof(char *));
+
+  for(int i = 0; i < len; i++) 
+    new_arr[i] = arr[i];
+
+  return new_arr;
+}
+
+
+
+void Signatures::expand_signature_container()
+{
+  int new_size = col_len * 2;
+  char **new_sigs = expand_array(sigs, col_len, new_size);
+  delete [] sigs;
+  sigs = new_sigs;
+
+  expand_value_array(row_len, new_size);
+}
+
+
+
+void Signatures::expand_filename_container()
+{
+  int new_size = row_len * 2;
+  char **new_files = expand_array(files, row_len, new_size);
+  delete [] files;
+  files = new_files;
+
+  expand_value_array(new_size, col_len);
+}
+
+
+
+void Signatures::expand_value_array(int d_row_len, int d_col_len)
+{
+  double *new_values = new double[d_row_len * d_col_len];
+  std::fill_n(new_values, d_row_len * d_col_len, NAN);
+  for(int row = 0; row < row_len; row++)
+    for(int col = 0; col < col_len; col++)
+      new_values[row * d_col_len + col] = values[row * col_len + col];
+  delete [] values;
+  col_len = d_col_len;
+  row_len = d_row_len;
+  values = new_values;
+}
+
+
+
+inline std::vector<std::string> Signatures::get_array_copy(char **arr, int len) const
+{
+  std::vector<std::string> arrcopy(len);
+  for (int i = 0; i < len; i++)
+    arrcopy.push_back(std::string(arr[i]));
+  return arrcopy;
 }
 
 
