@@ -37,8 +37,6 @@
 #include "FuzzyCalc.h"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-//#define min(a,b) (((a) < (b)) ? (a) : (b))
-//#define max(a,b) (((a) < (b)) ? (b) : (a))
 
 #define cmRGB 1
 #define cmHSV 2
