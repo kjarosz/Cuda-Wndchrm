@@ -164,12 +164,15 @@ dirent * CUDASignatures::read_next_entry()
 
 void CUDASignatures::load_image_matrix(char *filename)
 {
-  if(image_matrix_count >= matrix_container_size)
-    double_matrix_container();
-
   ImageMatrix *matrix = new ImageMatrix();
-  matrix->OpenImage(filename);
-  image_matrices[image_matrix_count++] = matrix;
+  if(matrix->OpenImage(filename)) {
+    if(image_matrix_count >= matrix_container_size)
+      double_matrix_container();
+
+    image_matrices[image_matrix_count++] = matrix;
+  } else {
+    delete matrix;
+  }
 }
 
 
