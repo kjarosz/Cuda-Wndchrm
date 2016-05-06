@@ -128,10 +128,16 @@ program.
 
 --- 2.2. HARALICK ---
 
-Signature:
+Signatures:
 
 compute_haarlick_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes,
                          cBits);
+haarlick(pix_data *pixels, double *distance, double *out, int *height,
+         int *width, int *depth, unsigned short int *bits);
+BasicStatistics(pix_data *color_data, double *min, double *max, int bins,
+                int num_pixels);
+Extract_Texture_Features(int distance, int angle, register u_int8_t **grays,
+                         int rows, int cols, int max_val);
 
 Usage:
 
@@ -165,6 +171,48 @@ cOutputs, cSizes, and cBits.
     http://murphylab.web.cmu.edu/publications/boland/boland_node26.html
   - cSizes is an array of long type containing the size of the images.
   - cBits is an array of ints containing the bit size of the images.
+
+This function calls:
+
+haarlick
+
+This function accepts:
+  - pixels: Same as cPixels
+  - distance: A global variable declared in compute_haarlick_on_cuda, set to 0.
+  - out: Same as cOutputs.
+  - height: Same as cHeights.
+  - width: Same as cWidths.
+  - depth: Same as cDepths.
+  - bits: Same as cBits.
+
+This is the main Haarlick function which actually performs the calculations.
+First it calls:
+
+BasicStatistics
+
+which accepts:
+
+  - color_data: Same as cPixels.
+  - min: An array of doubles.
+  - max: An array of doubles.
+  - bins: An int, set to 0 always.
+  - num_pixels: An int which is set to the amount of pixels in the image
+    (height*width*depth).
+
+This function will return the average min/max intensity values of the images
+in the arrays of min and max.
+
+The haarlick function will now call the:
+
+ExtractTextureFeatures
+
+function which computes the values listed above (Angular Second Moment,
+Contrast, Correlation, etc.).
+
+After these values are computed and set, the out variable is populated with
+the calculated values and the function ends. The compute_haarlick_on_cuda
+function will now place the values placed into out into the output file that
+the program generates.
 
 
 === 3. COMPILATION ===
