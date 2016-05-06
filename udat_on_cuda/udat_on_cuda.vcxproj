@@ -87,6 +87,9 @@
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <CudaCompile>
+      <GenerateRelocatableDeviceCode>Yes</GenerateRelocatableDeviceCode>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -152,7 +155,12 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="colors\FuzzyCalc.h" />
+<<<<<<< HEAD
     <ClInclude Include="CVIPtexture.h" />
+=======
+    <ClInclude Include="constants.h" />
+    <ClInclude Include="cuda_signatures.h" />
+>>>>>>> origin/master
     <ClInclude Include="file_manip.h" />
     <ClInclude Include="haarlick.h" />
     <ClInclude Include="histogram.h" />
@@ -162,7 +170,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="libs\libtiff\tiffio.h" />
     <ClInclude Include="libs\libtiff\tiffvers.h" />
     <ClInclude Include="signatures.h" />
-    <ClInclude Include="zernike.h" />
+    <ClInclude Include="textures\zernike\zernike.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="colors\FuzzyCalc.cpp" />
@@ -170,12 +178,16 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+<<<<<<< HEAD
     <CudaCompile Include="CVIPtexture.cu" />
     <CudaCompile Include="haarlick.cu" />
     <CudaCompile Include="histogram.cu" />
+=======
+    <CudaCompile Include="cuda_signatures.cu" />
+>>>>>>> origin/master
     <CudaCompile Include="image_matrix.cu" />
     <CudaCompile Include="signatures.cu" />
-    <CudaCompile Include="zernike.cu" />
+    <CudaCompile Include="textures\zernike\zernike.cu" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="libs\libtiff\libtiff.lib" />

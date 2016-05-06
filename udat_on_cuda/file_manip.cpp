@@ -57,6 +57,10 @@ void join_paths(char *output, char *p1, char *p2)
 
 
 
+dirent dirent_data;
+
+
+
 DIR * opendir(char *path)
 {
   WIN32_FIND_DATA file_data;

@@ -16,8 +16,6 @@ struct dirent
   char           d_name[256];
 };
 
-dirent dirent_data;
-
 
 
 char  **alloc_filename_buffers (int size);

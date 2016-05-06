@@ -30,6 +30,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <algorithm>
 
 #include "image_matrix.h"
 #include "cuda.h"
@@ -69,8 +70,8 @@
 
 /* ***************************************************************************** */
     __host__ __device__ pix_data get_pixel(pix_data *pixels, 
-                                           int x, int y, int z, 
-                                           int width, int height)
+                                          int width, int height,
+                                          int x, int y, int z )
 /* ***************************************************************************** */
 {
   return pixels[z * width * height + y * width + x];
@@ -80,9 +81,9 @@
 
 /* ***************************************************************************** */
     __host__ __device__ void set_pixel(pix_data *pixels, 
-                                       int x, int y, int z, 
                                        int width, int height, 
-                                       pix_data new_pixel)
+                                       int x, int y, int z, 
+                                       pix_data &new_pixel)
 /* ***************************************************************************** */
 {
   pixels[z * width * height + y * width + x] = new_pixel;
@@ -153,6 +154,21 @@ HSVcolor RGB2HSV(RGBcolor rgb)
 		hsv.hue = (byte)(h *(240.0 / 360.0));
 	}
 	return(hsv);
+}
+
+
+TColor RGB2COLOR(RGBcolor rgb)
+{  return((TColor)(rgb.blue*65536+rgb.green*256+rgb.red));
+}
+
+double COLOR2GRAY(TColor color1)
+{  double r,g,b;
+
+   r=(byte)(color1 & 0xFF);
+   g=(byte)((color1 & 0xFF00)>>8);
+   b=(byte)((color1 & 0xFF0000)>>16);
+
+   return((0.3*r+0.59*g+0.11*b));
 }
 
 
@@ -365,6 +381,11 @@ int ImageMatrix::OpenImage(char *image_file_name) //, int downsample, rect *boun
 #endif
 		system(buffer);
 	}
+
+  if (res)
+  {
+    strcpy(source_file, image_file_name);
+  }
 
   /*
 	if (res)  // add the image only if it was loaded properly 
@@ -597,10 +618,10 @@ void ImageMatrix::rotate(double angle)
 	y2 = (int)(height * cos(rad_angle) + width * sin(rad_angle));
 	x3 = (int)(width * cos(rad_angle));
 	y3 = (int)(width * sin(rad_angle));
-	minx = min(0, min(x1, min(x2, x3)));
-	miny = min(0, min(y1, min(y2, y3)));
-	maxx = max(x1, max(x2, x3));
-	maxy = max(y1, max(y2, y3));
+	minx = std::min<int>(0, std::min<int>(x1, std::min<int>(x2, x3)));
+	miny = std::min<int>(0, std::min<int>(y1, std::min<int>(y2, y3)));
+	maxx = std::max<int>(x1, std::max<int>(x2, x3));
+	maxy = std::max<int>(y1, std::max<int>(y2, y3));
 	new_width = maxx - minx;
 	new_height = maxy - miny;
 

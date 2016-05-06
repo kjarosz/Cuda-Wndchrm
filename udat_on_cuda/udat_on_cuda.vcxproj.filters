@@ -48,9 +48,6 @@
     <ClInclude Include="image_matrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="zernike.h">
-      <Filter>Header Files\textures\zernike</Filter>
-    </ClInclude>
     <ClInclude Include="file_manip.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -69,6 +66,7 @@
     <ClInclude Include="colors\FuzzyCalc.h">
       <Filter>Header Files\colors</Filter>
     </ClInclude>
+<<<<<<< HEAD
     <ClInclude Include="haarlick.h">
       <Filter>Header Files\textures\haarlick</Filter>
     </ClInclude>
@@ -76,6 +74,15 @@
       <Filter>Header Files\textures\haarlick</Filter>
     </ClInclude>
     <ClInclude Include="histogram.h">
+=======
+    <ClInclude Include="textures\zernike\zernike.h">
+      <Filter>Header Files\textures\zernike</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda_signatures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="constants.h">
+>>>>>>> origin/master
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -94,10 +101,13 @@
     <CudaCompile Include="signatures.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
-    <CudaCompile Include="zernike.cu">
+    <CudaCompile Include="image_matrix.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="textures\zernike\zernike.cu">
       <Filter>Source Files\textures\zernike</Filter>
     </CudaCompile>
-    <CudaCompile Include="image_matrix.cu">
+    <CudaCompile Include="cuda_signatures.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
     <CudaCompile Include="haarlick.cu">
