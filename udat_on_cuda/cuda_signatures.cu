@@ -311,3 +311,60 @@ void CUDASignatures::compute_zernike_on_cuda(pix_data **images, int *widths, int
   cudaFree(r);
   cudaFree(d);
 }
+
+
+void CUDASignatures::compute_haarlick_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits)
+{
+	__device__ const int cDistances = 0;
+
+	haarlick<<< 1, image_matrix_count >>>(images, cDistances, outputs, heights, widths, depths, bits);
+	int outs_size = MAX_OUTPUT_SIZE * image_matrix_count;
+  double *outs = new double[MAX_OUTPUT_SIZE * image_matrix_count];
+
+  int   sizes_size = image_matrix_count;
+  long *lSizes     = new long[image_matrix_count];
+
+  cudaMemcpy(outs, outputs, outs_size * sizeof(double), cudaMemcpyDeviceToHost);
+  cudaMemcpy(lSizes, sizes, sizes_size * sizeof(long), cudaMemcpyDeviceToHost);
+
+  char buffer[64];
+  for(int i = 0; i < image_matrix_count; i++)
+  {
+    for(int j = 0; j < lSizes[i]; j++)
+    {
+      sprintf(buffer, "Haarlick bin %i", j);
+      double value = outs[i * MAX_OUTPUT_SIZE + j];
+      signatures.add_signature(buffer, image_matrices[i]->source_file, value);
+    }
+  }
+
+  delete [] outs;
+  delete [] lSizes;
+}
+
+void CUDASignatures::compute_histogram_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits)
+{
+	multiscalehistogram<<< 1, image_matrix_count >>>(images, outputs, widths, heights, depths, bits);
+int outs_size = MAX_OUTPUT_SIZE * image_matrix_count;
+  double *outs = new double[MAX_OUTPUT_SIZE * image_matrix_count];
+
+  int   sizes_size = image_matrix_count;
+  long *lSizes     = new long[image_matrix_count];
+
+  cudaMemcpy(outs, outputs, outs_size * sizeof(double), cudaMemcpyDeviceToHost);
+  cudaMemcpy(lSizes, sizes, sizes_size * sizeof(long), cudaMemcpyDeviceToHost);
+
+  char buffer[64];
+  for(int i = 0; i < image_matrix_count; i++)
+  {
+    for(int j = 0; j < lSizes[i]; j++)
+    {
+      sprintf(buffer, "Multiscale Histogram bin %i", j);
+      double value = outs[i * MAX_OUTPUT_SIZE + j];
+      signatures.add_signature(buffer, image_matrices[i]->source_file, value);
+    }
+  }
+
+  delete [] outs;
+  delete [] lSizes;
+}
