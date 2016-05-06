@@ -206,12 +206,14 @@ void CUDASignatures::compute_signatures_on_cuda()
   int *widths  = new int[image_matrix_count];
   int *heights = new int[image_matrix_count];
   int *depths  = new int[image_matrix_count];
+  int *bits = new int[image_matrix_count];
 
   for(int i = 0; i < image_matrix_count; i++)
   {
     widths[i]  = image_matrices[i]->width;
     heights[i] = image_matrices[i]->height;
     depths[i]  = image_matrices[i]->depth;
+	bits[i]	   = image_matrices[i]->bits;
 
     int size = widths[i] * heights[i] * depths[i];
     pix_data *pixel_array;
@@ -222,17 +224,19 @@ void CUDASignatures::compute_signatures_on_cuda()
 
   // Move data from RAM to VRAM
   pix_data **cPixels = 0; 
-  int *cWidths = 0, *cHeights = 0, *cDepths = 0;
+  int *cWidths = 0, *cHeights = 0, *cDepths = 0, *cBits = 0;
 
   cudaMalloc(&cPixels,  image_matrix_count * sizeof(pix_data*));
   cudaMalloc(&cWidths,  image_matrix_count * sizeof(int));
   cudaMalloc(&cHeights, image_matrix_count * sizeof(int));
   cudaMalloc(&cDepths,  image_matrix_count * sizeof(int));
+  cudaMalloc(&cBits,	image_matrix_count * sizeof(int));
 
   cudaMemcpy(cWidths,  widths,  image_matrix_count * sizeof(int),       cudaMemcpyHostToDevice);
   cudaMemcpy(cHeights, heights, image_matrix_count * sizeof(int),       cudaMemcpyHostToDevice);
   cudaMemcpy(cDepths,  depths,  image_matrix_count * sizeof(int),       cudaMemcpyHostToDevice);
   cudaMemcpy(cPixels,  pixels,  image_matrix_count * sizeof(pix_data*), cudaMemcpyHostToDevice);
+  cudaMemcpy(cBits,	   bits,	image_matrix_count * sizeof(int),		cudaMemcpyHostToDevice);
 
   signatures.clear();
 
@@ -245,6 +249,10 @@ void CUDASignatures::compute_signatures_on_cuda()
   // Execute the features.
   printf("Performing Zernike texture analysis\n");
   compute_zernike_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes);
+  printf("Performing Haralick texture analysis\n");
+  compute_haarlick_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes, cBits);
+  printf("Performing Multiscale Histogram analysis\n");
+  compute_histogram_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes, cBits);
 
   cudaFree(cSizes);
   cudaFree(cOutputs);
@@ -257,11 +265,13 @@ void CUDASignatures::compute_signatures_on_cuda()
   cudaFree(cDepths);
   cudaFree(cHeights);
   cudaFree(cWidths);
+  cudaFree(cBits);
 
   delete [] pixels;
   delete [] depths;
   delete [] heights;
   delete [] widths;
+  delete [] bits;
 
   printf("Signatures computed\n");
   printf("============================================================\n");
