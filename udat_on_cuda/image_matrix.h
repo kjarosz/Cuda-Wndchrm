@@ -81,13 +81,13 @@ __host__ __device__ void     set_pixel(pix_data *pixels, int width, int height, 
 class ImageMatrix
 {
 public:
-  char source_file[FILENAME_MAX];
+	char source_file[FILENAME_MAX];
 	pix_data *data;                                 /* data of the colors                   */
 public:
 	int ColorMode;                                  /* can be cmRGB or cmHSV                */
 	unsigned short bits;                            /* the number of intensity bits (8,16, etc) */
 	int width, height, depth;                       /* width and height of the picture      */
-  int LoadTIFF(char *filename);
+	int LoadTIFF(char *filename);
 	int OpenImage(char *image_file_name);           /* load an image of any supported format */
 
 	ImageMatrix();                                  /* basic constructor                    */
@@ -96,7 +96,7 @@ public:
 	~ImageMatrix();                                 /* destructor */
 	ImageMatrix *duplicate();                       /* create a new identical matrix        */
 
-  pix_data pixel(int x, int y, int z);
+	pix_data pixel(int x, int y, int z);
 
 	void set(int x, int y, int z, pix_data val);      /* assign a pixel value                 */
 	void SetInt(int x, int y, int z, double val);     /* set only the intensity of the pixel  */
@@ -111,10 +111,10 @@ public:
 	void rotate(double angle);                      /* rotate and image                     */
 	void convolve(ImageMatrix *filter);
 	void BasicStatistics(double *mean, double *median, double *std, double *min, double *max, double *histogram, int bins);
-	
-  double Otsu();
-	void Mask(double threshold);   
-  void histogram(double *bins,unsigned short bins_num, int imhist);
+
+	double Otsu();
+	void Mask(double threshold);
+	void histogram(double *bins, unsigned short bins_num, int imhist);
 
 
 };

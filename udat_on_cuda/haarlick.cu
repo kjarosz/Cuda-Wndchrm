@@ -17,7 +17,7 @@
 output -array of double- a pre-allocated array of 28 doubles
 */
 
-__global__ void CUDA_haarlick2d(pix_data *pixels, double distance, double *out, int height, int width, int depth, unsigned short int bits) {
+__global__ void haarlick(pix_data *pixels, double *distance, double *out, int *height, int *width, int *depth, unsigned short int *bits) {
 	const int i = threadIdx.x * blockDim.x + threadIdx.x;
 	int a, x, y;
 	unsigned char **p_gray;
@@ -26,20 +26,20 @@ __global__ void CUDA_haarlick2d(pix_data *pixels, double distance, double *out, 
 	double min[14], max[14], sum[14];
 	double min_value = INF, max_value = -INF;//max_value=pow(2,Im->bits)-1;
 
-	if (distance <= 0) distance = 1;
+	if (distance <= 0) distance[i] = 1;
 
-	p_gray = new unsigned char *[height];
-	for (y = 0; y<height; y++)
-		p_gray[y] = new unsigned char[width];
+	p_gray = new unsigned char *[height[i]];
+	for (y = 0; y<height[i]; y++)
+		p_gray[y] = new unsigned char[width[i]];
 	/* for more than 8 bits - normalize the image to (0,255) range */
 
-	BasicStatistics(pixels, &min_value, &max_value, 0, height*width*depth);
-	for (y = 0; y<height; y++)
-		for (x = 0; x<width; x++)
-			if (bits>8) 
-				p_gray[y][x] = (unsigned char)((Im[i].pixel(x, y, 0).intensity - min_value)*(255.0 / (max_value - min_value)));
+	BasicStatistics(pixels, &min_value, &max_value, 0, height[i]*width[i]*depth[i]);
+	for (y = 0; y<height[i]; y++)
+		for (x = 0; x<width[i]; x++)
+			if (bits[i]>8) 
+				p_gray[y][x] = (unsigned char)((get_pixel(pixels, x, y, 0, width[i], height[i]).intensity - min_value)*(255.0 / (max_value - min_value)));
 			else 
-				p_gray[y][x] = (unsigned char)(Im[i].pixel(x, y, 0).intensity);
+				p_gray[y][x] = (unsigned char)(get_pixel(pixels, x, y, 0, width[i], height[i]).intensity);
 
 	for (a = 0; a<14; a++)
 	{
@@ -50,7 +50,7 @@ __global__ void CUDA_haarlick2d(pix_data *pixels, double distance, double *out, 
 
 	for (angle = 0; angle <= 135; angle = angle + 45)
 	{
-		features = Extract_Texture_Features((int)distance, angle, p_gray, height, width, (int)max_value);
+		features = Extract_Texture_Features((int)distance, angle, p_gray, height[i], width[i], (int)max_value);
 		/*  (1) Angular Second Moment */
 		sum[0] += features->ASM;
 		if (features->ASM<min[0]) min[0] = features->ASM;
@@ -110,7 +110,7 @@ __global__ void CUDA_haarlick2d(pix_data *pixels, double distance, double *out, 
 		free(features);
 	}
 
-	for (y = 0; y<height; y++)
+	for (y = 0; y<height[i]; y++)
 		delete p_gray[y];
 	delete p_gray;
 
@@ -152,56 +152,10 @@ __global__ void CUDA_haarlick2d(pix_data *pixels, double distance, double *out, 
 	out[27] = temp[17];
 }
 
-void allocate_haarlick_memory(ImageMatrix *matrix, double distance, double *out) {
-	// haarlick computation
-	double *d_distance, *d_out;
-	ImageMatrix *d_matrix;
-	TEXTURE *d_texture;
-	/* removed currently because I believe the device is able to allocate its own memory for variables declared within a kernel function
-	TEXTURE *d_features;
-	int d_a, d_x, d_y;
-	unsigned char **d_p_gray;
-	TEXTURE *d_features;
-	long d_angle;
-	double d_min[14], d_max[14], d_sum[14];
-	double d_min_value = INF, d_max_value = -INF;//max_value=pow(2,Im->bits)-1;
-	size_t pitch;
-
-	cudaMallocPitch((void**)&d_p_gray, &pitch, matrix->width * sizeof(unsigned char), matrix->height);
-	cudaMalloc((void**)d_a, sizeof(int));
-	cudaMalloc((void**)d_x, sizeof(int));
-	cudaMalloc((void**)d_y, sizeof(int));
-	cudaMalloc((void**)d_angle, sizeof(long));
-	cudaMalloc((void**)&d_min, sizeof(double));
-	cudaMalloc((void**)&d_max, sizeof(double));
-	cudaMalloc((void**)&d_sum, sizeof(double));
-	cudaMalloc((void**)&d_min_value, sizeof(double));
-	cudaMalloc((void**)&d_max_value, sizeof(double));
-	cudaMalloc((void**)&d_features, sizeof(TEXTURE));
-	*/
-
-	// Allocate memory for variables on device
-	cudaMalloc((void**)&d_matrix, sizeof(ImageMatrix));
-	cudaMalloc((void**)&d_out, sizeof(double));
-	cudaMalloc((void**)&d_distance, sizeof(double));
-	cudaMalloc((void**)&d_texture, sizeof(TEXTURE));
-
-
-	cudaMemcpy(d_matrix, matrix, sizeof(ImageMatrix), cudaMemcpyHostToDevice);
-	cudaMemcpy(d_out, out, sizeof(double), cudaMemcpyHostToDevice);
-	cudaMemcpy(d_distance, &distance, sizeof(double), cudaMemcpyHostToDevice);
-	//CUDA_haarlick2d<<<1, 1>>>(matrix, distance, out);
-	cudaMemcpy(out, d_out, sizeof(double), cudaMemcpyDeviceToHost);
-
-	cudaFree(d_matrix);
-	cudaFree(d_out);
-	cudaFree(d_distance);
-}
-
 
 __device__ void BasicStatistics(pix_data *color_data, double *min, double *max, int bins, int num_pixels)
 {
-	long pixel_index, num_pixels;
+	long pixel_index;
 	double *pixels;
 	double min1 = INF, max1 = -INF, mean_sum = 0;
 
@@ -223,8 +177,4 @@ __device__ void BasicStatistics(pix_data *color_data, double *min, double *max, 
 	delete pixels;
 }
 
-__device__ pix_data get_pixel(pix_data *data, int x, int y, int z, int width, int height)
-{
-	return(data[z*width*height + y*width + x]);
-}
 #pragma package(smart_init)

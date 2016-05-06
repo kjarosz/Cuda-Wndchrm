@@ -56,6 +56,8 @@ private:
 
   // All CUDA functions.
   void compute_zernike_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes);
+  void CUDASignatures::compute_haarlick_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits);
+  void CUDASignatures::compute_histogram_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits);
   
   void allocate_signature_buffers();
   void add_signatures(double *output, long size);

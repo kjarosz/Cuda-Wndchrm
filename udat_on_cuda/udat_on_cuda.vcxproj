@@ -155,9 +155,15 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="colors\FuzzyCalc.h" />
+<<<<<<< HEAD
+    <ClInclude Include="CVIPtexture.h" />
+=======
     <ClInclude Include="constants.h" />
     <ClInclude Include="cuda_signatures.h" />
+>>>>>>> origin/master
     <ClInclude Include="file_manip.h" />
+    <ClInclude Include="haarlick.h" />
+    <ClInclude Include="histogram.h" />
     <ClInclude Include="image_matrix.h" />
     <ClInclude Include="libs\libtiff\tiff.h" />
     <ClInclude Include="libs\libtiff\tiffconf.h" />
@@ -172,7 +178,13 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+<<<<<<< HEAD
+    <CudaCompile Include="CVIPtexture.cu" />
+    <CudaCompile Include="haarlick.cu" />
+    <CudaCompile Include="histogram.cu" />
+=======
     <CudaCompile Include="cuda_signatures.cu" />
+>>>>>>> origin/master
     <CudaCompile Include="image_matrix.cu" />
     <CudaCompile Include="signatures.cu" />
     <CudaCompile Include="textures\zernike\zernike.cu" />

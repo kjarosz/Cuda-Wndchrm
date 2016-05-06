@@ -270,4 +270,3 @@ inline std::vector<std::string> Signatures::get_array_copy(char **arr, int len) 
 }
 
 
-
