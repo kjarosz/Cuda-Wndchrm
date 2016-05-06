@@ -122,6 +122,46 @@ This function will loop through all of the pixels and find the min and max
 intensity. It will then allocate the remaining pixels into a histogram which
 shows the count of pixels with the same intensity.
 
+--- 2.2. HARALICK ---
+
+Signature:
+
+compute_haarlick_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes,
+                         cBits);
+
+Usage:
+
+Accepts CUDA-allocated variables of cPixels, cWidths, cHeights, cDepths,
+cOutputs, cSizes, and cBits.
+
+  - cPixels is an array of pixel_data for each image to be processed.
+  - cWidths is an array of ints containing image widths for each image to be
+    processed.
+  - cHeights is an array of ints containing image heights for each image to be
+    processed.
+  - cDepths is an array of ints containing image depths for each image to be
+    processed.
+  - cOutputs is the output array of doubles for each image. This will be
+    populated by the function for each image and will include the data for:
+      - Angular Second Moment
+      - Contrast
+      - Correlation
+      - Variance
+      - Inverse Difference Moment
+      - Sum Average
+      - Sum Variance
+      - Sum Entropy
+      - Entropy
+      - Difference Variance
+      - Difference Entropy
+      - Measure of Correlation 1
+      - Measure of Correlation 2
+      - Max Correlation Coefficient
+    Information on these functions are available here:
+    http://murphylab.web.cmu.edu/publications/boland/boland_node26.html
+  - cSizes is an array of long type containing the size of the images.
+  - cBits is an array of ints containing the bit size of the images.
+
 
 === 3. COMPILATION ===
 
