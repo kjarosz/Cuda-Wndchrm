@@ -1,0 +1,100 @@
+==============================================================================
+CUDA UDAT
+Software documentation
+------------------------------------------------------------------------------
+Lawrence Technological University
+Spring 2016 - Senior Project / Collaborative Research Project
+Authors:
+  Kamil Jarosz           <kjarosz@ltu.edu>
+  Christopher K. Horton  <chorton@ltu.edu>
+  Tyler Wiersing         <twiersing@ltu.edu>
+==============================================================================
+
+=== SECTIONS ===
+
+1. License
+2. About the algorithms
+3. Getting the code
+4. Compilation
+   4.1 Prerequisites
+   4.2 Compiling the code
+5. Using the code
+
+=== 1. LICENSE ===
+
+This software is covered under the terms of the MIT license. Please see
+LICENSE.txt for more information.
+
+
+=== 2. ABOUT THE ALGORITHMS ===
+
+The algorithms in this project are CUDA-enabled versions of those from the
+original UDAT image analysis software supplied to us by Dr. Lior Shamir at
+Lawrence Technological University in Southfield, MI. Many of these algorithms
+are described in a paper on the Wndchrm software here:
+http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13
+
+So far, the project contains code for the following algorithms modified to use
+CUDA:
+
+  - Zernicke
+  - Haralick
+  - Multi-scale histograms
+
+Some of the other algorithms which still need to be converted include:
+
+  - Gabor texture features
+  - Tamura texture features
+
+
+=== 3. COMPILATION ===
+
+CUDA UDAT is currently hosted on GitHub in source form here:
+https://github.com/kjarosz/new_cuda_udat
+
+If you are using Git with a command line interface or terminal, you can simply
+run the following command to get the latest version of the main code branch:
+
+git clone https://github.com/kjarosz/new_cuda_udat.git
+
+
+=== 4. COMPILATION ===
+
+--- 4.1 PREREQUISITES ---
+
+After you have obtained the CUDA UDAT source code, you will need to make sure
+you also have the following installed:
+
+  - Microsoft Visual Studio 2013*
+  - NVIDIA's CUDA Toolkit
+    - This is currently available at https://developer.nvidia.com/cuda-toolkit
+
+* Note: The version of Visual Studio you use is important, since NVIDIA
+currently does not support any newer versions like 2015 with their CUDA
+Toolkit yet.
+
+You will need to be using a Windows PC with an NVIDIA graphics card with CUDA
+technology. We have not tried compiling or running our code on any other
+operating system or IDE, and currently have no plans to do so nor support such
+alternative setups.
+
+--- 4.2 COMPILING THE CODE ---
+The Visual Studio project is already prepared and ready to compile. Simply go
+into the Build menu and hit Build Solution, and the code will be compiled.
+
+
+=== 5. USING THE CODE ===
+
+The application accepts only one argument and it is the directory containing
+the classes of images. The folder structure expected consists of a root
+directory and multiple folders for each class of images. The images will have
+to be placed into the class directories, otherwise they will not be read. The
+output of the application will be saved in the root directory.
+
+
+=== 6. FEEDBACK ===
+
+Bugs, questions, and other feedback may be submitted to the authors of this
+software here:
+
+https://github.com/kjarosz/new_cuda_udat/issues/new
