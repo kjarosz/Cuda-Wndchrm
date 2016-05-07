@@ -290,7 +290,7 @@ More information on the Zernicke algorithm itself can be found here:
 http://murphylab.web.cmu.edu/publications/boland/boland_node25.html
 
 
-=== 3. COMPILATION ===
+=== 3. GETTING THE CODE ===
 
 CUDA UDAT is currently hosted on GitHub in source form here:
 https://github.com/kjarosz/new_cuda_udat
