@@ -16,6 +16,7 @@ Authors:
 2. About the algorithms
    2.1 Multiscale histogram
    2.2 Haralick
+   2.3 Zernicke
 3. Getting the code
 4. Compilation
    4.1 Prerequisites
@@ -213,6 +214,80 @@ After these values are computed and set, the out variable is populated with
 the calculated values and the function ends. The compute_haarlick_on_cuda
 function will now place the values placed into out into the output file that
 the program generates.
+
+--- 2.3. ZERNICKE ---
+
+Signatures:
+
+void CUDASignatures::compute_zernike_on_cuda(pix_data **images, int *widths,
+                                             int *heights, int *depths,
+                                             double *outputs, long *sizes)
+__global__ void zernike(pix_data **images, int *widths, int *heights,
+                        int *depths, double *d, double *r, double *zvalues,
+                        long *output_size);
+__device__ void znl(long n, long l, double *X, double *Y, double *P, int size,
+                    double *out_r, double *out_i);
+__device__ double image_moments(pix_data *image, int width, int height, int x,
+                                int y);
+
+Usage:
+
+Accepts CUDA-allocated variables of images, widths, heights, depths, outputs,
+and sizes.
+
+  - images is an array of pixel_data for each image to be processed.
+  - widths is an array of ints containing image widths for each image to be
+    processed.
+  - heights is an array of ints containing image heights for each image to be
+    processed.
+  - depths is an array of ints containing image depths for each image to be
+    processed.
+  - outputs is the output array of doubles populated by the function for each
+    image.
+  - sizes is an array of longs.
+
+This function in turn calls the zernike function, with the following inputs:
+
+  - images: Same as images above.
+  - widths: Same as widths above.
+  - heights: Same as heights above.
+  - depths: Same as depths above.
+  - d: An array of doubles.
+  - r: An array of doubles. This represents the maximum radii to use for each
+       image.
+  - z_values: An array of doubles.
+  - output_size: An array of longs.
+
+This function in turn calls the znl function, which is what generates Zernicke
+moments, with the following inputs:
+
+  - n: A long indicating the degree of the moment.
+  - l: A long indicating the angular dependence.
+  - X: An array of doubles. One of the coordinate vectors.
+  - Y: An array of doubles. One of the coordinate vectors.
+  - P: An array of doubles. This is the intensity vector.
+    - Note that X, Y, and P must all be of the same length.
+  - size: An int. This is the length of each of the X, Y, and P arrays.
+  - out_r: An array of doubles. This is the real portion of the "returned"
+           values.
+  - out_i: An array of doubles. This is the imaginary portion of the "returned"
+           values.
+
+The zernike function also calls the image_moments function a few times, which
+calculates the moment for each image with the following inputs:
+
+  - image: One of the pix_data instances from the images variable above.
+  - width: The corresponding value from the widths variable.
+  - height: The corresponding value from the heights variable.
+  - x: An int.
+  - y: An int.
+
+The zernike function's moment10, moment00, and moment01 variables are each
+generated using this function. This is done to normalize the coordinates to
+the center of mass and normalize pixel distances using the maximum radius.
+
+More information on the Zernicke algorithm itself can be found here:
+http://murphylab.web.cmu.edu/publications/boland/boland_node25.html
 
 
 === 3. COMPILATION ===
