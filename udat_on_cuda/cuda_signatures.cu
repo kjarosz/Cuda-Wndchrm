@@ -3,6 +3,8 @@
 
 
 #include "textures/zernike/zernike.h"
+#include "textures/haralick/haralick.h"
+#include "histogram.h"
 #include "cuda_signatures.h"
 
 
@@ -25,42 +27,6 @@ CUDASignatures::~CUDASignatures()
 
 
 
-void CUDASignatures::save_in(char *directory)
-{
-  char buffer[FILENAME_MAX];
-  join_paths(buffer, directory, "output.csv");
-
-  std::ofstream output(buffer);
-  if (!output.good())
-  {
-    printf("Failed to open file \"%s\"", buffer);
-    return;
-  }
-
-  std::vector<std::string> signature_names = signatures.get_sig_names();
-  std::vector<std::string> filenames       = signatures.get_filenames();
-
-  output << "filename";
-  for(std::string signature: signature_names)
-    output << ',' << signature; 
-  output << std::endl;
-
-  for(int i = 0; i < filenames.size(); i++)
-  {
-    output << filenames[i];
-
-    for(int j = 0; j < signature_names.size(); j++) 
-      output << ',' << signatures.get_signature(j, i);
-
-    output << std::endl;
-  }
-
-  output.flush();
-  output.close();
-}
-
-
-
 void CUDASignatures::compute(char *root_dir, char **directories, int count)
 {
   reset_directory_tracker(root_dir, directories, count);
@@ -72,8 +38,21 @@ void CUDASignatures::compute(char *root_dir, char **directories, int count)
 
 bool CUDASignatures::supported_format(char *filename)
 {
-  if (strstr(filename, ".tif") || strstr(filename, ".TIF"))
+  int len, period, i;
+  len = strlen(filename);
+  for(i = len - 1; i > 0; i--) {
+    if (filename[i] == '.') {
+      period = i;
+      break;
+    }
+  }
+
+  if (period <= 0) 
+    return false;
+
+  if (strstr(filename + period, ".tif") || strstr(filename + period, ".TIF"))
     return true;
+
   return false;
 }
 
@@ -213,7 +192,7 @@ void CUDASignatures::compute_signatures_on_cuda()
     widths[i]  = image_matrices[i]->width;
     heights[i] = image_matrices[i]->height;
     depths[i]  = image_matrices[i]->depth;
-	bits[i]	   = image_matrices[i]->bits;
+    bits[i]    = image_matrices[i]->bits;
 
     int size = widths[i] * heights[i] * depths[i];
     pix_data *pixel_array;
@@ -247,12 +226,9 @@ void CUDASignatures::compute_signatures_on_cuda()
   cudaMalloc(&cSizes, image_matrix_count * sizeof(long));
 
   // Execute the features.
-  printf("Performing Zernike texture analysis\n");
   compute_zernike_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes);
-  printf("Performing Haralick texture analysis\n");
-  compute_haarlick_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes, cBits);
-  printf("Performing Multiscale Histogram analysis\n");
-  compute_histogram_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes, cBits);
+//  compute_haralick_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes, cBits);
+//  compute_histogram_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes, cBits);
 
   cudaFree(cSizes);
   cudaFree(cOutputs);
@@ -283,6 +259,7 @@ void CUDASignatures::compute_signatures_on_cuda()
 
 void CUDASignatures::compute_zernike_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes)
 {
+  printf("Performing Zernike texture analysis\n");
   double *d;
   double *r;
 
@@ -323,58 +300,99 @@ void CUDASignatures::compute_zernike_on_cuda(pix_data **images, int *widths, int
 }
 
 
-void CUDASignatures::compute_haarlick_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits)
+//void CUDASignatures::compute_haralick_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits)
+//{
+//  printf("Performing Haralick texture analysis\n");
+//
+//	const int cDistances = 0;
+//
+//	haralick<<< 1, image_matrix_count >>>(images, cDistances, outputs, heights, widths, depths, bits);
+//	int outs_size = MAX_OUTPUT_SIZE * image_matrix_count;
+//  double *outs = new double[MAX_OUTPUT_SIZE * image_matrix_count];
+//
+//  int   sizes_size = image_matrix_count;
+//  long *lSizes     = new long[image_matrix_count];
+//
+//  cudaMemcpy(outs, outputs, outs_size * sizeof(double), cudaMemcpyDeviceToHost);
+//  cudaMemcpy(lSizes, sizes, sizes_size * sizeof(long), cudaMemcpyDeviceToHost);
+//
+//  char buffer[64];
+//  for(int i = 0; i < image_matrix_count; i++)
+//  {
+//    for(int j = 0; j < lSizes[i]; j++)
+//    {
+//      sprintf(buffer, "Haarlick bin %i", j);
+//      double value = outs[i * MAX_OUTPUT_SIZE + j];
+//      signatures.add_signature(buffer, image_matrices[i]->source_file, value);
+//    }
+//  }
+//
+//  delete [] outs;
+//  delete [] lSizes;
+//}
+
+//void CUDASignatures::compute_histogram_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits)
+//{
+//  printf("Performing Multiscale Histogram analysis\n");
+//
+//	multiscalehistogram<<< 1, image_matrix_count >>>(images, outputs, widths, heights, depths, bits);
+//
+//  int outs_size = MAX_OUTPUT_SIZE * image_matrix_count;
+//  double *outs = new double[MAX_OUTPUT_SIZE * image_matrix_count];
+//
+//  int   sizes_size = image_matrix_count;
+//  long *lSizes     = new long[image_matrix_count];
+//
+//  cudaMemcpy(outs, outputs, outs_size * sizeof(double), cudaMemcpyDeviceToHost);
+//  cudaMemcpy(lSizes, sizes, sizes_size * sizeof(long), cudaMemcpyDeviceToHost);
+//
+//  char buffer[64];
+//  for(int i = 0; i < image_matrix_count; i++)
+//  {
+//    for(int j = 0; j < lSizes[i]; j++)
+//    {
+//      sprintf(buffer, "Multiscale Histogram bin %i", j);
+//      double value = outs[i * MAX_OUTPUT_SIZE + j];
+//      signatures.add_signature(buffer, image_matrices[i]->source_file, value);
+//    }
+//  }
+//
+//  delete [] outs;
+//  delete [] lSizes;
+//}
+
+
+
+void CUDASignatures::save_in(char *directory)
 {
-	__device__ const int cDistances = 0;
+  char buffer[FILENAME_MAX];
+  join_paths(buffer, directory, "output.csv");
 
-	haarlick<<< 1, image_matrix_count >>>(images, cDistances, outputs, heights, widths, depths, bits);
-	int outs_size = MAX_OUTPUT_SIZE * image_matrix_count;
-  double *outs = new double[MAX_OUTPUT_SIZE * image_matrix_count];
-
-  int   sizes_size = image_matrix_count;
-  long *lSizes     = new long[image_matrix_count];
-
-  cudaMemcpy(outs, outputs, outs_size * sizeof(double), cudaMemcpyDeviceToHost);
-  cudaMemcpy(lSizes, sizes, sizes_size * sizeof(long), cudaMemcpyDeviceToHost);
-
-  char buffer[64];
-  for(int i = 0; i < image_matrix_count; i++)
+  std::ofstream output(buffer);
+  if (!output.good())
   {
-    for(int j = 0; j < lSizes[i]; j++)
-    {
-      sprintf(buffer, "Haarlick bin %i", j);
-      double value = outs[i * MAX_OUTPUT_SIZE + j];
-      signatures.add_signature(buffer, image_matrices[i]->source_file, value);
-    }
+    printf("Failed to open file \"%s\"", buffer);
+    return;
   }
 
-  delete [] outs;
-  delete [] lSizes;
-}
+  std::vector<std::string> signature_names = signatures.get_sig_names();
+  std::vector<std::string> filenames       = signatures.get_filenames();
 
-void CUDASignatures::compute_histogram_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits)
-{
-	multiscalehistogram<<< 1, image_matrix_count >>>(images, outputs, widths, heights, depths, bits);
-int outs_size = MAX_OUTPUT_SIZE * image_matrix_count;
-  double *outs = new double[MAX_OUTPUT_SIZE * image_matrix_count];
+  output << "filename";
+  for(std::string signature: signature_names)
+    output << ',' << signature; 
+  output << std::endl;
 
-  int   sizes_size = image_matrix_count;
-  long *lSizes     = new long[image_matrix_count];
-
-  cudaMemcpy(outs, outputs, outs_size * sizeof(double), cudaMemcpyDeviceToHost);
-  cudaMemcpy(lSizes, sizes, sizes_size * sizeof(long), cudaMemcpyDeviceToHost);
-
-  char buffer[64];
-  for(int i = 0; i < image_matrix_count; i++)
+  for(int i = 0; i < filenames.size(); i++)
   {
-    for(int j = 0; j < lSizes[i]; j++)
-    {
-      sprintf(buffer, "Multiscale Histogram bin %i", j);
-      double value = outs[i * MAX_OUTPUT_SIZE + j];
-      signatures.add_signature(buffer, image_matrices[i]->source_file, value);
-    }
+    output << filenames[i];
+
+    for(int j = 0; j < signature_names.size(); j++) 
+      output << ',' << signatures.get_signature(j, i);
+
+    output << std::endl;
   }
 
-  delete [] outs;
-  delete [] lSizes;
+  output.flush();
+  output.close();
 }

@@ -1,124 +1,123 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{d039d282-4a3b-4735-9522-d46f446d120e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{f87524b7-b50f-4ab7-84c8-e5b910898b07}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Libraries">
-      <UniqueIdentifier>{1a7fbad0-644f-43e3-9599-e6d007cadd06}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\textures">
-      <UniqueIdentifier>{afd1a77e-35b9-4cff-9ae7-cc3de61d1e3e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\textures\zernike">
-      <UniqueIdentifier>{f30a22ee-2ab7-4efc-9850-fe82e826f179}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\textures">
-      <UniqueIdentifier>{23903cb9-6fc7-4f88-8ed1-03433d94e3d7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\textures\zernike">
-      <UniqueIdentifier>{daa2efa6-65e9-4c19-9477-62fdd7883748}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\libs">
-      <UniqueIdentifier>{a8647e75-99b4-43a9-a86e-ce94716b7889}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\libs\libtiff">
-      <UniqueIdentifier>{fa18fbc8-6144-4be0-ad2a-282df21820c0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\colors">
-      <UniqueIdentifier>{ba0bf78f-fe6b-4298-911a-c3068d56ba66}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\colors">
-      <UniqueIdentifier>{935213f5-5c0d-49c3-b7e3-d95fadfa9ec9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\textures\haarlick">
-      <UniqueIdentifier>{d738fb09-a893-490a-b8b5-91f3c37754cc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\textures\haarlick">
-      <UniqueIdentifier>{35f87a2e-c8bb-4aa3-9612-653cb77acdbf}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="signatures.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="image_matrix.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="file_manip.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\libtiff\tiff.h">
-      <Filter>Header Files\libs\libtiff</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\libtiff\tiffconf.h">
-      <Filter>Header Files\libs\libtiff</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\libtiff\tiffio.h">
-      <Filter>Header Files\libs\libtiff</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\libtiff\tiffvers.h">
-      <Filter>Header Files\libs\libtiff</Filter>
-    </ClInclude>
-    <ClInclude Include="colors\FuzzyCalc.h">
-      <Filter>Header Files\colors</Filter>
-    </ClInclude>
-<<<<<<< HEAD
-    <ClInclude Include="haarlick.h">
-      <Filter>Header Files\textures\haarlick</Filter>
-    </ClInclude>
-    <ClInclude Include="CVIPtexture.h">
-      <Filter>Header Files\textures\haarlick</Filter>
-    </ClInclude>
-    <ClInclude Include="histogram.h">
-=======
-    <ClInclude Include="textures\zernike\zernike.h">
-      <Filter>Header Files\textures\zernike</Filter>
-    </ClInclude>
-    <ClInclude Include="cuda_signatures.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="constants.h">
->>>>>>> origin/master
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="file_manip.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="colors\FuzzyCalc.cpp">
-      <Filter>Source Files\colors</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="signatures.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
-    <CudaCompile Include="image_matrix.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
-    <CudaCompile Include="textures\zernike\zernike.cu">
-      <Filter>Source Files\textures\zernike</Filter>
-    </CudaCompile>
     <CudaCompile Include="cuda_signatures.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
-    <CudaCompile Include="haarlick.cu">
-      <Filter>Source Files\textures\haarlick</Filter>
+      <Filter>Source</Filter>
     </CudaCompile>
     <CudaCompile Include="CVIPtexture.cu">
-      <Filter>Source Files\textures\haarlick</Filter>
+      <Filter>Source</Filter>
     </CudaCompile>
     <CudaCompile Include="histogram.cu">
-      <Filter>Source Files</Filter>
+      <Filter>Source</Filter>
     </CudaCompile>
+    <CudaCompile Include="image_matrix.cu">
+      <Filter>Source</Filter>
+    </CudaCompile>
+    <CudaCompile Include="signatures.cu">
+      <Filter>Source</Filter>
+    </CudaCompile>
+    <CudaCompile Include="textures\haralick\haralick.cu">
+      <Filter>Source\textures\haralick</Filter>
+    </CudaCompile>
+    <CudaCompile Include="textures\zernike\zernike.cu">
+      <Filter>Source\textures\zernike</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="file_manip.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="colors\FuzzyCalc.cpp">
+      <Filter>Source\colors</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="constants.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda_signatures.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CVIPtexture.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="file_manip.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="histogram.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="image_matrix.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="signatures.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\libtiff\tiffio.h">
+      <Filter>Headers\libs\libtiff</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\libtiff\tiffvers.h">
+      <Filter>Headers\libs\libtiff</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\libtiff\tiffconf.h">
+      <Filter>Headers\libs\libtiff</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\libtiff\tiff.h">
+      <Filter>Headers\libs\libtiff</Filter>
+    </ClInclude>
+    <ClInclude Include="textures\zernike\zernike.h">
+      <Filter>Headers\textures\zernike</Filter>
+    </ClInclude>
+    <ClInclude Include="textures\haralick\haralick.h">
+      <Filter>Headers\textures\haralick</Filter>
+    </ClInclude>
+    <ClInclude Include="colors\FuzzyCalc.h">
+      <Filter>Headers\colors</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{185dca98-6193-4411-b261-275cc5d67136}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{ee321a68-358b-43f6-bb4b-ffa93e293e26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries">
+      <UniqueIdentifier>{0461571d-fe9f-4626-a80d-155a1c41bb1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\libs">
+      <UniqueIdentifier>{7a28c0df-925c-489f-8613-e66f368ea030}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\libs\libtiff">
+      <UniqueIdentifier>{6f8b5878-ab5b-426d-a5f8-c8e075d8e5b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\colors">
+      <UniqueIdentifier>{ee33c19d-f74d-4fe8-8002-18de182afd15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\colors">
+      <UniqueIdentifier>{88da241a-afb9-4fe2-89ef-3570b7374167}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\textures">
+      <UniqueIdentifier>{c4926095-b485-45e2-91d5-bfa9498c00b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\textures\haralick">
+      <UniqueIdentifier>{7ebbc7eb-e6d4-4e2f-a614-be2aa8929084}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\textures\zernike">
+      <UniqueIdentifier>{38307fd3-10b5-4904-a33b-6f761947bdaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\textures">
+      <UniqueIdentifier>{8527a76d-f628-4945-b3db-e856eef8524f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\textures\zernike">
+      <UniqueIdentifier>{650304b1-9401-4ab7-b770-47c661c5113a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\textures\haralick">
+      <UniqueIdentifier>{56cda0f6-baf9-4a21-953a-86531fc65468}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Library Include="libs\libtiff\libtiff.lib">

@@ -6,7 +6,7 @@
 
 #include "file_manip.h"
 #include "textures/zernike/zernike.h"
-#include "haarlick.h"
+#include "textures/haralick/haralick.h"
 #include "signatures.h"
 #include "cuda_runtime.h"
 

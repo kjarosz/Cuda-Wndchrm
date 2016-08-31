@@ -8,16 +8,16 @@
 #endif
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include "haarlick.h"
-#include "CVIPtexture.h"
-#include "image_matrix.h"
+#include "haralick.h"
+#include "../../CVIPtexture.h"
+#include "../../image_matrix.h"
 #include "device_launch_parameters.h"
 //---------------------------------------------------------------------------
-/* haarlick
+/* haralick
 output -array of double- a pre-allocated array of 28 doubles
 */
 
-__global__ void haarlick(pix_data *pixels, double *distance, double *out, int *height, int *width, int *depth, unsigned short int *bits) {
+__global__ void haralick(pix_data *pixels, double *distance, double *out, int *height, int *width, int *depth, unsigned short int *bits) {
 	const int i = threadIdx.x * blockDim.x + threadIdx.x;
 	int a, x, y;
 	unsigned char **p_gray;
