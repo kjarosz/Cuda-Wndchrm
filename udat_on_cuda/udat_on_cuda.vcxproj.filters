@@ -33,6 +33,12 @@
     <ClCompile Include="colors\FuzzyCalc.cpp">
       <Filter>Source\colors</Filter>
     </ClCompile>
+    <ClCompile Include="utils\DirectoryListing.cpp">
+      <Filter>Source\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\Utils.cpp">
+      <Filter>Source\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="constants.h">
@@ -77,6 +83,12 @@
     <ClInclude Include="colors\FuzzyCalc.h">
       <Filter>Headers\colors</Filter>
     </ClInclude>
+    <ClInclude Include="utils\DirectoryListing.h">
+      <Filter>Headers\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Utils.h">
+      <Filter>Headers\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -117,6 +129,12 @@
     </Filter>
     <Filter Include="Headers\textures\haralick">
       <UniqueIdentifier>{56cda0f6-baf9-4a21-953a-86531fc65468}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\utils">
+      <UniqueIdentifier>{7844dc64-4e79-42a7-8818-6f20375ea3e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\utils">
+      <UniqueIdentifier>{50832648-4941-43f3-b59b-152aac5f9191}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -1,42 +1,92 @@
 #include <fstream>
+#include <sstream>
 
 
 
 #include "textures/zernike/zernike.h"
 #include "textures/haralick/haralick.h"
+#include "utils/DirectoryListing.h"
 #include "histogram.h"
 #include "cuda_signatures.h"
 
 
 
-CUDASignatures::CUDASignatures()
-:image_matrices(0), 
- matrix_container_size(INIT_MATRIX_CONTAINER_SIZE),
- image_matrix_count(0)
-{ 
-  image_matrices = new ImageMatrix*[matrix_container_size];
-}
-
-
-
-CUDASignatures::~CUDASignatures()
+std::vector<ClassSignatures> compute_signatures(char *root_dir, char **directories, int count)
 {
-  empty_matrix_container();
-  delete [] image_matrices;
+  std::vector<ClassSignatures> class_signatures;
+  for(int i = 0; i < count; i++)
+  {
+    std::stringstream class_dir;
+    class_dir << root_dir << "\\" << directories[i];
+
+    ClassSignatures signatures;
+    signatures.class_name = std::string(directories[i]);
+    signatures.signatures = compute_class_signatures(class_dir.str());
+    class_signatures.push_back(signatures);
+  }
+  return class_signatures;
 }
 
 
 
-void CUDASignatures::compute(char *root_dir, char **directories, int count)
+std::vector<Signature> compute_class_signatures(std::string class_dir)
 {
-  reset_directory_tracker(root_dir, directories, count);
-  while(read_next_batch())
-    compute_signatures_on_cuda();
+  DirectoryListing *directory_listing = new DirectoryListing(class_dir);
+
+  std::vector<ImageMatrix *> images;
+  std::vector<Signature> signatures;
+  while(get_next_batch(directory_listing, images))
+    for(Signature signature: compute_signatures_on_cuda(images))
+      signatures.push_back(signature);
+
+  delete directory_listing;
+
+  return signatures;
 }
 
 
 
-bool CUDASignatures::supported_format(char *filename)
+bool get_next_batch(DirectoryListing *listing, std::vector<ImageMatrix *> &images)
+{
+  for (ImageMatrix *image: images)
+    delete image;
+  images.clear();
+
+  try 
+  {
+    while(!batch_is_full(images))
+    {
+      std::string filename = listing->next_file();
+      if (supported_format(filename.c_str()))
+      {
+        ImageMatrix *image = load_image_matrix(filename.c_str());
+        if (image)
+          images.push_back(image);
+      }
+    }
+  } 
+  catch( OutOfFilesException &exc) 
+  {
+    if (images.size() == 0)
+      return false;
+  }
+
+  return true;
+}
+
+
+
+bool batch_is_full(std::vector<ImageMatrix *> &images)
+{
+  long bytes_taken = 0;
+  for(ImageMatrix *image: images)
+    bytes_taken += image->width * image->height * sizeof(pix_data);
+  return bytes_taken >= BATCH_SIZE;
+}
+
+
+
+bool supported_format(char *filename)
 {
   int len, period, i;
   len = strlen(filename);
@@ -50,6 +100,7 @@ bool CUDASignatures::supported_format(char *filename)
   if (period <= 0) 
     return false;
 
+  // TODO Check if this compares the extension correctly.
   if (strstr(filename + period, ".tif") || strstr(filename + period, ".TIF"))
     return true;
 
@@ -58,120 +109,14 @@ bool CUDASignatures::supported_format(char *filename)
 
 
 
-void CUDASignatures::reset_directory_tracker(char *root_dir, char **directories, int count)
-{
-  directory_tracker.root_dir    = root_dir;
-  directory_tracker.directories = directories;
-  directory_tracker.current_dir = 0;
-  directory_tracker.count       = count;
-  directory_tracker.opened_dir  = 0;
-}
-
-
-
-bool CUDASignatures::read_next_batch()
-{
-  dirent *entry;
-  char image_directory[FILENAME_MAX];
-  char image_filename[FILENAME_MAX];
-  while(!batch_capacity_reached() && (entry = read_next_entry()) )
-  {
-    if (entry->d_name[0] == '.')
-      continue;
-
-    if (!supported_format(entry->d_name))
-      continue;
-    
-    char *loaded_dir = directory_tracker.directories[directory_tracker.current_dir];
-    join_paths(image_directory, directory_tracker.root_dir, loaded_dir);
-    join_paths(image_filename, image_directory, entry->d_name);
-
-    printf("Loading image \"%s\"\n", image_filename);
-    load_image_matrix(image_filename);
-  }
-
-  return (image_matrix_count > 0);
-}
-
-
-#define MAX_MATRIX_SIZE 1073741824
-
-bool CUDASignatures::batch_capacity_reached()
-{
-  long bytes_taken = 0;
-  for (int i = 0; i < image_matrix_count; i++)
-  {
-    bytes_taken += image_matrices[i]->width * image_matrices[i]->height * sizeof(pix_data);
-  }
-  return (bytes_taken >= MAX_MATRIX_SIZE);
-}
-
-
-
-dirent * CUDASignatures::read_next_entry()
-{
-  dirent *entry = 0;
-  char buffer[FILENAME_MAX];
-
-  bool done = false;
-  while(!done && directory_tracker.current_dir < directory_tracker.count)
-  { 
-    if(!directory_tracker.opened_dir)
-    {
-      char *dir = directory_tracker.directories[directory_tracker.current_dir];
-      join_paths(buffer, directory_tracker.root_dir, dir);
-      directory_tracker.opened_dir = opendir( buffer );
-    }
-
-    entry = readdir(directory_tracker.opened_dir);
-    if (entry)
-    {
-      done = true;
-    } 
-    else
-    {
-      closedir(directory_tracker.opened_dir);
-      directory_tracker.opened_dir = 0;
-      directory_tracker.current_dir++;
-    }
-  }
-
-  return entry;
-}
-
-
-
-void CUDASignatures::load_image_matrix(char *filename)
+ImageMatrix *load_image_matrix(char *filename)
 {
   ImageMatrix *matrix = new ImageMatrix();
-  if(matrix->OpenImage(filename)) {
-    if(image_matrix_count >= matrix_container_size)
-      double_matrix_container();
-
-    image_matrices[image_matrix_count++] = matrix;
-  } else {
+  if(!matrix->OpenImage(filename)) {
     delete matrix;
+    matrix = 0;
   }
-}
-
-
-
-void CUDASignatures::double_matrix_container()
-{
-  ImageMatrix **new_container = new ImageMatrix*[matrix_container_size * 2];
-  memcpy(new_container, image_matrices, matrix_container_size * sizeof(ImageMatrix*));
-  delete [] image_matrices;
-  image_matrices = new_container;
-  matrix_container_size *= 2;
-}
-
-
-
-void CUDASignatures::empty_matrix_container()
-{
-  for(int i = 0; i < image_matrix_count; i++) 
-    delete image_matrices[i];
-  image_matrix_count = 0;
+  return matrix;
 }
 
 

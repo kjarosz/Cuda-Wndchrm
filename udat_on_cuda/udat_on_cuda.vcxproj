@@ -168,11 +168,15 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="signatures.h" />
     <ClInclude Include="textures\haralick\haralick.h" />
     <ClInclude Include="textures\zernike\zernike.h" />
+    <ClInclude Include="utils\DirectoryListing.h" />
+    <ClInclude Include="utils\Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="colors\FuzzyCalc.cpp" />
     <ClCompile Include="file_manip.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="utils\DirectoryListing.cpp" />
+    <ClCompile Include="utils\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="CVIPtexture.cu" />
