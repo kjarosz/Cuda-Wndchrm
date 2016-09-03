@@ -11,31 +11,56 @@
 #include "utils/DirectoryListing.h"
 
 // 1 GB Batch limit
-#define  BATCH_SIZE  1073741824
+//const int BATCH_SIZE = 1073741824;
+
+// 512 MB Batch Limit
+const int BATCH_SIZE = 536870912;
 
 
-
+// SECTION A - Main Interface
+//------------------------------------------------------------------------------
 std::vector<ClassSignatures> compute(char *root_dir, char **class_dirs, int class_count);
-std::vector<Signature>       compute_class_signatures(std::string class_dir);
-std::vector<Signature>       compute_signatures_on_cuda(std::vector<ImageMatrix *> &matrices);
+ClassSignatures              compute_class_signatures(std::string class_dir);
+std::vector<FileSignatures>  compute_signatures_on_cuda(std::vector<ImageMatrix *> &matrices);
 
 void                         save_signatures(std::vector<ClassSignatures> &class_signatures, char *root_dir);
 
 
-bool                         get_next_batch(DirectoryListing *listing, std::vector<ImageMatrix *> &images);
-bool                         batch_is_full(std::vector<ImageMatrix *> &images);
-
-bool                         supported_format(const char *filename);
-ImageMatrix*                 load_image_matrix(const char *filename);
-
-
-class CUDASignatures
+// SECTION B.a - Auxiliary Types
+//------------------------------------------------------------------------------
+struct CudaImages
 {
-  // All CUDA functions.
-  void compute_zernike_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes);
-  void compute_haralick_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits);
-  void compute_histogram_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits);
+  int        count;
+
+  pix_data **pixels;
+  int       *widths;
+  int       *heights;
+  int       *depths;
+  int       *bits;
 };
+
+
+// SECTION B - Auxiliary Functions
+//------------------------------------------------------------------------------
+bool          get_next_batch(DirectoryListing *listing, std::vector<ImageMatrix *> &images);
+bool          batch_is_full(std::vector<ImageMatrix *> &images);
+
+bool          supported_format(const char *filename);
+ImageMatrix*  load_image_matrix(const char *filename);
+
+void          move_images_to_cuda(std::vector<ImageMatrix *> &images, CudaImages &cuda_images);
+void          delete_cuda_images(CudaImages &cuda_images);
+
+template <class T>
+T*            move_data_to_cuda(T *data, int byte_size);
+
+std::vector<FileSignatures> &merge_signatures(std::vector<FileSignatures> &dst, std::vector<FileSignatures> &src);
+
+// SECTION C - Cuda Algorithms
+//------------------------------------------------------------------------------
+std::vector<FileSignatures> compute_zernike_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images);
+//void compute_haralick_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits);
+//void compute_histogram_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits);
 
 
 

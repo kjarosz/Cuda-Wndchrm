@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstring>
 #include <cstdio>
+#include <vector>
 
 
 
@@ -73,13 +74,11 @@ int main(int argc, char *argv[])
 
   printf("Found %i directories\n", dir_count);
   
-  CUDASignatures signatures;
-
   printf("Computing signatures\n");
-  signatures.compute(directory, filenames, dir_count);
+  std::vector<ClassSignatures> signatures = compute(directory, filenames, dir_count);
 
   printf("Saving signatures to file\n");
-  signatures.save_in(directory);
+  save_signatures(signatures, directory); 
 
   printf("Done\n");
 

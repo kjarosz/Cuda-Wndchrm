@@ -11,14 +11,19 @@
 struct Signature
 {
   std::string signature_name;
-  std::string file_name;
   double      value;
+};
+
+struct FileSignatures
+{
+  std::string            file_name;
+  std::vector<Signature> signatures;
 };
 
 struct ClassSignatures
 {
-  std::string            class_name;
-  std::vector<Signature> signatures;
+  std::string                 class_name;
+  std::vector<FileSignatures> signatures;
 };
 
 

@@ -1,20 +1,34 @@
-#ifndef ZERNIKE_H
-#define ZERNIKE_H
+//---------------------------------------------------------------------------
+
+#ifndef zernikeH
+#define zernikeH
+//---------------------------------------------------------------------------
+
+#include "../../cuda_signatures.h"
+
+struct ZernikeData
+{
+  double *D;
+  double *R;
+  double **Y;
+  double **X;
+  double **P;
+  double **xcoords;
+
+  double **zvalues;
+  double *output_size;
+};
 
 
 
-#include "../../image_matrix.h"
-#include "cuda_runtime.h"
+__global__ void mb_zernike2D(CudaImages images, ZernikeData data);
 
 
 
-__device__ double factorial     (double n);
-__device__ double image_moments (pix_data *image, int width, int height, int x, int y);
-__device__ void   znl           (long n, long l, double *X, double *Y, double *P, 
-                                 int size, double *out_r, double *out_i);
-__global__ void   zernike       (pix_data **images, int *widths, int *heights, int *depths, 
-                                 double *d, double *r, double *zvalues, long *output_size);
+ZernikeData                 cuda_allocate_zernike_data(const CudaImages &images);
+std::vector<FileSignatures> cuda_get_zernike_signatures(const ZernikeData &data, int image_count);
+void                        cuda_delete_zernike_data(ZernikeData &data, int image_count);
 
 
 
-#endif // ZERNIKE_H
+#endif

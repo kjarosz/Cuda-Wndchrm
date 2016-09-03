@@ -13,14 +13,8 @@
     <CudaCompile Include="image_matrix.cu">
       <Filter>Source</Filter>
     </CudaCompile>
-    <CudaCompile Include="signatures.cu">
-      <Filter>Source</Filter>
-    </CudaCompile>
     <CudaCompile Include="textures\haralick\haralick.cu">
       <Filter>Source\textures\haralick</Filter>
-    </CudaCompile>
-    <CudaCompile Include="textures\zernike\zernike.cu">
-      <Filter>Source\textures\zernike</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
@@ -38,6 +32,9 @@
     </ClCompile>
     <ClCompile Include="utils\Utils.cpp">
       <Filter>Source\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="textures\zernike\zernike.cu">
+      <Filter>Source\textures\zernike</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
