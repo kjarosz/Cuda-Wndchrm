@@ -74,7 +74,7 @@ bool CUDASignatures::read_next_batch()
   dirent *entry;
   char image_directory[FILENAME_MAX];
   char image_filename[FILENAME_MAX];
-  while((entry = read_next_entry()) && !batch_capacity_reached())
+  while(!batch_capacity_reached() && (entry = read_next_entry()) )
   {
     if (entry->d_name[0] == '.')
       continue;
