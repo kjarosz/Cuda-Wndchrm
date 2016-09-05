@@ -16,8 +16,15 @@ std::string print_windows_error()
 
   std::cerr << lpMsgBuf << std::endl;
 
-  std::string error(lpMsgBuf);
+  int msg_len = wcslen(lpMsgBuf);
+  char *msg = new char[msg_len+1];
+  for(int i = 0; i < msg_len; i++) {
+    msg[i] = (char)lpMsgBuf[i];
+  }
+  msg[msg_len] = '\0';
+  std::string error(msg);
 
+  delete [] msg;
   LocalFree(lpMsgBuf);
 
   return error;

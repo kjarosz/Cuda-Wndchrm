@@ -79,8 +79,8 @@ std::string DirectoryListing::next_file()
 
 void add_to_list(std::list<WIN32_FIND_DATA> &list, WIN32_FIND_DATA &file_data)
 {
-  if (strcmp(file_data.cFileName, ".")  == 0 ||
-      strcmp(file_data.cFileName, "..") == 0)
+  if (wcscmp(file_data.cFileName, L".")  == 0 ||
+      wcscmp(file_data.cFileName, L"..") == 0)
     return;
 
   list.push_back(file_data);
@@ -94,9 +94,11 @@ void DirectoryListing::read_directory()
   HANDLE find_handle;
 
   m_files.clear();
+
+  std::wstring wdir(m_directory.begin(), m_directory.end());
   
-  std::stringstream ss;
-  ss << m_directory << "\\*";
+  std::wstringstream ss;
+  ss << wdir << L"\\*";
 
   find_handle = FindFirstFile(ss.str().c_str(), &file_data);
   if ( find_handle == INVALID_HANDLE_VALUE )
