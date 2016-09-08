@@ -109,9 +109,10 @@ bool batch_is_full(std::vector<ImageMatrix *> &images)
 
 
 
-bool supported_format(char *filename)
+bool supported_format(const char *filename)
 {
-  int len, period, i;
+  int period = -1;
+  unsigned int len, i;
   len = strlen(filename);
   for(i = len - 1; i > 0; i--) {
     if (filename[i] == '.') {
@@ -132,7 +133,7 @@ bool supported_format(char *filename)
 
 
 
-ImageMatrix *load_image_matrix(char *filename)
+ImageMatrix *load_image_matrix(const char *filename)
 {
   ImageMatrix *matrix = new ImageMatrix();
   if(!matrix->OpenImage(filename)) {
@@ -235,9 +236,22 @@ std::vector<FileSignatures> compute_zernike_on_cuda(const std::vector<ImageMatri
 {
   std::cout << "Performing Zernike texture analysis" << std::endl;
 
-  ZernikeData zernike_data = cuda_allocate_zernike_data(cuda_images);
-  mb_zernike2D<<< 1, cuda_images.count >>>(cuda_images, zernike_data);
-  std::vector<FileSignatures> signatures = cuda_get_zernike_signatures(zernike_data, cuda_images.count);
+  ZernikeData zernike_data = cuda_allocate_zernike_data(images);
+  cuda_zernike<<< 1, cuda_images.count >>>(cuda_images, zernike_data);
+  cudaDeviceSynchronize();
+
+  std::vector<FileSignatures> signatures;
+  if(cudaPeekAtLastError() == cudaSuccess)
+  {
+    signatures = cuda_get_zernike_signatures(images, zernike_data, cuda_images.count);
+  } 
+  else 
+  {
+    cudaError errorCode = cudaGetLastError();
+    std::cout << "Error occurred when executing on CUDA (" << errorCode << ")" << std::endl
+        << "Name: " << cudaGetErrorName << std::endl
+        << "Description: " << cudaGetErrorString(errorCode) << std::endl << std::endl;
+  }
   cuda_delete_zernike_data(zernike_data, cuda_images.count);
   return signatures;
 }
@@ -306,36 +320,72 @@ std::vector<FileSignatures> compute_zernike_on_cuda(const std::vector<ImageMatri
 
 
 
-//void CUDASignatures::save_in(char *directory)
-//{
-//  char buffer[FILENAME_MAX];
-//  join_paths(buffer, directory, "output.csv");
-//
-//  std::ofstream output(buffer);
-//  if (!output.good())
-//  {
-//    printf("Failed to open file \"%s\"", buffer);
-//    return;
-//  }
-//
-//  std::vector<std::string> signature_names = signatures.get_sig_names();
-//  std::vector<std::string> filenames       = signatures.get_filenames();
-//
-//  output << "filename";
-//  for(std::string signature: signature_names)
-//    output << ',' << signature; 
-//  output << std::endl;
-//
-//  for(int i = 0; i < filenames.size(); i++)
-//  {
-//    output << filenames[i];
-//
-//    for(int j = 0; j < signature_names.size(); j++) 
-//      output << ',' << signatures.get_signature(j, i);
-//
-//    output << std::endl;
-//  }
-//
-//  output.flush();
-//  output.close();
-//}
+void save_signatures(std::vector<ClassSignatures> &class_signatures, char *directory)
+{
+  char buffer[FILENAME_MAX];
+  strcpy(buffer, directory);
+  strcat(buffer, "\\");
+  strcat(buffer, "output.csv");
+
+  std::ofstream output(buffer);
+  if (!output.good())
+  {
+    printf("Failed to open file \"%s\"", buffer);
+    return;
+  }
+
+  std::vector<std::string>         signatures;
+  std::vector<std::string>         filenames;
+  std::vector<std::vector<double>> cube;
+  for(ClassSignatures class_signature: class_signatures)
+  {
+    for(FileSignatures file_signatures: class_signature.signatures)
+    {
+      filenames.push_back(file_signatures.file_name);
+
+      std::vector<double> row(signatures.size());
+      row.resize(signatures.size());
+      for(Signature signature: file_signatures.signatures)
+      {
+        int i = find_in_vector(signatures, signature.signature_name);
+        if (i != -1)
+          row[i] = signature.value;
+        else
+        {
+          row.push_back(signature.value);
+          signatures.push_back(signature.signature_name);
+        }
+      }
+      cube.push_back(row);
+    }
+  }
+
+  output << "\"Filename\"";
+  for(std::string signature: signatures)
+    output << ",\"" << signature << "\"";
+  output << std::endl;
+
+  for(int i = 0; i < filenames.size(); i++) {
+    output << "\"" << filenames[i] << "\"";
+
+    for(int j = 0; j < cube[i].size(); j++)
+      output << ",\"" << cube[i][j] << "\"";
+
+    output << std::endl;
+  }
+
+  output.flush();
+  output.close();
+}
+
+
+
+int find_in_vector(std::vector<std::string> &vector, std::string value)
+{
+  for(int i = 0; i < vector.size(); i++)
+  {
+    if (value.compare(vector[i]) == 0)
+      return i;
+  }
+  return -1;
+}

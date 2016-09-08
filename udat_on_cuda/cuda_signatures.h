@@ -13,13 +13,13 @@
 // 1 GB Batch limit
 //const int BATCH_SIZE = 1073741824;
 
-// 512 MB Batch Limit
-const int BATCH_SIZE = 536870912;
+// 256 MB Batch Limit
+const int BATCH_SIZE = 268435456;
 
 
 // SECTION A - Main Interface
 //------------------------------------------------------------------------------
-std::vector<ClassSignatures> compute(char *root_dir, char **class_dirs, int class_count);
+std::vector<ClassSignatures> compute_signatures(char *root_dir, char **class_dirs, int class_count);
 ClassSignatures              compute_class_signatures(std::string class_dir);
 std::vector<FileSignatures>  compute_signatures_on_cuda(std::vector<ImageMatrix *> &matrices);
 
@@ -55,6 +55,7 @@ template <class T>
 T*            move_data_to_cuda(T *data, int byte_size);
 
 std::vector<FileSignatures> &merge_signatures(std::vector<FileSignatures> &dst, std::vector<FileSignatures> &src);
+int                          find_in_vector(std::vector<std::string> &vector, std::string value);
 
 // SECTION C - Cuda Algorithms
 //------------------------------------------------------------------------------

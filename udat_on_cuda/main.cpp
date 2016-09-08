@@ -62,6 +62,11 @@ int load_subdirectories(char *directory, char **&filenames, int &buffer_size)
 
 int main(int argc, char *argv[])
 {
+  std::cout << "pix_data:" << sizeof(pix_data) << std::endl
+    << "double: " << sizeof(double) << std::endl
+    << "double *: " << sizeof(double) << std::endl
+    << "long: " << sizeof(long) << std::endl;
+
   if (argc < 2)
     print_help();
 
@@ -75,7 +80,7 @@ int main(int argc, char *argv[])
   printf("Found %i directories\n", dir_count);
   
   printf("Computing signatures\n");
-  std::vector<ClassSignatures> signatures = compute(directory, filenames, dir_count);
+  std::vector<ClassSignatures> signatures = compute_signatures(directory, filenames, dir_count);
 
   printf("Saving signatures to file\n");
   save_signatures(signatures, directory); 

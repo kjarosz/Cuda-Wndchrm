@@ -64,8 +64,17 @@ std::string DirectoryListing::next_file()
     auto find_data = *m_iterator;
     m_iterator++;
 
+    int i = 0;
+    char filename[256];
+    while(find_data.cFileName[i])
+    {
+      filename[i] = (char)find_data.cFileName[i];
+      i++;
+    }
+    filename[i] = '\0';
+
     std::stringstream path;
-    path << m_directory << "\\" << find_data.cFileName;
+    path << m_directory << "\\" << filename;
     if ( find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
     {
       m_subdirectory = new DirectoryListing(path.str());

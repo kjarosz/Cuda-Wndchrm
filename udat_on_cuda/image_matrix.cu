@@ -242,7 +242,7 @@ int ImageMatrix::LoadJPG(char *filename, int ColorMode)
 /* LoadTIFF
    filename -char *- full path to the image file
 */
-int ImageMatrix::LoadTIFF(char *filename)
+int ImageMatrix::LoadTIFF(const char *filename)
 {
 //#ifndef BORLAND_C
    unsigned long h, w, x, y, z;   /* (originally it's tdir_t) */
@@ -349,7 +349,7 @@ mean -double- a mean value to normalize for.
 stddev -double- standard deviation to normalize for.
 DynamicRange -long- change to a new dynamic range. Ignore if 0.
 */
-int ImageMatrix::OpenImage(char *image_file_name) //, int downsample, rect *bounding_rect, double mean, double stddev, long DynamicRange, double otsu_mask)
+int ImageMatrix::OpenImage(const char *image_file_name) //, int downsample, rect *bounding_rect, double mean, double stddev, long DynamicRange, double otsu_mask)
 {
 	int res = 0;
 #ifdef BORLAND_C

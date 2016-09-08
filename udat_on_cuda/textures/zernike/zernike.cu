@@ -25,7 +25,11 @@
 #include "../../cuda_signatures.h"
 #include "zernike.h"
 
+#include <iostream>
+#include <cuda.h>
+#include <cuda_runtime.h>
 #include <thrust/complex.h>
+#include "device_launch_parameters.h"
 
 //---------------------------------------------------------------------------
 
@@ -49,7 +53,7 @@ __device__ double mb_imgmoments(pix_data *pixels, int width, int height, int x, 
   /* Generate a matrix with the x coordinates of each pixel. */
   for (int row = 0; row < height; row++)
     for (int col = 0; col < width; col++)
-      xcoords[row*width + col] = pow(col + 1, x);
+      xcoords[row*width + col] = pow(double(col + 1), double(x));
 
   double sum = 0;
   /* Generate a matrix with the y coordinates of each pixel. */
@@ -60,9 +64,9 @@ __device__ double mb_imgmoments(pix_data *pixels, int width, int height, int x, 
        if (y != 0)
        {  
          if (x == 0) 
-           xcoords[row*width + col] = pow(row + 1, y);
+           xcoords[row*width + col] = pow(double(row + 1), double(y));
          else
-           xcoords[row*width + col] = pow(col + 1, y) * xcoords[row*width + col];
+           xcoords[row*width + col] = pow(double(col + 1), double(y)) * xcoords[row*width + col];
        }
        sum += xcoords[row*width + col] * get_pixel(pixels, width, height, col, row, 0).intensity;
     }
@@ -155,14 +159,15 @@ __global__ void cuda_zernike(CudaImages images, ZernikeData data)
     for (int x=0; x < cols; x++) 
     {
       pix_data pixel = get_pixel(images.pixels[thread_idx], 
-                                 images.widths[thread_idx], images.heights[thread_idx], 
+                                 images.widths[thread_idx], 
+                                 images.heights[thread_idx], 
                                  x, y, 0);
       if (pixel.intensity != 0)
       {  
-        data.Y[thread_idx][size] = y+1;
-        data.X[thread_idx][size] = x+1;
-        data.P[thread_idx][size] = pixel.intensity;
-        psum += pixel.intensity;
+        data.Y[thread_idx][size] = double(y+1);
+        data.X[thread_idx][size] = double(x+1);
+        data.P[thread_idx][size] = double(pixel.intensity);
+        psum += double(pixel.intensity);
         size++;
       }
     }
@@ -209,53 +214,53 @@ __global__ void cuda_zernike(CudaImages images, ZernikeData data)
 
 
 
-ZernikeData cuda_allocate_zernike_data(const CudaImages &images)
+ZernikeData cuda_allocate_zernike_data(const std::vector<ImageMatrix *> &images)
 {
   ZernikeData zdata;
 
-  cudaMalloc(&zdata.D,    images.count * sizeof(double));
-  cudaMemset(zdata.D,  0, images.count * sizeof(double));
+  cudaMalloc(&zdata.D,    images.size() * sizeof(double));
+  cudaMemset(zdata.D,  0, images.size() * sizeof(double));
 
-  cudaMalloc(&zdata.R,    images.count * sizeof(double));
-  cudaMemset(zdata.R,  0, images.count * sizeof(double));
+  cudaMalloc(&zdata.R,    images.size() * sizeof(double));
+  cudaMemset(zdata.R,  0, images.size() * sizeof(double));
 
-  double **Y             = new double*[images.count];
-  double **X             = new double*[images.count];
-  double **P             = new double*[images.count];
-  double **xcoords       = new double*[images.count];
-  double **output_arrays = new double*[images.count];
-
-  for(int i = 0; i < images.count; i++)
+  double **Y = new double*[images.size()];
+  double **X = new double*[images.size()];
+  double **P = new double*[images.size()];
+  double **xcoords = new double*[images.size()];
+  double **zvalues = new double*[images.size()];
+  for(int i = 0; i < images.size(); i++)
   {
-    long arr_size = images.widths[i] * images.heights[i] * sizeof(double);
+    long arr_size = images[i]->width * images[i]->height * sizeof(double);
     cudaMalloc(&Y[i], arr_size);
     cudaMalloc(&X[i], arr_size);
     cudaMalloc(&P[i], arr_size);
     cudaMalloc(&xcoords[i], arr_size);
-    cudaMalloc(&output_arrays[i], MAX_OUTPUT_SIZE * sizeof(double));
+    cudaMalloc(&zvalues[i], MAX_OUTPUT_SIZE * sizeof(double));
   }
 
-  cudaMalloc(&zdata.X, images.count * sizeof(double *));
-  cudaMemcpy(zdata.X, X, images.count * sizeof(double *), cudaMemcpyHostToDevice);
+  cudaMalloc(&zdata.X, images.size() * sizeof(double *));
+  cudaMemcpy(zdata.X, X, images.size() * sizeof(double *), cudaMemcpyHostToDevice);
   delete [] X;
 
-  cudaMalloc(&zdata.Y, images.count * sizeof(double *));
-  cudaMemcpy(zdata.Y, Y, images.count * sizeof(double *), cudaMemcpyHostToDevice);
+  cudaMalloc(&zdata.Y, images.size() * sizeof(double *));
+  cudaMemcpy(zdata.Y,Y, images.size() * sizeof(double* ), cudaMemcpyHostToDevice);
   delete [] Y;
 
-  cudaMalloc(&zdata.P, images.count * sizeof(double *));
-  cudaMemcpy(zdata.P, P, images.count * sizeof(double *), cudaMemcpyHostToDevice);
+  cudaMalloc(&zdata.P, images.size() * sizeof(double *));
+  cudaMemcpy(zdata.P, P, images.size() * sizeof(double* ), cudaMemcpyHostToDevice);
   delete [] P;
 
-  cudaMalloc(&zdata.xcoords, images.count * sizeof(double *));
-  cudaMemcpy(zdata.xcoords, xcoords, images.count * sizeof(double *), cudaMemcpyHostToDevice);
+  cudaMalloc(&zdata.xcoords, images.size() * sizeof(double *));
+  cudaMemcpy(zdata.xcoords, xcoords, images.size() * sizeof(double* ), cudaMemcpyHostToDevice);
   delete [] xcoords;
 
-  cudaMalloc(&zdata.zvalues, images.count * sizeof(double *));
-  cudaMemcpy(zdata.zvalues, output_arrays, images.count * sizeof(double *), cudaMemcpyHostToDevice);
-  delete [] output_arrays;
+  cudaMalloc(&zdata.zvalues, images.size() * sizeof(double *));
+  cudaMemcpy(zdata.zvalues, zvalues, images.size() * sizeof(double* ), cudaMemcpyHostToDevice);
+  delete [] zvalues;
 
-  cudaMalloc(&zdata.output_size, images.count * sizeof(long));
+  cudaMalloc(&zdata.output_size, images.size() * sizeof(long));
+  cudaMemset(zdata.output_size, 0, images.size() * sizeof(long));
 
   return zdata;
 }
@@ -267,6 +272,11 @@ std::vector<FileSignatures> cuda_get_zernike_signatures(const std::vector<ImageM
 {
   long *output_size = new long[image_count];
   cudaMemcpy(output_size, data.output_size, image_count * sizeof(long), cudaMemcpyDeviceToHost);
+  cudaError error = cudaGetLastError();
+  if (error != cudaSuccess)
+    std::cout << error << std::endl
+      << cudaGetErrorName(error) << std::endl
+      << cudaGetErrorString(error) << std::endl;
 
   double **zvalues = new double*[image_count];
   cudaMemcpy(zvalues, data.zvalues, image_count * sizeof( double * ), cudaMemcpyDeviceToHost);

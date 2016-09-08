@@ -90,6 +90,9 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <CudaCompile>
       <GenerateRelocatableDeviceCode>Yes</GenerateRelocatableDeviceCode>
     </CudaCompile>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -129,6 +132,9 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
 copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -175,7 +181,9 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="colors\FuzzyCalc.cpp" />
     <ClCompile Include="file_manip.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="textures\zernike\zernike.cu" />
+    <CudaCompile Include="textures\zernike\zernike.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
     <ClCompile Include="utils\DirectoryListing.cpp" />
     <ClCompile Include="utils\Utils.cpp" />
   </ItemGroup>

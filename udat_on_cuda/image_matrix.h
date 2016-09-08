@@ -87,11 +87,11 @@ public:
 	int ColorMode;                                  /* can be cmRGB or cmHSV                */
 	unsigned short bits;                            /* the number of intensity bits (8,16, etc) */
 	int width, height, depth;                       /* width and height of the picture      */
-	int LoadTIFF(char *filename);
-	int OpenImage(char *image_file_name);           /* load an image of any supported format */
+	int LoadTIFF(const char *filename);
+	int OpenImage(const char *image_file_name);     /* load an image of any supported format */
 
 	ImageMatrix();                                  /* basic constructor                    */
-	ImageMatrix(int width, int height, int depth);    /* construct a new empty matrix         */
+	ImageMatrix(int width, int height, int depth);  /* construct a new empty matrix         */
 	ImageMatrix(ImageMatrix *matrix, int x1, int y1, int x2, int y2, int z1, int z2);  /* create a new matrix which is part of the original one */
 	~ImageMatrix();                                 /* destructor */
 	ImageMatrix *duplicate();                       /* create a new identical matrix        */
