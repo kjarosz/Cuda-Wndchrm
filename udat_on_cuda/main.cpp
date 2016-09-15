@@ -1,12 +1,15 @@
 #include <iostream>
+#include <sstream>
 #include <cstring>
 #include <cstdio>
 #include <vector>
 
-
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 #include "file_manip.h"
 #include "cuda_signatures.h"
+#include "utils/Utils.h"
 
 
 
@@ -62,11 +65,6 @@ int load_subdirectories(char *directory, char **&filenames, int &buffer_size)
 
 int main(int argc, char *argv[])
 {
-  std::cout << "pix_data:" << sizeof(pix_data) << std::endl
-    << "double: " << sizeof(double) << std::endl
-    << "double *: " << sizeof(double) << std::endl
-    << "long: " << sizeof(long) << std::endl;
-
   if (argc < 2)
     print_help();
 
@@ -88,6 +86,8 @@ int main(int argc, char *argv[])
   printf("Done\n");
 
   free_filename_buffers(filenames, filename_buffer_size);
+
+  system("pause");
 
   return 0;
 }

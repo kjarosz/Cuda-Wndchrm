@@ -1,6 +1,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <cstdio>
 
 
 
@@ -9,6 +10,7 @@
 #include "utils/DirectoryListing.h"
 #include "histogram.h"
 #include "cuda_signatures.h"
+#include "utils/Utils.h"
 
 
 
@@ -238,23 +240,30 @@ std::vector<FileSignatures> compute_zernike_on_cuda(const std::vector<ImageMatri
 
   ZernikeData zernike_data = cuda_allocate_zernike_data(images);
   cuda_zernike<<< 1, cuda_images.count >>>(cuda_images, zernike_data);
-  cudaDeviceSynchronize();
+  cudaError sync_error = cudaGetLastError();
+  cudaError async_error = cudaDeviceSynchronize();
 
   std::vector<FileSignatures> signatures;
-  if(cudaPeekAtLastError() == cudaSuccess)
+  if(sync_error == cudaSuccess && async_error == cudaSuccess)
   {
     signatures = cuda_get_zernike_signatures(images, zernike_data, cuda_images.count);
   } 
   else 
   {
-    cudaError errorCode = cudaGetLastError();
-    std::cout << "Error occurred when executing on CUDA (" << errorCode << ")" << std::endl
-        << "Name: " << cudaGetErrorName << std::endl
-        << "Description: " << cudaGetErrorString(errorCode) << std::endl << std::endl;
+    if (sync_error != cudaSuccess)
+      print_cuda_error(sync_error, "Synchronous CUDA error occurred");
+
+    if (async_error != cudaSuccess)
+      print_cuda_error(async_error, "Asynchronous CUDA error occurred");
+//    cudaError errorCode = cudaGetLastError();
+//    std::cout << "Error occurred when executing on CUDA (" << errorCode << ")" << std::endl
+//        << "Name: " << cudaGetErrorName << std::endl
+//        << "Description: " << cudaGetErrorString(errorCode) << std::endl << std::endl;
   }
   cuda_delete_zernike_data(zernike_data, cuda_images.count);
   return signatures;
 }
+
 
 
 //void CUDASignatures::compute_haralick_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits)
@@ -327,10 +336,12 @@ void save_signatures(std::vector<ClassSignatures> &class_signatures, char *direc
   strcat(buffer, "\\");
   strcat(buffer, "output.csv");
 
-  std::ofstream output(buffer);
-  if (!output.good())
-  {
-    printf("Failed to open file \"%s\"", buffer);
+  std::ofstream output;
+  try {
+    output.open(buffer);
+  } catch (std::system_error &e) {
+    std::cout << "Failed to open file \"" << buffer << "\"" << std::endl
+              << e.what() << std::endl;
     return;
   }
 

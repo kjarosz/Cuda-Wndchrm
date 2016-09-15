@@ -19,6 +19,9 @@
     <CudaCompile Include="textures\zernike\zernike.cu">
       <Filter>Source\textures\zernike</Filter>
     </CudaCompile>
+    <CudaCompile Include="textures\zernike\cuda_complex.cu">
+      <Filter>Source\textures\zernike</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="file_manip.cpp">
@@ -85,6 +88,9 @@
     </ClInclude>
     <ClInclude Include="utils\Utils.h">
       <Filter>Headers\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="textures\zernike\cuda_complex.h">
+      <Filter>Headers\textures\zernike</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

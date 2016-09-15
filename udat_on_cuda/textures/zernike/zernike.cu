@@ -30,6 +30,7 @@
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
 #include "device_launch_parameters.h"
+#include "cuda_complex.h"
 
 //---------------------------------------------------------------------------
 
@@ -48,27 +49,24 @@ __device__ double factorial(double n)
    calculates the moment MXY for IMAGE
 
 */
-__device__ double mb_imgmoments(pix_data *pixels, int width, int height, int x, int y, double *xcoords)
+__device__ double mb_imgmoments(pix_data *pixels, int width, int height, int x, int y)
 { 
-  /* Generate a matrix with the x coordinates of each pixel. */
-  for (int row = 0; row < height; row++)
-    for (int col = 0; col < width; col++)
-      xcoords[row*width + col] = pow(double(col + 1), double(x));
-
+  double xcoord;
   double sum = 0;
   /* Generate a matrix with the y coordinates of each pixel. */
   for (int col = 0; col < width; col++) 
   {
     for (int row = 0; row < height; row++)
     {
+       xcoord = pow((double)(col+1), (double)x);
        if (y != 0)
        {  
          if (x == 0) 
-           xcoords[row*width + col] = pow(double(row + 1), double(y));
+           xcoord = pow(double(row + 1), double(y));
          else
-           xcoords[row*width + col] = pow(double(col + 1), double(y)) * xcoords[row*width + col];
+           xcoord = pow(double(col + 1), double(y)) * xcoord;
        }
-       sum += xcoords[row*width + col] * get_pixel(pixels, width, height, col, row, 0).intensity;
+       sum += xcoord * get_pixel(pixels, width, height, col, row, 0).intensity;
     }
   }
 
@@ -77,7 +75,57 @@ __device__ double mb_imgmoments(pix_data *pixels, int width, int height, int x, 
 
 
 
-__device__ thrust::complex<double> Rpolar(double rho, double theta)
+__device__ void mb_Znl(long n, long l, double *X, double *Y, double *P, int size, double *out_r, double *out_i)
+{
+  double x, y, p ;   /* individual values of X, Y, P */
+  int i,m;
+  fcomplex sum;              /* Accumulator for complex moments */
+  fcomplex Vnl;              /* Inner sum in Zernike calculations */
+  double* preal;             /* Real part of return value */
+  double* pimag;             /* Imag part of return value */
+
+  sum = Complex (0.0, 0.0);
+
+  for(i = 0 ; i < size ; i++) {
+    x = X[i] ;
+    y = Y[i] ;
+    p = P[i] ;
+
+    Vnl = Complex (0.0, 0.0);
+    for( m = 0; m <= (n-l)/2; m++) {
+      double tmp = (pow((double)-1.0,(double)m)) * ( factorial(n-m) ) /
+				( factorial(m) * (factorial((n - 2.0*m + l) / 2.0)) *
+	  			(factorial((n - 2.0*m - l) / 2.0)) ) *
+				( pow( sqrt(x*x + y*y), (double)(n - 2*m)) );
+
+	  Vnl = Cadd (Vnl, RCmul(tmp, Rpolar(1.0, l*atan2(y,x))) );
+      /*
+       NOTE: This function did not work with the following:
+        ...pow((x*x + y*y), (double)(n/2 -m))...
+        perhaps pow does not work properly with a non-integer
+        second argument.
+       'not work' means that the output did not match the 'old'
+        Zernike calculation routines.
+      */
+    }
+
+    /* sum += p * conj(Vnl) ; */
+	sum = Cadd(sum, RCmul(p, Conjg(Vnl)));
+  }
+
+  /* sum *= (n+1)/3.14159265 ; */
+  sum = RCmul((n+1)/3.14159265, sum);
+
+
+  /* Assign the returned value */
+  *out_r = sum.r ;
+  *out_i = sum.i ;
+
+}
+
+
+
+__device__ thrust::complex<double> Rpolar2(double rho, double theta)
 {
   return thrust::complex<double>(
       rho * cos(theta),
@@ -92,65 +140,60 @@ __device__ thrust::complex<double> Rpolar(double rho, double theta)
   X and Y and intensity vector P.  X, Y, and P must have the same
   length
 */
-__device__ void mb_Znl(long n, long l, double *X, double *Y, double *P, int size, double *out_r, double *out_i)
-{ 
-  // Accumulator for complex moments
-  thrust::complex<double> sum = thrust::complex<double> (0.0, 0.0);
-  for(int i = 0 ; i < size ; i++) 
-  {
-    double x = X[i] ;
-    double y = Y[i] ;
-    double p = P[i] ;
-
-    // Inner sum in Zernike calculations
-    thrust::complex<double> Vnl = thrust::complex<double> (0.0, 0.0);
-    for(int m = 0; m <= (n-l)/2; m++) 
-    {
-      double tmp = pow(double(-1.0), double(m)) * factorial(n-m) /
-				( factorial(m) * factorial((n - 2.0*m + l) / 2.0) * factorial((n - 2.0*m - l) / 2.0) ) *
-				( pow(sqrt(X[i]*X[i] + Y[i]*Y[i]), double(n - 2*m)) );
-
-      Vnl = Vnl + tmp * Rpolar(1.0, l * atan2(Y[i], X[i])) ;
-      /*
-       NOTE: This function did not work with the following:
-        ...pow((x*x + y*y), (double)(n/2 -m))...
-        perhaps pow does not work properly with a non-integer
-        second argument.
-       'not work' means that the output did not match the 'old'
-        Zernike calculation routines.
-      */
-    }
-
-    sum = sum + p * thrust::conj<double>(Vnl);
-  }
-
-  /* sum *= (n+1)/3.14159265 ; */
-  sum = ((n+1)/3.14159265) * sum;
-
-
-  /* Assign the returned value */
-  *out_r = sum.real() ;
-  *out_i = sum.imag() ;
-}
+//__device__ void mb_Znl(long n, long l, double *X, double *Y, double *P, int size, double *out_r, double *out_i)
+//{ 
+//  // Accumulator for complex moments
+//  thrust::complex<double> sum = thrust::complex<double> (0.0, 0.0);
+//  for(int i = 0 ; i < size ; i++) 
+//  {
+//    // Inner sum in Zernike calculations
+//    thrust::complex<double> Vnl = thrust::complex<double> (0.0, 0.0);
+//    for(int m = 0; m <= (n-l)/2; m++) 
+//    {
+//      double tmp = pow(double(-1.0), double(m)) * factorial(n-m) /
+//				( factorial(m) * factorial((n - 2.0*m + l) / 2.0) * factorial((n - 2.0*m - l) / 2.0) ) *
+//				( pow(sqrt(X[i]*X[i] + Y[i]*Y[i]), double(n - 2*m)) );
+//
+//      Vnl = Vnl + tmp * Rpolar2(1.0, l * atan2(Y[i], X[i])) ;
+//      /*
+//       NOTE: This function did not work with the following:
+//        ...pow((x*x + y*y), (double)(n/2 -m))...
+//        perhaps pow does not work properly with a non-integer
+//        second argument.
+//       'not work' means that the output did not match the 'old'
+//        Zernike calculation routines.
+//      */
+//    }
+//
+//    sum = sum + P[i] * thrust::conj<double>(Vnl);
+//  }
+//
+//  /* sum *= (n+1)/3.14159265 ; */
+//  sum = ((n+1)/3.14159265) * sum;
+//
+//
+//  /* Assign the returned value */
+//  *out_r = sum.real() ;
+//  *out_i = sum.imag() ;
+//}
 
 
 __global__ void cuda_zernike(CudaImages images, ZernikeData data)
 {  
-  int thread_idx = blockIdx.x * blockDim.x + threadIdx.x;
-
+  int th_idx = blockIdx.x * blockDim.x + threadIdx.x;
 
   int rows, cols;
-  if (data.D[thread_idx] <= 0) 
-    data.D[thread_idx] = 15;
+  if (data.D[th_idx] <= 0) 
+    data.D[th_idx] = 15;
 
-  if (data.R[thread_idx] <= 0)
+  if (data.R[th_idx] <= 0)
   {  
-    rows = images.heights[thread_idx];
-    cols = images.widths[thread_idx];
-    data.R[thread_idx] = rows / 2;
+    rows = images.heights[th_idx];
+    cols = images.widths[th_idx];
+    data.R[th_idx] = rows / 2;
   }
 
-  /* Find all non-zero pixel coordinates and values */
+  // Find all non-zero pixel coordinates and values 
   double psum = 0;
 
   int size = 0;
@@ -158,58 +201,55 @@ __global__ void cuda_zernike(CudaImages images, ZernikeData data)
   {
     for (int x=0; x < cols; x++) 
     {
-      pix_data pixel = get_pixel(images.pixels[thread_idx], 
-                                 images.widths[thread_idx], 
-                                 images.heights[thread_idx], 
+      pix_data pixel = get_pixel(images.pixels[th_idx], 
+                                 images.widths[th_idx], 
+                                 images.heights[th_idx], 
                                  x, y, 0);
       if (pixel.intensity != 0)
       {  
-        data.Y[thread_idx][size] = double(y+1);
-        data.X[thread_idx][size] = double(x+1);
-        data.P[thread_idx][size] = double(pixel.intensity);
+        data.Y[th_idx][size] = double(y+1);
+        data.X[th_idx][size] = double(x+1);
+        data.P[th_idx][size] = double(pixel.intensity);
         psum += double(pixel.intensity);
         size++;
       }
     }
   }
 
-  /* Normalize the coordinates to the center of mass and normalize
-     pixel distances using the maximum radius argument (R) */
-  double moment10 = mb_imgmoments(images.pixels[thread_idx], images.widths[thread_idx], images.heights[thread_idx], 
-                                  1, 0, data.xcoords[thread_idx]);
-  double moment00 = mb_imgmoments(images.pixels[thread_idx], images.widths[thread_idx], images.heights[thread_idx], 
-                                  0, 0, data.xcoords[thread_idx]);
-  double moment01 = mb_imgmoments(images.pixels[thread_idx], images.widths[thread_idx], images.heights[thread_idx], 
-                                  0, 1, data.xcoords[thread_idx]);
+  // Normalize the coordinates to the center of mass and normalize
+  // pixel distances using the maximum radius argument (R) 
+  double moment10 = mb_imgmoments(images.pixels[th_idx], images.widths[th_idx], images.heights[th_idx], 1, 0);
+  double moment00 = mb_imgmoments(images.pixels[th_idx], images.widths[th_idx], images.heights[th_idx], 0, 0);
+  double moment01 = mb_imgmoments(images.pixels[th_idx], images.widths[th_idx], images.heights[th_idx], 0, 1);
 
   int size2 = 0;
   for (int a = 0; a < size; a++)
   { 
-    data.X[thread_idx][size2] = (data.X[thread_idx][a] - moment10/moment00)/data.R[thread_idx];
-    data.Y[thread_idx][size2] = (data.Y[thread_idx][a] - moment01/moment00)/data.R[thread_idx];
-    data.P[thread_idx][size2] = data.P[thread_idx][a] / psum;
+    data.X[th_idx][size2] = (data.X[th_idx][a] - moment10/moment00)/data.R[th_idx];
+    data.Y[th_idx][size2] = (data.Y[th_idx][a] - moment01/moment00)/data.R[th_idx];
+    data.P[th_idx][size2] = data.P[th_idx][a] / psum;
 
-    double squareX = data.X[thread_idx][size2] * data.X[thread_idx][size2];
-    double squareY = data.Y[thread_idx][size2] * data.Y[thread_idx][size2];
+    double squareX = data.X[th_idx][size2] * data.X[th_idx][size2];
+    double squareY = data.Y[th_idx][size2] * data.Y[th_idx][size2];
     double radius = sqrt( squareX + squareY );
     if (radius <= 1.0) 
-      size2 = size2++;
+      size2++;
   }
 
   int size3 = 0;
-  for (int n = 0; n <= data.D[thread_idx]; n++) 
+  for (int n = 0; n <= data.D[th_idx]; n++) 
   {
     for (int l = 0; l <= n; l++) 
     {
       if (((n - l) % 2) == 0)
       {  
         double preal, pimag;
-        mb_Znl(n, l, data.X[thread_idx], data.Y[thread_idx], data.P[thread_idx], size2, &preal, &pimag);
-        data.zvalues[thread_idx][size3++] = fabs(sqrt(preal*preal + pimag*pimag));
+        mb_Znl(n, l, data.X[th_idx], data.Y[th_idx], data.P[th_idx], size2, &preal, &pimag);
+        data.zvalues[th_idx][size3++] = fabs(sqrt(preal*preal + pimag*pimag));
       }
     }
   }
-  data.output_size[thread_idx] = size3;
+  data.output_size[th_idx] = size3;
 }
 
 

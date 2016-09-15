@@ -29,3 +29,13 @@ std::string print_windows_error()
 
   return error;
 }
+
+
+
+void print_cuda_error(cudaError error, std::string message)
+{
+  std::cout << message << " (" << error << ")"      << std::endl
+    << "Name: "        << cudaGetErrorName(error)   << std::endl
+    << "Description: " << cudaGetErrorString(error) << std::endl
+    << std::endl;
+}

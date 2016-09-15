@@ -25,7 +25,7 @@ struct ZernikeData
 
 __global__ void cuda_zernike(CudaImages images, ZernikeData data);
 __device__ void mb_Znl(long n, long l, double *X, double *Y, double *P, int size, double *out_r, double *out_i);
-__device__ thrust::complex<double> Rpolar(double rho, double theta); 
+__device__ thrust::complex<double> Rpolar2(double rho, double theta); 
 __device__ double mb_imgmoments(pix_data *pixels, int width, int height, int x, int y, double *xcoords);
 __device__ double factorial(double n);
 

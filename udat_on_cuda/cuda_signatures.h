@@ -16,6 +16,8 @@
 // 256 MB Batch Limit
 const int BATCH_SIZE = 268435456;
 
+const int MAXIMUM_CUDA_THREADS = 356;
+
 
 // SECTION A - Main Interface
 //------------------------------------------------------------------------------
