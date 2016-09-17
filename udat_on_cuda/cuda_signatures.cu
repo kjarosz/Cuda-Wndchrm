@@ -272,7 +272,6 @@ std::vector<FileSignatures> compute_haralick_on_cuda(const std::vector<ImageMatr
   }
   cuda_delete_haralick_data(images, haralick_data);
   return signatures;
-
 }
 
 //void CUDASignatures::compute_histogram_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits)
