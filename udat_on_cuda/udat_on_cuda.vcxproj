@@ -175,6 +175,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="textures\haralick\haralick.h" />
     <ClInclude Include="textures\zernike\cuda_complex.h" />
     <ClInclude Include="textures\zernike\zernike.h" />
+    <ClInclude Include="utils\cuda_utils.h" />
     <ClInclude Include="utils\DirectoryListing.h" />
     <ClInclude Include="utils\Utils.h" />
   </ItemGroup>

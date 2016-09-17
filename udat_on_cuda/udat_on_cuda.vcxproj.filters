@@ -92,6 +92,9 @@
     <ClInclude Include="textures\zernike\cuda_complex.h">
       <Filter>Headers\textures\zernike</Filter>
     </ClInclude>
+    <ClInclude Include="utils\cuda_utils.h">
+      <Filter>Headers\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

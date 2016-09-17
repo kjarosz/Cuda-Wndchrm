@@ -23,14 +23,15 @@
 #pragma hdrstop
 
 #include "../../cuda_signatures.h"
+#include "../../utils/cuda_utils.h"
+#include "cuda_complex.h"
 #include "zernike.h"
 
 #include <iostream>
+#include <sstream>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <thrust/complex.h>
 #include "device_launch_parameters.h"
-#include "cuda_complex.h"
 
 //---------------------------------------------------------------------------
 
@@ -81,8 +82,6 @@ __device__ void mb_Znl(long n, long l, double *X, double *Y, double *P, int size
   int i,m;
   fcomplex sum;              /* Accumulator for complex moments */
   fcomplex Vnl;              /* Inner sum in Zernike calculations */
-  double* preal;             /* Real part of return value */
-  double* pimag;             /* Imag part of return value */
 
   sum = Complex (0.0, 0.0);
 
@@ -123,59 +122,6 @@ __device__ void mb_Znl(long n, long l, double *X, double *Y, double *P, int size
 
 }
 
-
-
-__device__ thrust::complex<double> Rpolar2(double rho, double theta)
-{
-  return thrust::complex<double>(
-      rho * cos(theta),
-      rho * sin(theta)
-    );
-}
-
-
-/* mb_Znl
-  Zernike moment generating function.  The moment of degree n and
-  angular dependence l for the pixels defined by coordinate vectors
-  X and Y and intensity vector P.  X, Y, and P must have the same
-  length
-*/
-//__device__ void mb_Znl(long n, long l, double *X, double *Y, double *P, int size, double *out_r, double *out_i)
-//{ 
-//  // Accumulator for complex moments
-//  thrust::complex<double> sum = thrust::complex<double> (0.0, 0.0);
-//  for(int i = 0 ; i < size ; i++) 
-//  {
-//    // Inner sum in Zernike calculations
-//    thrust::complex<double> Vnl = thrust::complex<double> (0.0, 0.0);
-//    for(int m = 0; m <= (n-l)/2; m++) 
-//    {
-//      double tmp = pow(double(-1.0), double(m)) * factorial(n-m) /
-//				( factorial(m) * factorial((n - 2.0*m + l) / 2.0) * factorial((n - 2.0*m - l) / 2.0) ) *
-//				( pow(sqrt(X[i]*X[i] + Y[i]*Y[i]), double(n - 2*m)) );
-//
-//      Vnl = Vnl + tmp * Rpolar2(1.0, l * atan2(Y[i], X[i])) ;
-//      /*
-//       NOTE: This function did not work with the following:
-//        ...pow((x*x + y*y), (double)(n/2 -m))...
-//        perhaps pow does not work properly with a non-integer
-//        second argument.
-//       'not work' means that the output did not match the 'old'
-//        Zernike calculation routines.
-//      */
-//    }
-//
-//    sum = sum + P[i] * thrust::conj<double>(Vnl);
-//  }
-//
-//  /* sum *= (n+1)/3.14159265 ; */
-//  sum = ((n+1)/3.14159265) * sum;
-//
-//
-//  /* Assign the returned value */
-//  *out_r = sum.real() ;
-//  *out_i = sum.imag() ;
-//}
 
 
 __global__ void cuda_zernike(CudaImages images, ZernikeData data)
@@ -254,9 +200,23 @@ __global__ void cuda_zernike(CudaImages images, ZernikeData data)
 
 
 
+long cuda_zernike_mem_estimate(ImageMatrix *image)
+{
+  return /* D */        sizeof(double) +
+         /* R */        sizeof(double) +
+         /* Y */        sizeof(double*) + sizeof(double) * image->width * image->height +
+         /* X */        sizeof(double*) + sizeof(double) * image->width * image->height +
+         /* P */        sizeof(double*) + sizeof(double) * image->width * image->height +
+         /* zvalues */  sizeof(double*) + sizeof(double) * MAX_OUTPUT_SIZE +
+         /* out_size */ sizeof(long);
+}
+
+
+
 ZernikeData cuda_allocate_zernike_data(const std::vector<ImageMatrix *> &images)
 {
   ZernikeData zdata;
+  memset(&zdata, 0, sizeof(ZernikeData));
 
   cudaMalloc(&zdata.D,    images.size() * sizeof(double));
   cudaMemset(zdata.D,  0, images.size() * sizeof(double));
@@ -264,43 +224,19 @@ ZernikeData cuda_allocate_zernike_data(const std::vector<ImageMatrix *> &images)
   cudaMalloc(&zdata.R,    images.size() * sizeof(double));
   cudaMemset(zdata.R,  0, images.size() * sizeof(double));
 
-  double **Y = new double*[images.size()];
-  double **X = new double*[images.size()];
-  double **P = new double*[images.size()];
-  double **xcoords = new double*[images.size()];
-  double **zvalues = new double*[images.size()];
-  for(int i = 0; i < images.size(); i++)
-  {
-    long arr_size = images[i]->width * images[i]->height * sizeof(double);
-    cudaMalloc(&Y[i], arr_size);
-    cudaMalloc(&X[i], arr_size);
-    cudaMalloc(&P[i], arr_size);
-    cudaMalloc(&xcoords[i], arr_size);
-    cudaMalloc(&zvalues[i], MAX_OUTPUT_SIZE * sizeof(double));
-  }
-
-  cudaMalloc(&zdata.X, images.size() * sizeof(double *));
-  cudaMemcpy(zdata.X, X, images.size() * sizeof(double *), cudaMemcpyHostToDevice);
-  delete [] X;
-
-  cudaMalloc(&zdata.Y, images.size() * sizeof(double *));
-  cudaMemcpy(zdata.Y,Y, images.size() * sizeof(double* ), cudaMemcpyHostToDevice);
-  delete [] Y;
-
-  cudaMalloc(&zdata.P, images.size() * sizeof(double *));
-  cudaMemcpy(zdata.P, P, images.size() * sizeof(double* ), cudaMemcpyHostToDevice);
-  delete [] P;
-
-  cudaMalloc(&zdata.xcoords, images.size() * sizeof(double *));
-  cudaMemcpy(zdata.xcoords, xcoords, images.size() * sizeof(double* ), cudaMemcpyHostToDevice);
-  delete [] xcoords;
-
-  cudaMalloc(&zdata.zvalues, images.size() * sizeof(double *));
-  cudaMemcpy(zdata.zvalues, zvalues, images.size() * sizeof(double* ), cudaMemcpyHostToDevice);
-  delete [] zvalues;
-
   cudaMalloc(&zdata.output_size, images.size() * sizeof(long));
   cudaMemset(zdata.output_size, 0, images.size() * sizeof(long));
+
+  unsigned int *sizes = new unsigned int[images.size()];
+  for(unsigned int i = 0; i < images.size(); i++)
+    sizes[i] = images[i]->width * images[i]->height;
+
+  cuda_alloc_multivar_array<double>(sizes,       images.size(), zdata.Y);
+  cuda_alloc_multivar_array<double>(sizes,       images.size(), zdata.X);
+  cuda_alloc_multivar_array<double>(sizes,       images.size(), zdata.P);
+  cuda_alloc_cube_array<double>(MAX_OUTPUT_SIZE, images.size(), zdata.zvalues);
+
+  delete [] sizes;
 
   return zdata;
 }
@@ -310,19 +246,15 @@ ZernikeData cuda_allocate_zernike_data(const std::vector<ImageMatrix *> &images)
 std::vector<FileSignatures> cuda_get_zernike_signatures(const std::vector<ImageMatrix *> &images, 
                                                         const ZernikeData &data, int image_count)
 {
+  cudaError status;
   long *output_size = new long[image_count];
-  cudaMemcpy(output_size, data.output_size, image_count * sizeof(long), cudaMemcpyDeviceToHost);
-  cudaError error = cudaGetLastError();
-  if (error != cudaSuccess)
-    std::cout << error << std::endl
-      << cudaGetErrorName(error) << std::endl
-      << cudaGetErrorString(error) << std::endl;
+  status = cudaMemcpy(output_size, data.output_size, image_count * sizeof(long), cudaMemcpyDeviceToHost);
 
   double **zvalues = new double*[image_count];
-  cudaMemcpy(zvalues, data.zvalues, image_count * sizeof( double * ), cudaMemcpyDeviceToHost);
+  status = cudaMemcpy(zvalues, data.zvalues, image_count * sizeof( double * ), cudaMemcpyDeviceToHost);
   for(int i = 0; i < image_count; i++) {
     double *zvals = new double[output_size[i]];
-    cudaMemcpy(zvals, zvalues[i], output_size[i] * sizeof(double), cudaMemcpyDeviceToHost);
+    status = cudaMemcpy(zvals, zvalues[i], output_size[i] * sizeof(double), cudaMemcpyDeviceToHost);
     zvalues[i] = zvals;
   }
 
@@ -365,42 +297,15 @@ std::vector<FileSignatures> cuda_get_zernike_signatures(const std::vector<ImageM
 
 void cuda_delete_zernike_data(ZernikeData &data, int image_count)
 {
-  cudaFree(&data.D);
-  cudaFree(&data.R);
+  cudaError status;
+  status = cudaFree(data.D);
+  status = cudaFree(data.R);
+  status = cudaFree(data.output_size);
 
-  double **Y       = new double*[image_count];
-  double **X       = new double*[image_count];
-  double **P       = new double*[image_count];
-  double **xcoords = new double*[image_count];
-  double **zvalues = new double*[image_count];
-
-  cudaMemcpy(Y,       data.Y,       image_count * sizeof(double *), cudaMemcpyDeviceToHost);
-  cudaMemcpy(X,       data.X,       image_count * sizeof(double *), cudaMemcpyDeviceToHost);
-  cudaMemcpy(P,       data.P,       image_count * sizeof(double *), cudaMemcpyDeviceToHost);
-  cudaMemcpy(xcoords, data.xcoords, image_count * sizeof(double *), cudaMemcpyDeviceToHost);
-  cudaMemcpy(zvalues, data.zvalues, image_count * sizeof(double *), cudaMemcpyDeviceToHost);
-
-  for(int i = 0; i < image_count; i++)
-  {
-    cudaFree(&Y[i]);
-    cudaFree(&X[i]);
-    cudaFree(&P[i]);
-    cudaFree(&xcoords[i]);
-    cudaFree(&zvalues[i]);
-  }
-
-  delete [] Y;
-  delete [] X;
-  delete [] P;
-  delete [] xcoords;
-  delete [] zvalues;
-
-  cudaFree(data.Y);
-  cudaFree(data.X);
-  cudaFree(data.P);
-  cudaFree(data.xcoords);
-  cudaFree(data.zvalues);
-  cudaFree(data.output_size);
+  cuda_free_multidim_arr<double>(data.Y,       image_count);
+  cuda_free_multidim_arr<double>(data.X,       image_count);
+  cuda_free_multidim_arr<double>(data.P,       image_count);
+  cuda_free_multidim_arr<double>(data.zvalues, image_count);
 
   memset(&data, 0, sizeof(ZernikeData));
 }

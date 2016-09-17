@@ -11,6 +11,7 @@
 #include "histogram.h"
 #include "cuda_signatures.h"
 #include "utils/Utils.h"
+#include "utils/cuda_utils.h"
 
 
 
@@ -164,16 +165,15 @@ void move_images_to_cuda(std::vector<ImageMatrix *> &images, CudaImages &cuda_im
     heights[i] = images[i]->height;
     depths[i]  = images[i]->depth;
     bits[i]    = images[i]->bits;
-    pixels[i]  = move_data_to_cuda<pix_data>(images[i]->data, widths[i] * heights[i] * depths[i]);
-
+    move_host_to_cuda<pix_data>(images[i]->data, widths[i] * heights[i] * depths[i], pixels[i]);
   }
 
   // Move data from RAM to VRAM
-  cuda_images.pixels  = move_data_to_cuda<pix_data*>(pixels,  cuda_images.count);
-  cuda_images.widths  = move_data_to_cuda<int>      (widths,  cuda_images.count);
-  cuda_images.heights = move_data_to_cuda<int>      (heights, cuda_images.count);
-  cuda_images.depths  = move_data_to_cuda<int>      (depths,  cuda_images.count);
-  cuda_images.bits    = move_data_to_cuda<int>      (bits,    cuda_images.count);
+  move_host_to_cuda<pix_data*>(pixels,  cuda_images.count, cuda_images.pixels);
+  move_host_to_cuda<int>      (widths,  cuda_images.count, cuda_images.widths);
+  move_host_to_cuda<int>      (heights, cuda_images.count, cuda_images.heights);
+  move_host_to_cuda<int>      (depths,  cuda_images.count, cuda_images.depths);
+  move_host_to_cuda<int>      (bits,    cuda_images.count, cuda_images.bits);
 
   delete [] pixels;
   delete [] depths;
@@ -186,11 +186,7 @@ void move_images_to_cuda(std::vector<ImageMatrix *> &images, CudaImages &cuda_im
 
 void delete_cuda_images(CudaImages &cuda_images)
 {
-  for(int i = 0; i < cuda_images.count; i++)
-  {
-    cudaFree(cuda_images.pixels[i]);
-  }
-  cudaFree(cuda_images.pixels);
+  cuda_free_multidim_arr<pix_data>(cuda_images.pixels, cuda_images.count);
   cudaFree(cuda_images.depths);
   cudaFree(cuda_images.heights);
   cudaFree(cuda_images.widths);
@@ -199,16 +195,6 @@ void delete_cuda_images(CudaImages &cuda_images)
   memset(&cuda_images, 0, sizeof(CudaImages));
 }
 
-
-
-template <class T>
-T* move_data_to_cuda(T *data, int size)
-{
-  T *cuda_data;
-  cudaMalloc(&cuda_data, size * sizeof(T));
-  cudaMemcpy(cuda_data, data, size * sizeof(T), cudaMemcpyHostToDevice);
-  return cuda_data;
-}
 
 
 
@@ -255,10 +241,6 @@ std::vector<FileSignatures> compute_zernike_on_cuda(const std::vector<ImageMatri
 
     if (async_error != cudaSuccess)
       print_cuda_error(async_error, "Asynchronous CUDA error occurred");
-//    cudaError errorCode = cudaGetLastError();
-//    std::cout << "Error occurred when executing on CUDA (" << errorCode << ")" << std::endl
-//        << "Name: " << cudaGetErrorName << std::endl
-//        << "Description: " << cudaGetErrorString(errorCode) << std::endl << std::endl;
   }
   cuda_delete_zernike_data(zernike_data, cuda_images.count);
   return signatures;
@@ -266,36 +248,32 @@ std::vector<FileSignatures> compute_zernike_on_cuda(const std::vector<ImageMatri
 
 
 
-//void CUDASignatures::compute_haralick_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits)
-//{
-//  printf("Performing Haralick texture analysis\n");
-//
-//	const int cDistances = 0;
-//
-//	haralick<<< 1, image_matrix_count >>>(images, cDistances, outputs, heights, widths, depths, bits);
-//	int outs_size = MAX_OUTPUT_SIZE * image_matrix_count;
-//  double *outs = new double[MAX_OUTPUT_SIZE * image_matrix_count];
-//
-//  int   sizes_size = image_matrix_count;
-//  long *lSizes     = new long[image_matrix_count];
-//
-//  cudaMemcpy(outs, outputs, outs_size * sizeof(double), cudaMemcpyDeviceToHost);
-//  cudaMemcpy(lSizes, sizes, sizes_size * sizeof(long), cudaMemcpyDeviceToHost);
-//
-//  char buffer[64];
-//  for(int i = 0; i < image_matrix_count; i++)
-//  {
-//    for(int j = 0; j < lSizes[i]; j++)
-//    {
-//      sprintf(buffer, "Haarlick bin %i", j);
-//      double value = outs[i * MAX_OUTPUT_SIZE + j];
-//      signatures.add_signature(buffer, image_matrices[i]->source_file, value);
-//    }
-//  }
-//
-//  delete [] outs;
-//  delete [] lSizes;
-//}
+std::vector<FileSignatures> compute_haralick_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images)
+{
+  printf("Performing Haralick texture analysis\n");
+
+  HaralickData haralick_data = cuda_allocate_haralick_data(images);
+	cuda_haralick<<< 1, cuda_images.count >>>(cuda_images, haralick_data);
+  cudaError sync_status = cudaGetLastError();
+  cudaError async_status = cudaDeviceSynchronize();
+
+  std::vector<FileSignatures> signatures;
+  if(sync_status == cudaSuccess && async_status == cudaSuccess)
+  {
+    signatures = cuda_get_haralick_signatures(images, haralick_data);
+  }
+  else
+  {
+    if (sync_status != cudaSuccess)
+      print_cuda_error(sync_status, "Synchronous CUDA error occurred");
+
+    if (async_status != cudaSuccess)
+      print_cuda_error(async_status, "Asynchronous CUDA error occurred");
+  }
+  cuda_delete_haralick_data(images, haralick_data);
+  return signatures;
+
+}
 
 //void CUDASignatures::compute_histogram_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits)
 //{
