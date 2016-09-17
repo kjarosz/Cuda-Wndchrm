@@ -53,16 +53,13 @@ ImageMatrix*  load_image_matrix(const char *filename);
 void          move_images_to_cuda(std::vector<ImageMatrix *> &images, CudaImages &cuda_images);
 void          delete_cuda_images(CudaImages &cuda_images);
 
-template <class T>
-T*            move_data_to_cuda(T *data, int byte_size);
-
 std::vector<FileSignatures> &merge_signatures(std::vector<FileSignatures> &dst, std::vector<FileSignatures> &src);
 int                          find_in_vector(std::vector<std::string> &vector, std::string value);
 
 // SECTION C - Cuda Algorithms
 //------------------------------------------------------------------------------
 std::vector<FileSignatures> compute_zernike_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images);
-//void compute_haralick_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits);
+std::vector<FileSignatures> compute_haralick_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images);
 //void compute_histogram_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits);
 
 

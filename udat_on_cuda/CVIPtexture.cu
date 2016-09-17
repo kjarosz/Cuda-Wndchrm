@@ -69,41 +69,246 @@
 #include "CVIPtexture.h"
 #include "device_launch_parameters.h"
 
-#define RADIX 2.0
-#define EPSILON 0.000000001
-
-#define SIGN(x,y) ((y)<0 ? -fabs(x) : fabs(x))
-#define SWAP(a,b) {y=(a);(a)=(b);(b)=y;}
-#define PGM_MAXMAXVAL 255
-
-__device__ __host__ double f1_asm(double **P, int Ng);
-__device__ __host__ double f2_contrast(double **P, int Ng);
-__device__ __host__ double f3_corr(double **P, int Ng);
-__device__ __host__ double f4_var(double **P, int Ng);
-__device__ __host__ double f5_idm(double **P, int Ng);
-__device__ __host__ double f6_savg(double **P, int Ng);
-__device__ __host__ double f7_svar(double **P, int Ng, double S);
-__device__ __host__ double f8_sentropy(double **P, int Ng);
-__device__ __host__ double f9_entropy(double **P, int Ng);
-__device__ __host__ double f10_dvar(double **P, int Ng);
-__device__ __host__ double f11_dentropy(double **P, int Ng);
-__device__ __host__ double f12_icorr(double **P, int Ng);
-__device__ __host__ double f13_icorr(double **P, int Ng);
-__device__ __host__ double f14_maxcorr(double **P, int Ng);
 
 
-__device__ __host__ double *allocate_vector(int nl, int nh);
-__device__ __host__ double **allocate_matrix(int nrl, int nrh, int ncl, int nch);
-__device__ __host__ void free_matrix(double **matrix, int nrh);
 
-__device__ __host__ double** CoOcMat_Angle_0(int distance, u_int8_t **grays,
-	int rows, int cols, int* tone_LUT, int tone_count);
-__device__ __host__ double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
-	int rows, int cols, int* tone_LUT, int tone_count);
+
+/* *************************************************************************** */
+__device__ __host__ 
+int Extract_Texture_Features(TEXTURE *Texture, int distance, int angle, 
+                             u_int8_t **grays, int rows,     int cols, 
+                             int max_val)
+/* *************************************************************************** */
+{
+	int tone_LUT[PGM_MAXMAXVAL + 1]; /* LUT mapping gray tone(0-255) to matrix indicies */
+	int tone_count = 0; /* number of tones actually in the img. atleast 1 less than 255 */
+	int itone;
+	int row, col, i;
+	double **P_matrix;
+	double sum_entropy;
+
+	/* Determine the number of different gray tones (not maxval) */
+	for (row = PGM_MAXMAXVAL; row >= 0; --row)
+		tone_LUT[row] = -1;
+
+	for (row = rows - 1; row >= 0; --row)
+    for (col = 0; col < cols; ++col)
+      tone_LUT[grays[row][col]] = grays[row][col];
+
+	for (row = PGM_MAXMAXVAL, tone_count = 0; row >= 0; --row)
+    if (tone_LUT[row] != -1)
+      tone_count++;
+
+	/* Use the number of different tones to build LUT */
+	for (row = 0, itone = 0; row <= PGM_MAXMAXVAL; row++)
+    if (tone_LUT[row] != -1)
+      tone_LUT[row] = itone++;
+
+	/* compute gray-tone spatial dependence matrix */
+	if (angle == 0)
+		P_matrix = CoOcMat_Angle_0(distance, grays, rows, cols, tone_LUT, tone_count);
+	else if (angle == 45)
+		P_matrix = CoOcMat_Angle_45(distance, grays, rows, cols, tone_LUT, tone_count);
+	else if (angle == 90)
+		P_matrix = CoOcMat_Angle_90(distance, grays, rows, cols, tone_LUT, tone_count);
+	else if (angle == 135)
+		P_matrix = CoOcMat_Angle_135(distance, grays, rows, cols, tone_LUT, tone_count);
+	else {
+		return 0;
+	}
+
+	/* compute the statistics for the spatial dependence matrix */
+	Texture->ASM           = f1_asm(P_matrix, tone_count);
+	Texture->contrast      = f2_contrast(P_matrix, tone_count);
+	Texture->correlation   = f3_corr(P_matrix, tone_count);
+	Texture->variance      = f4_var(P_matrix, tone_count);
+	Texture->IDM           = f5_idm(P_matrix, tone_count);
+	Texture->sum_avg       = f6_savg(P_matrix, tone_count);
+
+	/* T.J.M watch below the cast from float to double */
+	sum_entropy            = f8_sentropy(P_matrix, tone_count);
+	Texture->sum_entropy   = sum_entropy;
+	Texture->sum_var       = f7_svar(P_matrix, tone_count, sum_entropy);
+
+	Texture->entropy       = f9_entropy(P_matrix, tone_count);
+	Texture->diff_var      = f10_dvar(P_matrix, tone_count);
+	Texture->diff_entropy  = f11_dentropy(P_matrix, tone_count);
+	Texture->meas_corr1    = f12_icorr(P_matrix, tone_count);
+	Texture->meas_corr2    = f13_icorr(P_matrix, tone_count);
+	Texture->max_corr_coef = f14_maxcorr(P_matrix, tone_count);
+
+	free_matrix(P_matrix, tone_count);
+	return 1;
+}
+
+
+
+/* ************************************************************************** */
+__device__ __host__ 
+double** CoOcMat_Angle_0(int distance, u_int8_t **grays, int rows, int cols, 
+                         int* tone_LUT, int tone_count)
+/* ************************************************************************** */
+{
+	int d = distance;
+	int x, y;
+	int row, col, itone, jtone;
+	int count = 0; /* normalizing factor */
+
+	double** matrix = allocate_matrix(0, tone_count, 0, tone_count);
+
+	/* zero out matrix */
+	for (itone = 0; itone < tone_count; ++itone)
+	for (jtone = 0; jtone < tone_count; ++jtone)
+		matrix[itone][jtone] = 0;
+
+	for (row = 0; row < rows; ++row)
+	for (col = 0; col < cols; ++col) {
+		/* only non-zero values count*/
+		if (grays[row][col] == 0)
+			continue;
+
+		/* find x tone */
+		if (col + d < cols && grays[row][col + d]) {
+			x = tone_LUT[grays[row][col]];
+			y = tone_LUT[grays[row][col + d]];
+			matrix[x][y]++;
+			matrix[y][x]++;
+			count += 2;
+		}
+	}
+
+	/* normalize matrix */
+	for (itone = 0; itone < tone_count; ++itone)
+	for (jtone = 0; jtone < tone_count; ++jtone)
+	if (count == 0)   /* protect from error */
+		matrix[itone][jtone] = 0;
+	else matrix[itone][jtone] /= count;
+
+	return matrix;
+}
+
 __device__ __host__ double** CoOcMat_Angle_90(int distance, u_int8_t **grays,
-	int rows, int cols, int* tone_LUT, int tone_count);
+	int rows, int cols, int* tone_LUT, int tone_count)
+{
+	int d = distance;
+	int x, y;
+	int row, col, itone, jtone;
+	int count = 0; /* normalizing factor */
+
+	double** matrix = allocate_matrix(0, tone_count, 0, tone_count);
+
+	/* zero out matrix */
+	for (itone = 0; itone < tone_count; ++itone)
+	for (jtone = 0; jtone < tone_count; ++jtone)
+		matrix[itone][jtone] = 0;
+
+	for (row = 0; row < rows; ++row)
+	for (col = 0; col < cols; ++col) {
+		/* only non-zero values count*/
+		if (grays[row][col] == 0)
+			continue;
+
+		/* find x tone */
+		if (row + d < rows && grays[row + d][col]) {
+			x = tone_LUT[grays[row][col]];
+			y = tone_LUT[grays[row + d][col]];
+			matrix[x][y]++;
+			matrix[y][x]++;
+			count += 2;
+		}
+	}
+
+	/* normalize matrix */
+	for (itone = 0; itone < tone_count; ++itone)
+	for (jtone = 0; jtone < tone_count; ++jtone)
+	if (count == 0) matrix[itone][jtone] = 0;
+	else matrix[itone][jtone] /= count;
+
+	return matrix;
+}
+
+__device__ __host__ double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
+	int rows, int cols, int* tone_LUT, int tone_count)
+{
+	int d = distance;
+	int x, y;
+	int row, col, itone, jtone;
+	int count = 0; /* normalizing factor */
+
+	double** matrix = allocate_matrix(0, tone_count, 0, tone_count);
+
+	/* zero out matrix */
+	for (itone = 0; itone < tone_count; ++itone)
+	for (jtone = 0; jtone < tone_count; ++jtone)
+		matrix[itone][jtone] = 0;
+
+	for (row = 0; row < rows; ++row)
+	for (col = 0; col < cols; ++col) {
+		/* only non-zero values count*/
+		if (grays[row][col] == 0)
+			continue;
+
+		/* find x tone */
+		if (row + d < rows && col - d >= 0 && grays[row + d][col - d]) {
+			x = tone_LUT[grays[row][col]];
+			y = tone_LUT[grays[row + d][col - d]];
+			matrix[x][y]++;
+			matrix[y][x]++;
+			count += 2;
+		}
+	}
+
+	/* normalize matrix */
+	for (itone = 0; itone < tone_count; ++itone)
+	for (jtone = 0; jtone < tone_count; ++jtone)
+	if (count == 0) matrix[itone][jtone] = 0;       /* protect from error */
+	else matrix[itone][jtone] /= count;
+
+	return matrix;
+}
+
 __device__ __host__ double** CoOcMat_Angle_135(int distance, u_int8_t **grays,
-	int rows, int cols, int* tone_LUT, int tone_count);
+	int rows, int cols, int* tone_LUT, int tone_count)
+{
+	int d = distance;
+	int x, y;
+	int row, col, itone, jtone;
+	int count = 0; /* normalizing factor */
+
+	double** matrix = allocate_matrix(0, tone_count, 0, tone_count);
+
+	/* zero out matrix */
+	for (itone = 0; itone < tone_count; ++itone)
+	for (jtone = 0; jtone < tone_count; ++jtone)
+		matrix[itone][jtone] = 0;
+
+	for (row = 0; row < rows; ++row)
+	for (col = 0; col < cols; ++col) {
+		/* only non-zero values count*/
+		if (grays[row][col] == 0)
+			continue;
+
+		/* find x tone */
+		if (row + d < rows && col + d < cols && grays[row + d][col + d]) {
+			x = tone_LUT[grays[row][col]];
+			y = tone_LUT[grays[row + d][col + d]];
+			matrix[x][y]++;
+			matrix[y][x]++;
+			count += 2;
+		}
+	}
+
+	/* normalize matrix */
+	for (itone = 0; itone < tone_count; ++itone)
+	for (jtone = 0; jtone < tone_count; ++jtone)
+	if (count == 0) matrix[itone][jtone] = 0;   /* protect from error */
+	else matrix[itone][jtone] /= count;
+
+	return matrix;
+}
+
+
+
 
 
 /* support functions to compute f14_maxcorr */
@@ -363,234 +568,7 @@ __device__ __host__ int hessenberg(double **a, int n, double wr[], double wi[])
 
 
 
-
-
-__device__ __host__ TEXTURE * Extract_Texture_Features(int distance, int angle,
-	register u_int8_t **grays, int rows, int cols, int max_val)
-{
-	int tone_LUT[PGM_MAXMAXVAL + 1]; /* LUT mapping gray tone(0-255) to matrix indicies */
-	int tone_count = 0; /* number of tones actually in the img. atleast 1 less than 255 */
-	int itone;
-	int row, col, i;
-	double **P_matrix;
-	double sum_entropy;
-	TEXTURE *Texture;
-	Texture = (TEXTURE*)malloc(sizeof(TEXTURE));
-
-	/* Determine the number of different gray tones (not maxval) */
-	for (row = PGM_MAXMAXVAL; row >= 0; --row)
-		tone_LUT[row] = -1;
-	for (row = rows - 1; row >= 0; --row)
-	for (col = 0; col < cols; ++col)
-		tone_LUT[grays[row][col]] = grays[row][col];
-
-	for (row = PGM_MAXMAXVAL, tone_count = 0; row >= 0; --row)
-	if (tone_LUT[row] != -1)
-		tone_count++;
-
-	/* Use the number of different tones to build LUT */
-	for (row = 0, itone = 0; row <= PGM_MAXMAXVAL; row++)
-	if (tone_LUT[row] != -1)
-		tone_LUT[row] = itone++;
-
-	/* compute gray-tone spatial dependence matrix */
-	if (angle == 0)
-		P_matrix = CoOcMat_Angle_0(distance, grays, rows, cols, tone_LUT, tone_count);
-	else if (angle == 45)
-		P_matrix = CoOcMat_Angle_45(distance, grays, rows, cols, tone_LUT, tone_count);
-	else if (angle == 90)
-		P_matrix = CoOcMat_Angle_90(distance, grays, rows, cols, tone_LUT, tone_count);
-	else if (angle == 135)
-		P_matrix = CoOcMat_Angle_135(distance, grays, rows, cols, tone_LUT, tone_count);
-	else {
-		return NULL;
-	}
-
-	/* compute the statistics for the spatial dependence matrix */
-	Texture->ASM = f1_asm(P_matrix, tone_count);
-	Texture->contrast = f2_contrast(P_matrix, tone_count);
-	Texture->correlation = f3_corr(P_matrix, tone_count);
-	Texture->variance = f4_var(P_matrix, tone_count);
-	Texture->IDM = f5_idm(P_matrix, tone_count);
-	Texture->sum_avg = f6_savg(P_matrix, tone_count);
-
-	/* T.J.M watch below the cast from float to double */
-	sum_entropy = f8_sentropy(P_matrix, tone_count);
-	Texture->sum_entropy = sum_entropy;
-	Texture->sum_var = f7_svar(P_matrix, tone_count, sum_entropy);
-
-	Texture->entropy = f9_entropy(P_matrix, tone_count);
-	Texture->diff_var = f10_dvar(P_matrix, tone_count);
-	Texture->diff_entropy = f11_dentropy(P_matrix, tone_count);
-	Texture->meas_corr1 = f12_icorr(P_matrix, tone_count);
-	Texture->meas_corr2 = f13_icorr(P_matrix, tone_count);
-	Texture->max_corr_coef = f14_maxcorr(P_matrix, tone_count);
-
-	free_matrix(P_matrix, tone_count);
-	return (Texture);
-}
-
 /* Compute gray-tone spatial dependence matrix */
-__device__ __host__ double** CoOcMat_Angle_0(int distance, u_int8_t **grays,
-	int rows, int cols, int* tone_LUT, int tone_count)
-{
-	int d = distance;
-	int x, y;
-	int row, col, itone, jtone;
-	int count = 0; /* normalizing factor */
-
-	double** matrix = allocate_matrix(0, tone_count, 0, tone_count);
-
-	/* zero out matrix */
-	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-		matrix[itone][jtone] = 0;
-
-	for (row = 0; row < rows; ++row)
-	for (col = 0; col < cols; ++col) {
-		/* only non-zero values count*/
-		if (grays[row][col] == 0)
-			continue;
-
-		/* find x tone */
-		if (col + d < cols && grays[row][col + d]) {
-			x = tone_LUT[grays[row][col]];
-			y = tone_LUT[grays[row][col + d]];
-			matrix[x][y]++;
-			matrix[y][x]++;
-			count += 2;
-		}
-	}
-
-	/* normalize matrix */
-	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-	if (count == 0)   /* protect from error */
-		matrix[itone][jtone] = 0;
-	else matrix[itone][jtone] /= count;
-
-	return matrix;
-}
-
-__device__ __host__ double** CoOcMat_Angle_90(int distance, u_int8_t **grays,
-	int rows, int cols, int* tone_LUT, int tone_count)
-{
-	int d = distance;
-	int x, y;
-	int row, col, itone, jtone;
-	int count = 0; /* normalizing factor */
-
-	double** matrix = allocate_matrix(0, tone_count, 0, tone_count);
-
-	/* zero out matrix */
-	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-		matrix[itone][jtone] = 0;
-
-	for (row = 0; row < rows; ++row)
-	for (col = 0; col < cols; ++col) {
-		/* only non-zero values count*/
-		if (grays[row][col] == 0)
-			continue;
-
-		/* find x tone */
-		if (row + d < rows && grays[row + d][col]) {
-			x = tone_LUT[grays[row][col]];
-			y = tone_LUT[grays[row + d][col]];
-			matrix[x][y]++;
-			matrix[y][x]++;
-			count += 2;
-		}
-	}
-
-	/* normalize matrix */
-	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-	if (count == 0) matrix[itone][jtone] = 0;
-	else matrix[itone][jtone] /= count;
-
-	return matrix;
-}
-
-__device__ __host__ double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
-	int rows, int cols, int* tone_LUT, int tone_count)
-{
-	int d = distance;
-	int x, y;
-	int row, col, itone, jtone;
-	int count = 0; /* normalizing factor */
-
-	double** matrix = allocate_matrix(0, tone_count, 0, tone_count);
-
-	/* zero out matrix */
-	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-		matrix[itone][jtone] = 0;
-
-	for (row = 0; row < rows; ++row)
-	for (col = 0; col < cols; ++col) {
-		/* only non-zero values count*/
-		if (grays[row][col] == 0)
-			continue;
-
-		/* find x tone */
-		if (row + d < rows && col - d >= 0 && grays[row + d][col - d]) {
-			x = tone_LUT[grays[row][col]];
-			y = tone_LUT[grays[row + d][col - d]];
-			matrix[x][y]++;
-			matrix[y][x]++;
-			count += 2;
-		}
-	}
-
-	/* normalize matrix */
-	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-	if (count == 0) matrix[itone][jtone] = 0;       /* protect from error */
-	else matrix[itone][jtone] /= count;
-
-	return matrix;
-}
-
-__device__ __host__ double** CoOcMat_Angle_135(int distance, u_int8_t **grays,
-	int rows, int cols, int* tone_LUT, int tone_count)
-{
-	int d = distance;
-	int x, y;
-	int row, col, itone, jtone;
-	int count = 0; /* normalizing factor */
-
-	double** matrix = allocate_matrix(0, tone_count, 0, tone_count);
-
-	/* zero out matrix */
-	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-		matrix[itone][jtone] = 0;
-
-	for (row = 0; row < rows; ++row)
-	for (col = 0; col < cols; ++col) {
-		/* only non-zero values count*/
-		if (grays[row][col] == 0)
-			continue;
-
-		/* find x tone */
-		if (row + d < rows && col + d < cols && grays[row + d][col + d]) {
-			x = tone_LUT[grays[row][col]];
-			y = tone_LUT[grays[row + d][col + d]];
-			matrix[x][y]++;
-			matrix[y][x]++;
-			count += 2;
-		}
-	}
-
-	/* normalize matrix */
-	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-	if (count == 0) matrix[itone][jtone] = 0;   /* protect from error */
-	else matrix[itone][jtone] /= count;
-
-	return matrix;
-}
 
 /*
 T. Macura:
