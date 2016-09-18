@@ -59,8 +59,8 @@ std::vector<FileSignatures> compute_signatures_on_cuda(std::vector<ImageMatrix *
   move_images_to_cuda(images, cuda_images);
 
   // Execute the features.
-  merge_signatures(signatures, compute_zernike_on_cuda(images, cuda_images));
-//  compute_haralick_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes, cBits);
+  //merge_signatures(signatures, compute_zernike_on_cuda(images, cuda_images));
+  merge_signatures(signatures, compute_haralick_on_cuda(images, cuda_images));
 //  compute_histogram_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes, cBits);
 
 

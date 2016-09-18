@@ -7,14 +7,68 @@
 #include "../../image_matrix.h"
 #include "../../utils/cuda_utils.h"
 
+#include <sstream>
+
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include "device_launch_parameters.h"
 
 
 
-__global__ void haralick(CudaImages images, HaralickData data) 
-// pix_data *pixels, double *distance, double *out, int *height, int *width, int *depth, unsigned short int *bits) 
+/* Order in which the features go into the output array. */
+__device__ const unsigned int HARALICK_OUT_MAP[HARALICK_OUT_SIZE] = {
+  0,  14, //  (1) Angular Second Moment
+  1,  15, //  (2) Contrast
+  2,  16, //  (3) Correlation
+  9,  23, // (10) Difference Variance
+  10, 24, // (11) Difference Entropy
+  8,  22, //  (9) Entropy
+  11, 25, // (12) Measure of Correlation 1
+  4,  18, //  (5) Inverse Difference Moment
+  13, 27, // (14) Maximal Correlation Coefficient
+  12, 26, // (13) Measure of Correlation 2
+  5,  19, //  (6) Sum Average
+  7,  21, //  (8) Sum Entropy
+  6,  20, //  (7) Sum Variance
+  3,  17  //  (4) Variance
+};
+
+
+
+const char *haralick_names[80] = {
+  "CoOcMat_AngularSecondMoment",               "ASM",
+  "CoOcMat_Contrast",                          "Contrast",
+  "CoOcMat_Correlation",                       "Correlation",
+  "CoOcMat_Variance",                          "Variance",
+  "CoOcMat_InverseDifferenceMoment",           "IDM",
+  "CoOcMat_SumAverage" ,                       "SumAvg",
+  "CoOcMat_SumVariance",                       "SumVar",
+  "CoOcMat_SumEntropy",                        "SumEntropy",
+  "CoOcMat_Entropy",                           "Entropy",
+  "CoOcMat_DifferenceEntropy",                 "DiffEntropy",
+  "CoOcMat_DifferenceVariance",                "DiffVar",
+  "CoOcMat_FirstMeasureOfCorrelation",         "MeasCorr1",
+  "CoOcMat_SecondMeasureOfCorrelation",        "MeasCorr2",
+  "CoOcMat_MaximalCorrelationCoefficient",     "MaxCorrCoef",
+  "CoOcMat_AngularSecondMomentDif",            "ASM",
+  "CoOcMat_ContrastDif" ,                      "Contrast",
+  "CoOcMat_CorrelationDif",                    "Correlation",
+  "CoOcMat_VarianceDif",                       "Variance",
+  "CoOcMat_InverseDifferenceMomentDif",        "IDM",
+  "CoOcMat_SumAverageDif",                     "SumAvg",
+  "CoOcMat_SumVarianceDif",                    "SumVar",
+  "CoOcMat_SumEntropyDif" ,                    "SumEntropy",
+  "CoOcMat_EntropyDif",                        "Entropy",
+  "CoOcMat_DifferenceEntropyDif",              "DiffEntropy",
+  "CoOcMat_DifferenceVarianceDif",             "DiffVar",
+  "CoOcMat_FirstMeasureOfCorrelationDif",      "MeasCorr1",
+  "CoOcMat_SecondMeasureOfCorrelationDif",     "MeasCorr2",
+  "CoOcMat_MaximalCorrelationCoefficientDif",  "MaxCorrCoef"
+};
+
+
+
+__global__ void cuda_haralick(CudaImages images, HaralickData data) 
 {
 	const int th_idx = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -125,7 +179,7 @@ __device__ void normalize_to_8_bits(pix_data *image, int width, int height, int 
 	// for more than 8 bits - normalize the image to (0,255) range 
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) { 
-      pix_data pixel = get_pixel(image, x, y, 0, width, height);
+      pix_data pixel = get_pixel(image, width, height, x, y, 0);
 
 			if (bits > 8) 
 				gray[y][x] = unsigned char((pixel.intensity - min)*(255.0 / (max - min)));
@@ -181,36 +235,52 @@ HaralickData cuda_allocate_haralick_data(const std::vector<ImageMatrix *> &image
 
   cuda_alloc_cube_array<double>(HARALICK_OUT_SIZE, images.size(), data.out_buffer);
   cuda_alloc_cube_array<double>(HARALICK_OUT_SIZE, images.size(), data.out);
+
+  return data;
 }
 
 
 
 std::vector<FileSignatures> cuda_get_haralick_signatures(const std::vector<ImageMatrix *> &images, HaralickData &data)
 {
-	int outs_size = MAX_OUTPUT_SIZE * image_matrix_count;
-  double *outs = new double[MAX_OUTPUT_SIZE * image_matrix_count];
+  cudaError status;
 
-  int   sizes_size = image_matrix_count;
-  long *lSizes     = new long[image_matrix_count];
-
-  cudaMemcpy(outs, outputs, outs_size * sizeof(double), cudaMemcpyDeviceToHost);
-  cudaMemcpy(lSizes, sizes, sizes_size * sizeof(long), cudaMemcpyDeviceToHost);
-
-  char buffer[64];
-  for(int i = 0; i < image_matrix_count; i++)
+  double **output = new double*[images.size()];
+  status = cudaMemcpy(output, data.out, sizeof(double *) * images.size(), cudaMemcpyDeviceToHost);
+  for(int i = 0; i < images.size(); i++) 
   {
-    for(int j = 0; j < lSizes[i]; j++)
-    {
-      sprintf(buffer, "Haarlick bin %i", j);
-      double value = outs[i * MAX_OUTPUT_SIZE + j];
-      signatures.add_signature(buffer, image_matrices[i]->source_file, value);
-    }
+    double *out = new double[HARALICK_OUT_SIZE];
+    cudaMemcpy(out, output[i], sizeof(double) * HARALICK_OUT_SIZE, cudaMemcpyDeviceToHost);
+    output[i] = out;
   }
 
-  delete [] outs;
-  delete [] lSizes;
-  std::vector<FileSignatures> signatures;
-  return signatures;
+  std::stringstream ss;
+  std::vector<FileSignatures> file_signatures;
+  for(int i = 0; i < images.size(); i++)
+  {
+    FileSignatures file_signature;
+    file_signature.file_name = images[i]->source_file;
+
+    for(int j = 0; j < HARALICK_OUT_SIZE; j++)
+    {
+      ss.clear();
+      ss << haralick_names[j * 2] << " " << haralick_names[j*2 + 1];
+
+      Signature sig;
+      sig.signature_name = ss.str();
+      sig.value = output[i][j];
+      file_signature.signatures.push_back(sig);
+    }
+
+    file_signatures.push_back(file_signature);
+  }
+
+  for(int i = 0; i < images.size(); i++) {
+    delete [] output[i];
+  }
+  delete [] output;
+
+  return file_signatures;
 }
 
 

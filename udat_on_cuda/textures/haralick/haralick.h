@@ -11,24 +11,6 @@
 const unsigned int HARALICK_FEATURE_SIZE               = 14;
 const unsigned int HARALICK_OUT_SIZE                   = 28;
 
-/* Order in which the features go into the output array. */
-const unsigned int HARALICK_OUT_MAP[HARALICK_OUT_SIZE] = {
-  0,  14, //  (1) Angular Second Moment
-  1,  15, //  (2) Contrast
-  2,  16, //  (3) Correlation
-  9,  23, // (10) Difference Variance
-  10, 24, // (11) Difference Entropy
-  8,  22, //  (9) Entropy
-  11, 25, // (12) Measure of Correlation 1
-  4,  18, //  (5) Inverse Difference Moment
-  13, 27, // (14) Maximal Correlation Coefficient
-  12, 26, // (13) Measure of Correlation 2
-  5,  19, //  (6) Sum Average
-  7,  21, //  (8) Sum Entropy
-  6,  20, //  (7) Sum Variance
-  3,  17  //  (4) Variance
-};
-
 struct HaralickData
 {
   double          *distance;
@@ -51,5 +33,6 @@ __device__ inline void assign_feature(float feature, double *min, double *max, d
 HaralickData                cuda_allocate_haralick_data(const std::vector<ImageMatrix *> &images);
 std::vector<FileSignatures> cuda_get_haralick_signatures(const std::vector<ImageMatrix *> &images, HaralickData &data);
 void                        cuda_delete_haralick_data(const std::vector<ImageMatrix *> &images, HaralickData &data);
+
 
 #endif // _HARALICK_H
