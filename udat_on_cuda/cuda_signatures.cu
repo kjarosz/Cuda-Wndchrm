@@ -60,8 +60,8 @@ std::vector<FileSignatures> compute_signatures_on_cuda(std::vector<ImageMatrix *
 
   // Execute the features.
   //merge_signatures(signatures, compute_zernike_on_cuda(images, cuda_images));
-  merge_signatures(signatures, compute_haralick_on_cuda(images, cuda_images));
-//  compute_histogram_on_cuda(cPixels, cWidths, cHeights, cDepths, cOutputs, cSizes, cBits);
+  //merge_signatures(signatures, compute_haralick_on_cuda(images, cuda_images));
+  merge_signatures(signatures, compute_histogram_on_cuda(images, cuda_images));
 
 
   std::cout << "Signatures computed" << std::endl;
@@ -274,35 +274,31 @@ std::vector<FileSignatures> compute_haralick_on_cuda(const std::vector<ImageMatr
   return signatures;
 }
 
-//void CUDASignatures::compute_histogram_on_cuda(pix_data **images, int *widths, int *heights, int *depths, double *outputs, long *sizes, int *bits)
-//{
-//  printf("Performing Multiscale Histogram analysis\n");
-//
-//	multiscalehistogram<<< 1, image_matrix_count >>>(images, outputs, widths, heights, depths, bits);
-//
-//  int outs_size = MAX_OUTPUT_SIZE * image_matrix_count;
-//  double *outs = new double[MAX_OUTPUT_SIZE * image_matrix_count];
-//
-//  int   sizes_size = image_matrix_count;
-//  long *lSizes     = new long[image_matrix_count];
-//
-//  cudaMemcpy(outs, outputs, outs_size * sizeof(double), cudaMemcpyDeviceToHost);
-//  cudaMemcpy(lSizes, sizes, sizes_size * sizeof(long), cudaMemcpyDeviceToHost);
-//
-//  char buffer[64];
-//  for(int i = 0; i < image_matrix_count; i++)
-//  {
-//    for(int j = 0; j < lSizes[i]; j++)
-//    {
-//      sprintf(buffer, "Multiscale Histogram bin %i", j);
-//      double value = outs[i * MAX_OUTPUT_SIZE + j];
-//      signatures.add_signature(buffer, image_matrices[i]->source_file, value);
-//    }
-//  }
-//
-//  delete [] outs;
-//  delete [] lSizes;
-//}
+std::vector<FileSignatures> compute_histogram_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images)
+{
+  printf("Performing Multiscale Histogram analysis\n");
+
+  HistogramData histogram_data = cuda_allocate_histogram_data(images);
+	cuda_multiscalehistogram<<< 1, cuda_images.count >>>(cuda_images, histogram_data);
+  cudaError sync_status = cudaGetLastError();
+  cudaError async_status = cudaDeviceSynchronize();
+
+  std::vector<FileSignatures> signatures;
+  if(sync_status == cudaSuccess && async_status == cudaSuccess)
+  {
+    signatures = cuda_get_histogram_signatures(images, histogram_data);
+  }
+  else
+  {
+    if (sync_status != cudaSuccess)
+      print_cuda_error(sync_status, "Synchronous CUDA error occurred");
+
+    if (async_status != cudaSuccess)
+      print_cuda_error(async_status, "Asynchronous CUDA error occurred");
+  }
+  cuda_delete_histogram_data(images, histogram_data);
+  return signatures;
+}
 
 
 
