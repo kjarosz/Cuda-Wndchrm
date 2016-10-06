@@ -9,6 +9,7 @@
 #include "textures/haralick/haralick.h"
 #include "utils/DirectoryListing.h"
 #include "histogram.h"
+#include "fractal.h"
 #include "cuda_signatures.h"
 #include "utils/Utils.h"
 #include "utils/cuda_utils.h"
@@ -51,6 +52,7 @@ ClassSignatures compute_class_signatures(std::string class_dir)
 
 std::vector<FileSignatures> compute_signatures_on_cuda(std::vector<ImageMatrix *> &images)
 {
+  std::cout << "============================================================" << std::endl;
   std::cout << "Computing signatures for " << images.size() << " images on CUDA:" << std::endl;
 
   std::vector<FileSignatures> signatures;
@@ -61,8 +63,8 @@ std::vector<FileSignatures> compute_signatures_on_cuda(std::vector<ImageMatrix *
   // Execute the features.
   //merge_signatures(signatures, compute_zernike_on_cuda(images, cuda_images));
   //merge_signatures(signatures, compute_haralick_on_cuda(images, cuda_images));
-  merge_signatures(signatures, compute_histogram_on_cuda(images, cuda_images));
-
+  //merge_signatures(signatures, compute_histogram_on_cuda(images, cuda_images));
+  merge_signatures(signatures, compute_fractals_on_cuda(images, cuda_images));
 
   std::cout << "Signatures computed" << std::endl;
   std::cout << "============================================================" << std::endl;
@@ -297,6 +299,34 @@ std::vector<FileSignatures> compute_histogram_on_cuda(const std::vector<ImageMat
       print_cuda_error(async_status, "Asynchronous CUDA error occurred");
   }
   cuda_delete_histogram_data(images, histogram_data);
+  return signatures;
+}
+
+
+
+std::vector<FileSignatures> compute_fractals_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images)
+{
+  printf("Calculating Fractals\n");
+
+  FractalData fractal_data = cuda_allocate_fractal_data(images);
+	cuda_fractal<<< 1, cuda_images.count >>>(cuda_images, fractal_data);
+  cudaError sync_status = cudaGetLastError();
+  cudaError async_status = cudaDeviceSynchronize();
+
+  std::vector<FileSignatures> signatures;
+  if(sync_status == cudaSuccess && async_status == cudaSuccess)
+  {
+    signatures = cuda_get_fractal_signatures(images, fractal_data);
+  }
+  else
+  {
+    if (sync_status != cudaSuccess)
+      print_cuda_error(sync_status, "Synchronous CUDA error occurred");
+
+    if (async_status != cudaSuccess)
+      print_cuda_error(async_status, "Asynchronous CUDA error occurred");
+  }
+  cuda_delete_fractal_data(images, fractal_data);
   return signatures;
 }
 

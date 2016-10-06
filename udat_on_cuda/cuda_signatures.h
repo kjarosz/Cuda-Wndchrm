@@ -42,7 +42,7 @@ struct CudaImages
 };
 
 
-// SECTION B - Auxiliary Functions
+// SECTION B.b - Auxiliary Functions
 //------------------------------------------------------------------------------
 bool          get_next_batch(DirectoryListing *listing, std::vector<ImageMatrix *> &images);
 bool          batch_is_full(std::vector<ImageMatrix *> &images);
@@ -61,7 +61,7 @@ int                          find_in_vector(std::vector<std::string> &vector, st
 std::vector<FileSignatures> compute_zernike_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images);
 std::vector<FileSignatures> compute_haralick_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images);
 std::vector<FileSignatures> compute_histogram_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images);
-
+std::vector<FileSignatures> compute_fractals_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images);
 
 
 #endif // CUDASIGNATURES_H

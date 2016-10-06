@@ -209,32 +209,33 @@ HaralickData cuda_allocate_haralick_data(const std::vector<ImageMatrix *> &image
   HaralickData data;
   memset(&data, 0, sizeof(data));
 
-  cudaMalloc(&data.distance, sizeof(double) * images.size());
-  cudaMemset(data.distance, 0 , sizeof(double) * images.size());
+  cudaError status;
+  status = cudaMalloc(&data.distance, sizeof(double) * images.size());
+  status = cudaMemset(data.distance, 0 , sizeof(double) * images.size());
 
   unsigned char ***th_gray = new unsigned char**[images.size()];
   for(int i = 0; i < images.size(); i++)
   {
     unsigned char **gray = new unsigned char*[images[i]->height];
     for(int j = 0; j < images[i]->height; j++) 
-      cudaMalloc(&gray[j], sizeof(unsigned char) * images[i]->width);
+      status = cudaMalloc(&gray[j], sizeof(unsigned char) * images[i]->width);
 
-    cudaMalloc(&th_gray[i], sizeof(unsigned char *) * images[i]->height);
-    cudaMemcpy(th_gray[i], gray, sizeof(unsigned char*) * images[i]->height, cudaMemcpyHostToDevice);
+    status = cudaMalloc(&th_gray[i], sizeof(unsigned char *) * images[i]->height);
+    status = cudaMemcpy(th_gray[i], gray, sizeof(unsigned char*) * images[i]->height, cudaMemcpyHostToDevice);
 
     delete [] gray;
   }
 
-  cudaMalloc(&data.gray, sizeof(unsigned char **) * images.size());
-  cudaMemcpy(data.gray, th_gray, sizeof(unsigned char **) * images.size(), cudaMemcpyHostToDevice);
+  status = cudaMalloc(&data.gray, sizeof(unsigned char **) * images.size());
+  status = cudaMemcpy(data.gray, th_gray, sizeof(unsigned char **) * images.size(), cudaMemcpyHostToDevice);
   delete [] th_gray;
 
-  cuda_alloc_cube_array<double>(HARALICK_FEATURE_SIZE, images.size(), data.min);
-  cuda_alloc_cube_array<double>(HARALICK_FEATURE_SIZE, images.size(), data.max);
-  cuda_alloc_cube_array<double>(HARALICK_FEATURE_SIZE, images.size(), data.sum);
+  status = cuda_alloc_cube_array<double>(HARALICK_FEATURE_SIZE, images.size(), data.min);
+  status = cuda_alloc_cube_array<double>(HARALICK_FEATURE_SIZE, images.size(), data.max);
+  status = cuda_alloc_cube_array<double>(HARALICK_FEATURE_SIZE, images.size(), data.sum);
 
-  cuda_alloc_cube_array<double>(HARALICK_OUT_SIZE, images.size(), data.out_buffer);
-  cuda_alloc_cube_array<double>(HARALICK_OUT_SIZE, images.size(), data.out);
+  status = cuda_alloc_cube_array<double>(HARALICK_OUT_SIZE, images.size(), data.out_buffer);
+  status = cuda_alloc_cube_array<double>(HARALICK_OUT_SIZE, images.size(), data.out);
 
   return data;
 }

@@ -117,25 +117,25 @@ int Extract_Texture_Features(TEXTURE *Texture, int distance, int angle,
 		return 0;
 	}
 
-	/* compute the statistics for the spatial dependence matrix */
-	Texture->ASM           = f1_asm(P_matrix, tone_count);
-	Texture->contrast      = f2_contrast(P_matrix, tone_count);
-	Texture->correlation   = f3_corr(P_matrix, tone_count);
-	Texture->variance      = f4_var(P_matrix, tone_count);
-	Texture->IDM           = f5_idm(P_matrix, tone_count);
-	Texture->sum_avg       = f6_savg(P_matrix, tone_count);
-
-	/* T.J.M watch below the cast from float to double */
-	sum_entropy            = f8_sentropy(P_matrix, tone_count);
-	Texture->sum_entropy   = sum_entropy;
-	Texture->sum_var       = f7_svar(P_matrix, tone_count, sum_entropy);
-
-	Texture->entropy       = f9_entropy(P_matrix, tone_count);
-	Texture->diff_var      = f10_dvar(P_matrix, tone_count);
-	Texture->diff_entropy  = f11_dentropy(P_matrix, tone_count);
-	Texture->meas_corr1    = f12_icorr(P_matrix, tone_count);
-	Texture->meas_corr2    = f13_icorr(P_matrix, tone_count);
-	Texture->max_corr_coef = f14_maxcorr(P_matrix, tone_count);
+//	/* compute the statistics for the spatial dependence matrix */
+//	Texture->ASM           = f1_asm(P_matrix, tone_count);
+//	Texture->contrast      = f2_contrast(P_matrix, tone_count);
+//	Texture->correlation   = f3_corr(P_matrix, tone_count);
+//	Texture->variance      = f4_var(P_matrix, tone_count);
+//	Texture->IDM           = f5_idm(P_matrix, tone_count);
+//	Texture->sum_avg       = f6_savg(P_matrix, tone_count);
+//
+//	/* T.J.M watch below the cast from float to double */
+//	sum_entropy            = f8_sentropy(P_matrix, tone_count);
+//	Texture->sum_entropy   = sum_entropy;
+//	Texture->sum_var       = f7_svar(P_matrix, tone_count, sum_entropy);
+//
+//	Texture->entropy       = f9_entropy(P_matrix, tone_count);
+//	Texture->diff_var      = f10_dvar(P_matrix, tone_count);
+//	Texture->diff_entropy  = f11_dentropy(P_matrix, tone_count);
+//	Texture->meas_corr1    = f12_icorr(P_matrix, tone_count);
+//	Texture->meas_corr2    = f13_icorr(P_matrix, tone_count);
+//	Texture->max_corr_coef = f14_maxcorr(P_matrix, tone_count);
 
 	free_matrix(P_matrix, tone_count);
 	return 1;
@@ -179,10 +179,11 @@ double** CoOcMat_Angle_0(int distance, u_int8_t **grays, int rows, int cols,
 
 	/* normalize matrix */
 	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-	if (count == 0)   /* protect from error */
-		matrix[itone][jtone] = 0;
-	else matrix[itone][jtone] /= count;
+    for (jtone = 0; jtone < tone_count; ++jtone)
+      if (count == 0)   /* protect from error */
+        matrix[itone][jtone] = 0;
+      else 
+        matrix[itone][jtone] /= count;
 
 	return matrix;
 }

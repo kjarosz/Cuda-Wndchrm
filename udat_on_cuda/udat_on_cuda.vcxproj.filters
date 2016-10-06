@@ -22,6 +22,9 @@
     <CudaCompile Include="textures\zernike\cuda_complex.cu">
       <Filter>Source\textures\zernike</Filter>
     </CudaCompile>
+    <CudaCompile Include="fractal.cu">
+      <Filter>Source</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="file_manip.cpp">
@@ -94,6 +97,9 @@
     </ClInclude>
     <ClInclude Include="utils\cuda_utils.h">
       <Filter>Headers\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="fractal.h">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
