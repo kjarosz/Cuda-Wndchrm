@@ -3,14 +3,15 @@
 #include <iostream>
 #include <cstdio>
 
+#include "cuda_signatures.h"
 
-
+#include "image/histogram.h"
+#include "image/fractal.h"
 #include "textures/zernike/zernike.h"
 #include "textures/haralick/haralick.h"
+#include "transforms/chebyshev.h"
+
 #include "utils/DirectoryListing.h"
-#include "histogram.h"
-#include "fractal.h"
-#include "cuda_signatures.h"
 #include "utils/Utils.h"
 #include "utils/cuda_utils.h"
 
@@ -64,7 +65,8 @@ std::vector<FileSignatures> compute_signatures_on_cuda(std::vector<ImageMatrix *
   //merge_signatures(signatures, compute_zernike_on_cuda(images, cuda_images));
   //merge_signatures(signatures, compute_haralick_on_cuda(images, cuda_images));
   //merge_signatures(signatures, compute_histogram_on_cuda(images, cuda_images));
-  merge_signatures(signatures, compute_fractals_on_cuda(images, cuda_images));
+  //merge_signatures(signatures, compute_fractals_on_cuda(images, cuda_images));
+  merge_signatures(signatures, compute_chebyshev_on_cuda(images, cuda_images));
 
   std::cout << "Signatures computed" << std::endl;
   std::cout << "============================================================" << std::endl;
@@ -332,6 +334,34 @@ std::vector<FileSignatures> compute_fractals_on_cuda(const std::vector<ImageMatr
 
 
 
+std::vector<FileSignatures> compute_chebyshev_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images)
+{
+  printf("Calculating Chebyshev\n");
+
+  ChebyshevData chebyshev_data = cuda_allocate_chebyshev_data(images);
+	cuda_chebyshev<<< 1, cuda_images.count >>>(cuda_images, chebyshev_data);
+  cudaError sync_status = cudaGetLastError();
+  cudaError async_status = cudaDeviceSynchronize();
+
+  std::vector<FileSignatures> signatures;
+  if(sync_status == cudaSuccess && async_status == cudaSuccess)
+  {
+    signatures = cuda_get_chebyshev_signatures(images, chebyshev_data);
+  }
+  else
+  {
+    if (sync_status != cudaSuccess)
+      print_cuda_error(sync_status, "Synchronous CUDA error occurred");
+
+    if (async_status != cudaSuccess)
+      print_cuda_error(async_status, "Asynchronous CUDA error occurred");
+  }
+  cuda_delete_chebyshev_data(images, chebyshev_data);
+  return signatures;
+}
+
+
+
 void save_signatures(std::vector<ClassSignatures> &class_signatures, char *directory)
 {
   char buffer[FILENAME_MAX];
@@ -403,3 +433,9 @@ int find_in_vector(std::vector<std::string> &vector, std::string value)
   }
   return -1;
 }
+
+
+
+//CudaAlgorithm::CudaAlgorithm(const std::vector<ImageMatrix *> *images,
+//                             const CudaImages *cuda_images)
+//: images(images), cuda_images(cuda_images) {}

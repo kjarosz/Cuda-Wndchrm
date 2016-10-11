@@ -7,8 +7,8 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-#include "file_manip.h"
 #include "cuda_signatures.h"
+#include "utils/file_manip.h"
 #include "utils/Utils.h"
 
 

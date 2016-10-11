@@ -312,6 +312,115 @@ void cuda_delete_zernike_data(ZernikeData &data, int image_count)
 
 
 
-#pragma package(smart_init)
-
-
+//CudaZernike2D::CudaZernike2D(const std::vector<ImageMatrix *> *images,
+//                             const CudaImages *cuda_images)
+//: CudaAlgorithm(images, cuda_images)
+//{
+//  data = new ZernikeData();
+//  memset(data, 0, sizeof(ZernikeData));
+//
+//  cudaMalloc(&data->D,    images->size() * sizeof(double));
+//  cudaMemset(data->D,  0, images->size() * sizeof(double));
+//
+//  cudaMalloc(&data->R,    images->size() * sizeof(double));
+//  cudaMemset(data->R,  0, images->size() * sizeof(double));
+//
+//  cudaMalloc(&data->output_size, images->size() * sizeof(long));
+//  cudaMemset(data->output_size, 0, images->size() * sizeof(long));
+//
+//  unsigned int *sizes = new unsigned int[images->size()];
+//  for(unsigned int i = 0; i < images->size(); i++)
+//    sizes[i] = (*images)[i]->width * (*images)[i]->height;
+//
+//  cuda_alloc_multivar_array<double>(sizes,       images->size(), data->Y);
+//  cuda_alloc_multivar_array<double>(sizes,       images->size(), data->X);
+//  cuda_alloc_multivar_array<double>(sizes,       images->size(), data->P);
+//  cuda_alloc_cube_array<double>(MAX_OUTPUT_SIZE, images->size(), data->zvalues);
+//
+//  delete [] sizes;
+//}
+//
+//
+//
+//CudaZernike2D::~CudaZernike2D()
+//{
+//  cudaError status;
+//  status = cudaFree(data->D);
+//  status = cudaFree(data->R);
+//  status = cudaFree(data->output_size);
+//
+//  cuda_free_multidim_arr<double>(data->Y,       images->size());
+//  cuda_free_multidim_arr<double>(data->X,       images->size());
+//  cuda_free_multidim_arr<double>(data->P,       images->size());
+//  cuda_free_multidim_arr<double>(data->zvalues, images->size());
+//
+//  memset(&data, 0, sizeof(ZernikeData));
+//
+//  delete data;
+//}
+//
+//
+//
+//void CudaZernike2D::print_message() const
+//{
+//  std::cout << "Calculating Zernike features." << std::endl;
+//}
+//
+//
+//
+//void CudaZernike2D::compute()
+//{
+//  cuda_zernike<<< 1, images->size()>>>(*cuda_images, *data);
+//}
+//
+//
+//
+//std::vector<FileSignatures> CudaZernike2D::get_signatures() const
+//{
+//  cudaError status;
+//
+//  long *output_size = new long[images->size()];
+//  status = cudaMemcpy(output_size, data->output_size, images->size() * sizeof(long), cudaMemcpyDeviceToHost);
+//
+//  double **zvalues = new double*[images->size()];
+//  status = cudaMemcpy(zvalues, data->zvalues, images->size() * sizeof( double * ), cudaMemcpyDeviceToHost);
+//  for(int i = 0; i < images->size(); i++) {
+//    double *zvals = new double[output_size[i]];
+//    status = cudaMemcpy(zvals, zvalues[i], output_size[i] * sizeof(double), cudaMemcpyDeviceToHost);
+//    zvalues[i] = zvals;
+//  }
+//
+//  std::vector<FileSignatures> file_signatures;
+//  for(int i = 0; i < images->size(); i++) 
+//  {
+//    FileSignatures file_signature;
+//    file_signature.file_name = (*images)[i]->source_file;
+//    int x = 0;
+//    int y = 0;
+//    for(int j = 0; j < output_size[i]; j++) 
+//    {
+//      std::stringstream ss;
+//      ss << "ZernikeMoments Z_" << y << "_" << x;
+//
+//      Signature signature;
+//      signature.signature_name = ss.str();
+//      signature.value = zvalues[i][j];
+//
+//      file_signature.signatures.push_back(signature);
+//
+//      if (x >= y)
+//        x = 1 - (y++ % 2);
+//      else
+//        x += 2;
+//    }
+//    file_signatures.push_back(file_signature);
+//  }
+//
+//  for(int i = 0; i < images->size(); i++) {
+//    delete [] zvalues[i];
+//  }
+//  delete [] zvalues;
+//  delete [] output_size;
+//
+//  return file_signatures;
+//}

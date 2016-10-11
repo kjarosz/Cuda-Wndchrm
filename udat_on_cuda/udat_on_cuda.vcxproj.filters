@@ -4,15 +4,6 @@
     <CudaCompile Include="cuda_signatures.cu">
       <Filter>Source</Filter>
     </CudaCompile>
-    <CudaCompile Include="CVIPtexture.cu">
-      <Filter>Source</Filter>
-    </CudaCompile>
-    <CudaCompile Include="histogram.cu">
-      <Filter>Source</Filter>
-    </CudaCompile>
-    <CudaCompile Include="image_matrix.cu">
-      <Filter>Source</Filter>
-    </CudaCompile>
     <CudaCompile Include="textures\haralick\haralick.cu">
       <Filter>Source\textures\haralick</Filter>
     </CudaCompile>
@@ -22,14 +13,23 @@
     <CudaCompile Include="textures\zernike\cuda_complex.cu">
       <Filter>Source\textures\zernike</Filter>
     </CudaCompile>
-    <CudaCompile Include="fractal.cu">
-      <Filter>Source</Filter>
+    <CudaCompile Include="transforms\chebyshev.cu">
+      <Filter>Source\transforms</Filter>
+    </CudaCompile>
+    <CudaCompile Include="image\fractal.cu">
+      <Filter>Source\image</Filter>
+    </CudaCompile>
+    <CudaCompile Include="image\histogram.cu">
+      <Filter>Source\image</Filter>
+    </CudaCompile>
+    <CudaCompile Include="image\image_matrix.cu">
+      <Filter>Source\image</Filter>
+    </CudaCompile>
+    <CudaCompile Include="textures\haralick\CVIPtexture.cu">
+      <Filter>Source\textures\haralick</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="file_manip.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -42,24 +42,15 @@
     <ClCompile Include="utils\Utils.cpp">
       <Filter>Source\utils</Filter>
     </ClCompile>
+    <ClCompile Include="utils\file_manip.cpp">
+      <Filter>Source\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="constants.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="cuda_signatures.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="CVIPtexture.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="file_manip.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="histogram.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="image_matrix.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="signatures.h">
@@ -98,8 +89,23 @@
     <ClInclude Include="utils\cuda_utils.h">
       <Filter>Headers\utils</Filter>
     </ClInclude>
-    <ClInclude Include="fractal.h">
-      <Filter>Headers</Filter>
+    <ClInclude Include="transforms\chebyshev.h">
+      <Filter>Headers\transforms</Filter>
+    </ClInclude>
+    <ClInclude Include="textures\haralick\CVIPtexture.h">
+      <Filter>Headers\textures\haralick</Filter>
+    </ClInclude>
+    <ClInclude Include="image\fractal.h">
+      <Filter>Headers\image</Filter>
+    </ClInclude>
+    <ClInclude Include="image\histogram.h">
+      <Filter>Headers\image</Filter>
+    </ClInclude>
+    <ClInclude Include="image\image_matrix.h">
+      <Filter>Headers\image</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\file_manip.h">
+      <Filter>Headers\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -147,6 +153,18 @@
     </Filter>
     <Filter Include="Source\utils">
       <UniqueIdentifier>{50832648-4941-43f3-b59b-152aac5f9191}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\transforms">
+      <UniqueIdentifier>{302d5d29-4492-40d9-b976-89ed4a35ffcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\transforms">
+      <UniqueIdentifier>{439cbf1a-5f15-4d32-8a49-63030a44bc3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\image">
+      <UniqueIdentifier>{c6ebd843-8c92-48d1-a2eb-7797b9ab7a11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\image">
+      <UniqueIdentifier>{558a73a2-da20-4c3b-b35d-e5acd03e163f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

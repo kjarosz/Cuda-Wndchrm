@@ -1,11 +1,16 @@
-//---------------------------------------------------------------------------
+#ifndef ZERNIKE_H
+#define ZERNIKE_H
 
-#ifndef zernikeH
-#define zernikeH
-//---------------------------------------------------------------------------
+
+
+#include <vector>
+
+#include "device_launch_parameters.h"
 
 #include "../../cuda_signatures.h"
-#include "device_launch_parameters.h"
+#include "../../image/image_matrix.h"
+
+
 
 struct ZernikeData
 {
@@ -35,4 +40,4 @@ void                        cuda_delete_zernike_data(ZernikeData &data, int imag
 
 
 
-#endif
+#endif // ZERNIKE_H

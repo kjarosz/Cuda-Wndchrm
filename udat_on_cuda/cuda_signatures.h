@@ -5,13 +5,12 @@
 #include <string>
 #include <vector>
 
-#include "image_matrix.h"
+#include "image/image_matrix.h"
+
 #include "signatures.h"
 #include "constants.h"
 #include "utils/DirectoryListing.h"
 
-// 1 GB Batch limit
-//const int BATCH_SIZE = 1073741824;
 
 // 256 MB Batch Limit
 const int BATCH_SIZE = 268435456;
@@ -62,6 +61,57 @@ std::vector<FileSignatures> compute_zernike_on_cuda(const std::vector<ImageMatri
 std::vector<FileSignatures> compute_haralick_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images);
 std::vector<FileSignatures> compute_histogram_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images);
 std::vector<FileSignatures> compute_fractals_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images);
+std::vector<FileSignatures> compute_chebyshev_on_cuda(const std::vector<ImageMatrix *> &images, CudaImages &cuda_images);
 
+
+
+//// SECTION D.a - Cuda Algorithms Class
+////------------------------------------------------------------------------------
+//class CudaAlgorithm
+//{
+//public:
+//  CudaAlgorithm(const std::vector<ImageMatrix *> *, const CudaImages *);
+//  virtual ~CudaAlgorithm() {};
+//
+//  virtual void                        print_message()  const = 0;
+//  virtual void                        compute()              = 0;
+//  virtual std::vector<FileSignatures> get_signatures() const = 0;
+//
+//private:
+//  CudaAlgorithm(const CudaAlgorithm &);
+//  CudaAlgorithm &operator=(const CudaAlgorithm &);
+//
+//protected:
+//  const std::vector<ImageMatrix *> *images;
+//  const CudaImages                 *cuda_images;
+//};
+//
+//// SECTION D.b - Cuda Algorithms template
+////------------------------------------------------------------------------------
+//template <class T>
+//std::vector<FileSignatures> compute_features_on_cuda(const std::vector<ImageMatrix *> &images, const CudaImages &cuda_images)
+//{
+//  T computer(&images, &cuda_images);
+//  computer.print_message();
+//  computer.compute();
+//
+//  cudaError sync_status = cudaGetLastError();
+//  cudaError async_status = cudaDeviceSynchronize();
+//
+//  if(sync_status == cudaSuccess && async_status == cudaSuccess) 
+//  {
+//    return computer.get_signatures();
+//  } 
+//  else 
+//  {
+//    if (sync_status != cudaSuccess)
+//      print_cuda_error(sync_status, "Synchronous CUDA error occurred");
+//
+//    if (async_status != cudaSuccess)
+//      print_cuda_error(async_status, "Asynchronous CUDA error occurred");
+//
+//    return std::vector<FileSignatures>();
+//  }
+//}
 
 #endif // CUDASIGNATURES_H

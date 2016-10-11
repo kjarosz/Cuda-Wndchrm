@@ -3,8 +3,8 @@
 #pragma hdrstop
 
 #include "haralick.h"
-#include "../../CVIPtexture.h"
-#include "../../image_matrix.h"
+#include "CVIPtexture.h"
+#include "../../image/image_matrix.h"
 #include "../../utils/cuda_utils.h"
 
 #include <sstream>

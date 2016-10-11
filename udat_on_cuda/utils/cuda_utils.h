@@ -34,7 +34,8 @@ cudaError move_cuda_to_host(T *data, unsigned int size, T* &output)
   if(status != cudaSuccess) {
     delete [] host_data;
     host_data = 0;
-  }
+  } 
+  output = host_data;
   return status;
 }
 

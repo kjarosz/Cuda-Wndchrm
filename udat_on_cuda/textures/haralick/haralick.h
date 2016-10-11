@@ -5,7 +5,7 @@
 //---------------------------------------------------------------------------
 
 #include "../../cuda_signatures.h"
-#include "../../image_matrix.h"
+#include "../../image/image_matrix.h"
 #include "device_launch_parameters.h"
 
 const unsigned int HARALICK_FEATURE_SIZE               = 14;

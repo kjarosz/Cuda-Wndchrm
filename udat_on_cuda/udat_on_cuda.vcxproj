@@ -161,42 +161,44 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="colors\FuzzyCalc.h" />
-    <ClInclude Include="CVIPtexture.h" />
     <ClInclude Include="constants.h" />
     <ClInclude Include="cuda_signatures.h" />
-    <ClInclude Include="file_manip.h" />
-    <ClInclude Include="fractal.h" />
-    <ClInclude Include="histogram.h" />
-    <ClInclude Include="image_matrix.h" />
+    <ClInclude Include="image\fractal.h" />
+    <ClInclude Include="image\histogram.h" />
+    <ClInclude Include="image\image_matrix.h" />
     <ClInclude Include="libs\libtiff\tiff.h" />
     <ClInclude Include="libs\libtiff\tiffconf.h" />
     <ClInclude Include="libs\libtiff\tiffio.h" />
     <ClInclude Include="libs\libtiff\tiffvers.h" />
     <ClInclude Include="signatures.h" />
+    <ClInclude Include="textures\haralick\CVIPtexture.h" />
     <ClInclude Include="textures\haralick\haralick.h" />
     <ClInclude Include="textures\zernike\cuda_complex.h" />
     <ClInclude Include="textures\zernike\zernike.h" />
+    <ClInclude Include="transforms\chebyshev.h" />
     <ClInclude Include="utils\cuda_utils.h" />
     <ClInclude Include="utils\DirectoryListing.h" />
+    <ClInclude Include="utils\file_manip.h" />
     <ClInclude Include="utils\Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="colors\FuzzyCalc.cpp" />
-    <ClCompile Include="file_manip.cpp" />
     <ClCompile Include="main.cpp" />
-    <CudaCompile Include="fractal.cu" />
+    <CudaCompile Include="image\fractal.cu" />
+    <CudaCompile Include="image\histogram.cu" />
+    <CudaCompile Include="image\image_matrix.cu" />
+    <CudaCompile Include="textures\haralick\CVIPtexture.cu" />
     <CudaCompile Include="textures\zernike\cuda_complex.cu" />
     <CudaCompile Include="textures\zernike\zernike.cu">
       <FileType>Document</FileType>
     </CudaCompile>
     <ClCompile Include="utils\DirectoryListing.cpp" />
+    <ClCompile Include="utils\file_manip.cpp" />
     <ClCompile Include="utils\Utils.cpp" />
+    <CudaCompile Include="transforms\chebyshev.cu" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="CVIPtexture.cu" />
-    <CudaCompile Include="histogram.cu" />
     <CudaCompile Include="cuda_signatures.cu" />
-    <CudaCompile Include="image_matrix.cu" />
     <CudaCompile Include="textures\haralick\haralick.cu" />
   </ItemGroup>
   <ItemGroup>
