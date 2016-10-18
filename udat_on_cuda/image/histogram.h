@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "cuda_signatures.h"
+#include "../cuda_signatures.h"
 #include "image_matrix.h"
 #include "device_launch_parameters.h"
 

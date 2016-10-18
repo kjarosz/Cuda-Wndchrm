@@ -10,6 +10,8 @@
 
 const unsigned int HARALICK_FEATURE_SIZE               = 14;
 const unsigned int HARALICK_OUT_SIZE                   = 28;
+const unsigned int HARALICK_TONE_MAX                   = 255;
+const unsigned int HARALICK_BUF_VEC_COUNT              = 4;
 
 struct HaralickData
 {
@@ -22,6 +24,11 @@ struct HaralickData
 
   double         **out_buffer;
   double         **out;
+
+  double        ***tone_matrix;
+
+  double        ***buffer_matrix;
+  double         **buffer_vector;
 };
 
 __global__ void cuda_haralick(CudaImages images, HaralickData data);

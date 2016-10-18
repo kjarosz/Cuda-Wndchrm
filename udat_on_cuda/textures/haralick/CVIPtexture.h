@@ -67,37 +67,33 @@ typedef struct  {
 [4] -> average, 
 [5] -> range (max - min) 
 */
-__device__ __host__ int       Extract_Texture_Features(TEXTURE *Texture, int distance, int angle, u_int8_t **grays, int rows, int cols, int max_val);
+__device__ int       Extract_Texture_Features(TEXTURE *Texture, double **tone_matrix, double **buffer_matrix, double *vector_buffer, 
+                                                       int distance, int angle, u_int8_t **grays, int rows, int cols, int max_val);
 
 
 
 // Spacial Dependence matrix calculations
-__device__ __host__ double** CoOcMat_Angle_0(int distance, u_int8_t **grays, int rows, int cols, int* tone_LUT, int tone_count);
-__device__ __host__ double** CoOcMat_Angle_45(int distance, u_int8_t **grays, int rows, int cols, int* tone_LUT, int tone_count);
-__device__ __host__ double** CoOcMat_Angle_90(int distance, u_int8_t **grays, int rows, int cols, int* tone_LUT, int tone_count);
-__device__ __host__ double** CoOcMat_Angle_135(int distance, u_int8_t **grays, int rows, int cols, int* tone_LUT, int tone_count);
+__device__ double** CoOcMat_Angle_0(double** tone_matrix, int distance, u_int8_t **grays, int rows, int cols, int* tone_LUT, int tone_count);
+__device__ double** CoOcMat_Angle_45(double** tone_matrix, int distance, u_int8_t **grays, int rows, int cols, int* tone_LUT, int tone_count);
+__device__ double** CoOcMat_Angle_90(double** tone_matrix, int distance, u_int8_t **grays, int rows, int cols, int* tone_LUT, int tone_count);
+__device__ double** CoOcMat_Angle_135(double** tone_matrix, int distance, u_int8_t **grays, int rows, int cols, int* tone_LUT, int tone_count);
 
 
 
 // Auxiliary
-__device__ __host__ double   f1_asm(double **P, int Ng);
-__device__ __host__ double   f2_contrast(double **P, int Ng);
-__device__ __host__ double   f3_corr(double **P, int Ng);
-__device__ __host__ double   f4_var(double **P, int Ng);
-__device__ __host__ double   f5_idm(double **P, int Ng);
-__device__ __host__ double   f6_savg(double **P, int Ng);
-__device__ __host__ double   f7_svar(double **P, int Ng, double S);
-__device__ __host__ double   f8_sentropy(double **P, int Ng);
-__device__ __host__ double   f9_entropy(double **P, int Ng);
-__device__ __host__ double   f10_dvar(double **P, int Ng);
-__device__ __host__ double   f11_dentropy(double **P, int Ng);
-__device__ __host__ double   f12_icorr(double **P, int Ng);
-__device__ __host__ double   f13_icorr(double **P, int Ng);
-__device__ __host__ double   f14_maxcorr(double **P, int Ng);
-
-
-__device__ __host__ double  *allocate_vector(int nl, int nh);
-__device__ __host__ double **allocate_matrix(int nrl, int nrh, int ncl, int nch);
-__device__ __host__ void     free_matrix(double **matrix, int nrh);
+__device__ double   f1_asm(double **P, int Ng);
+__device__ double   f2_contrast(double **P, int Ng);
+__device__ double   f3_corr(double **P, double *px, int Ng);
+__device__ double   f4_var(double **P, int Ng);
+__device__ double   f5_idm(double **P, int Ng);
+__device__ double   f6_savg(double **P, double *Pxpy, int Ng);
+__device__ double   f7_svar(double **P, double *Pxpy, int Ng, double S);
+__device__ double   f8_sentropy(double **P, double *Pxpy, int Ng);
+__device__ double   f9_entropy(double **P, int Ng);
+__device__ double   f10_dvar(double **P, double *Pxpy, int Ng);
+__device__ double   f11_dentropy(double **P, double *Pxpy, int Ng);
+__device__ double   f12_icorr(double **P, double *Pxpy, int Ng);
+__device__ double   f13_icorr(double **P, double *Pxpy, int Ng);
+__device__ double   f14_maxcorr(double **P, double **Q_buf, double *Pxpy,int Ng);
 
 #endif

@@ -34,7 +34,7 @@
 //---------------------------------------------------------------------------
 
 #include <cstdio>
-#include "colors/FuzzyCalc.h"
+#include "../colors/FuzzyCalc.h"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 

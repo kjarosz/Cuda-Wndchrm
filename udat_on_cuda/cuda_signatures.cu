@@ -62,11 +62,11 @@ std::vector<FileSignatures> compute_signatures_on_cuda(std::vector<ImageMatrix *
   move_images_to_cuda(images, cuda_images);
 
   // Execute the features.
-  //merge_signatures(signatures, compute_zernike_on_cuda(images, cuda_images));
-  //merge_signatures(signatures, compute_haralick_on_cuda(images, cuda_images));
-  //merge_signatures(signatures, compute_histogram_on_cuda(images, cuda_images));
-  //merge_signatures(signatures, compute_fractals_on_cuda(images, cuda_images));
-  merge_signatures(signatures, compute_chebyshev_on_cuda(images, cuda_images));
+  merge_signatures(signatures, compute_zernike_on_cuda(images, cuda_images));
+  merge_signatures(signatures, compute_haralick_on_cuda(images, cuda_images));
+  merge_signatures(signatures, compute_histogram_on_cuda(images, cuda_images));
+  merge_signatures(signatures, compute_fractals_on_cuda(images, cuda_images));
+  //merge_signatures(signatures, compute_chebyshev_on_cuda(images, cuda_images));
 
   std::cout << "Signatures computed" << std::endl;
   std::cout << "============================================================" << std::endl;

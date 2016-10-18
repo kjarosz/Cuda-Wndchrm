@@ -6,7 +6,7 @@
 
 #include "image_matrix.h"
 #include "histogram.h"
-#include "utils/cuda_utils.h"
+#include "../utils/cuda_utils.h"
 
 
 

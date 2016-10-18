@@ -35,39 +35,6 @@ __device__ const unsigned int HARALICK_OUT_MAP[HARALICK_OUT_SIZE] = {
 
 
 
-const char *haralick_names[80] = {
-  "CoOcMat_AngularSecondMoment",               "ASM",
-  "CoOcMat_Contrast",                          "Contrast",
-  "CoOcMat_Correlation",                       "Correlation",
-  "CoOcMat_Variance",                          "Variance",
-  "CoOcMat_InverseDifferenceMoment",           "IDM",
-  "CoOcMat_SumAverage" ,                       "SumAvg",
-  "CoOcMat_SumVariance",                       "SumVar",
-  "CoOcMat_SumEntropy",                        "SumEntropy",
-  "CoOcMat_Entropy",                           "Entropy",
-  "CoOcMat_DifferenceEntropy",                 "DiffEntropy",
-  "CoOcMat_DifferenceVariance",                "DiffVar",
-  "CoOcMat_FirstMeasureOfCorrelation",         "MeasCorr1",
-  "CoOcMat_SecondMeasureOfCorrelation",        "MeasCorr2",
-  "CoOcMat_MaximalCorrelationCoefficient",     "MaxCorrCoef",
-  "CoOcMat_AngularSecondMomentDif",            "ASM",
-  "CoOcMat_ContrastDif" ,                      "Contrast",
-  "CoOcMat_CorrelationDif",                    "Correlation",
-  "CoOcMat_VarianceDif",                       "Variance",
-  "CoOcMat_InverseDifferenceMomentDif",        "IDM",
-  "CoOcMat_SumAverageDif",                     "SumAvg",
-  "CoOcMat_SumVarianceDif",                    "SumVar",
-  "CoOcMat_SumEntropyDif" ,                    "SumEntropy",
-  "CoOcMat_EntropyDif",                        "Entropy",
-  "CoOcMat_DifferenceEntropyDif",              "DiffEntropy",
-  "CoOcMat_DifferenceVarianceDif",             "DiffVar",
-  "CoOcMat_FirstMeasureOfCorrelationDif",      "MeasCorr1",
-  "CoOcMat_SecondMeasureOfCorrelationDif",     "MeasCorr2",
-  "CoOcMat_MaximalCorrelationCoefficientDif",  "MaxCorrCoef"
-};
-
-
-
 __global__ void cuda_haralick(CudaImages images, HaralickData data) 
 {
 	const int th_idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -93,8 +60,10 @@ __global__ void cuda_haralick(CudaImages images, HaralickData data)
 	for (long angle = 0; angle <= 135; angle = angle + 45)
 	{
     TEXTURE features;
-		Extract_Texture_Features(&features, (int)data.distance[th_idx], angle, data.gray[th_idx], 
-                             images.heights[th_idx], images.widths[th_idx], (int)max_value);
+		Extract_Texture_Features(&features, data.tone_matrix[th_idx], data.buffer_matrix[th_idx],
+                             data.buffer_vector[th_idx], (int)data.distance[th_idx], angle, 
+                             data.gray[th_idx], images.heights[th_idx], images.widths[th_idx], 
+                             (int)max_value);
 
 		/*  (1) Angular Second Moment */
     assign_feature(features.ASM,           &data.min[th_idx][0], &data.max[th_idx][0], &data.sum[th_idx][0]);
@@ -136,7 +105,7 @@ __global__ void cuda_haralick(CudaImages images, HaralickData data)
     assign_feature(features.meas_corr2,    &data.min[th_idx][12], &data.max[th_idx][12], &data.sum[th_idx][12]);
 
 		/* (14) Maximal Correlation Coefficient */
-    assign_feature(features.max_corr_coef, &data.min[th_idx][13], &data.max[th_idx][13], &data.sum[th_idx][13]);
+    assign_feature(0.0f /*features.max_corr_coef*/, &data.min[th_idx][13], &data.max[th_idx][13], &data.sum[th_idx][13]);
 	}
 
 	/* copy the values to the output array in the right output order */
@@ -146,8 +115,34 @@ __global__ void cuda_haralick(CudaImages images, HaralickData data)
 		data.out_buffer[th_idx][a + HARALICK_FEATURE_SIZE] = data.max[th_idx][a] - data.min[th_idx][a];
 	}
 
-  for (unsigned int a = 0; a < HARALICK_OUT_SIZE; a++) 
-    data.out[th_idx][a] = data.out_buffer[th_idx][HARALICK_OUT_MAP[a]];
+   data.out[th_idx][0]  = data.out_buffer[th_idx][0];
+   data.out[th_idx][1]  = data.out_buffer[th_idx][14];
+   data.out[th_idx][2]  = data.out_buffer[th_idx][1];
+   data.out[th_idx][3]  = data.out_buffer[th_idx][15];
+   data.out[th_idx][4]  = data.out_buffer[th_idx][2];
+   data.out[th_idx][5]  = data.out_buffer[th_idx][16];
+   data.out[th_idx][6]  = data.out_buffer[th_idx][9];
+   data.out[th_idx][7]  = data.out_buffer[th_idx][23];
+   data.out[th_idx][8]  = data.out_buffer[th_idx][10];
+   data.out[th_idx][9]  = data.out_buffer[th_idx][24];
+   data.out[th_idx][10] = data.out_buffer[th_idx][8];
+   data.out[th_idx][11] = data.out_buffer[th_idx][22];
+   data.out[th_idx][12] = data.out_buffer[th_idx][11];
+   data.out[th_idx][13] = data.out_buffer[th_idx][25];
+   data.out[th_idx][14] = data.out_buffer[th_idx][4];
+   data.out[th_idx][15] = data.out_buffer[th_idx][18];
+   data.out[th_idx][16] = data.out_buffer[th_idx][13];
+   data.out[th_idx][17] = data.out_buffer[th_idx][27];
+   data.out[th_idx][18] = data.out_buffer[th_idx][12];
+   data.out[th_idx][19] = data.out_buffer[th_idx][26];
+   data.out[th_idx][20] = data.out_buffer[th_idx][5];
+   data.out[th_idx][21] = data.out_buffer[th_idx][19];
+   data.out[th_idx][22] = data.out_buffer[th_idx][7];
+   data.out[th_idx][23] = data.out_buffer[th_idx][21];
+   data.out[th_idx][24] = data.out_buffer[th_idx][6];
+   data.out[th_idx][25] = data.out_buffer[th_idx][20];
+   data.out[th_idx][26] = data.out_buffer[th_idx][3];
+   data.out[th_idx][27] = data.out_buffer[th_idx][17];
 }
 
 
@@ -237,6 +232,22 @@ HaralickData cuda_allocate_haralick_data(const std::vector<ImageMatrix *> &image
   status = cuda_alloc_cube_array<double>(HARALICK_OUT_SIZE, images.size(), data.out_buffer);
   status = cuda_alloc_cube_array<double>(HARALICK_OUT_SIZE, images.size(), data.out);
 
+  double ***tone_matrices = new double**[images.size()];
+  for(int i = 0; i < images.size(); i++) {
+    status = cuda_alloc_cube_array<double>((HARALICK_TONE_MAX+1), (HARALICK_TONE_MAX+1), tone_matrices[i]);
+  }
+  move_host_to_cuda<double **>(tone_matrices, images.size(), data.tone_matrix);
+  delete [] tone_matrices;
+
+  double ***buffer_matrix = new double**[images.size()];
+  for(int i = 0; i < images.size(); i++) {
+    status = cuda_alloc_cube_array<double>((HARALICK_TONE_MAX+1), (HARALICK_TONE_MAX+1), buffer_matrix[i]);
+  }
+  move_host_to_cuda<double **>(buffer_matrix, images.size(), data.buffer_matrix);
+  delete [] buffer_matrix;
+
+  status = cuda_alloc_cube_array<double>(HARALICK_BUF_VEC_COUNT * (HARALICK_TONE_MAX+1), images.size(), data.buffer_vector);
+
   return data;
 }
 
@@ -255,7 +266,6 @@ std::vector<FileSignatures> cuda_get_haralick_signatures(const std::vector<Image
     output[i] = out;
   }
 
-  std::stringstream ss;
   std::vector<FileSignatures> file_signatures;
   for(int i = 0; i < images.size(); i++)
   {
@@ -264,8 +274,8 @@ std::vector<FileSignatures> cuda_get_haralick_signatures(const std::vector<Image
 
     for(int j = 0; j < HARALICK_OUT_SIZE; j++)
     {
-      ss.clear();
-      ss << haralick_names[j * 2] << " " << haralick_names[j*2 + 1];
+      std::stringstream ss;
+      ss << "Haralick Texture " << j;
 
       Signature sig;
       sig.signature_name = ss.str();
@@ -311,6 +321,22 @@ void cuda_delete_haralick_data(const std::vector<ImageMatrix *> &images, Haralic
 
   cuda_free_multidim_arr<double>(data.out_buffer, images.size());
   cuda_free_multidim_arr<double>(data.out,        images.size());
+
+  double ***tone_matrices;
+  move_cuda_to_host<double **>(data.tone_matrix, images.size(), tone_matrices);
+  for(int i = 0; i < images.size(); i++)
+    cuda_free_multidim_arr<double>(tone_matrices[i], HARALICK_TONE_MAX);
+  cudaFree(data.tone_matrix);
+  delete [] tone_matrices;
+
+  double ***buffer_matrix;
+  move_cuda_to_host<double **>(data.buffer_matrix, images.size(), buffer_matrix);
+  for(int i = 0; i < images.size(); i++)
+    cuda_free_multidim_arr<double>(buffer_matrix[i], HARALICK_TONE_MAX);
+  cudaFree(data.buffer_matrix);
+  delete [] buffer_matrix;
+
+  cuda_free_multidim_arr<double>(data.buffer_vector, images.size());
 }
 
 #pragma package(smart_init)

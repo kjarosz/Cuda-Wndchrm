@@ -45,16 +45,16 @@
 #endif
 #endif
 
-#include "libs/libtiff/tiffio.h"
+#include "../libs/libtiff/tiffio.h"
 
 #ifdef BORLAND_C
-#include "libs/libtiff/tiffio.h"
+#include "../libs/libtiff/tiffio.h"
 #include <jpeg.hpp>
 #endif
 
 
 #ifdef VISUAL_C
-#include "libs/libtiff/tiffio.h"
+#include "../libs/libtiff/tiffio.h"
 #include <stdlib.h>
 #endif
 

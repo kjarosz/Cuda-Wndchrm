@@ -74,10 +74,11 @@
 
 
 /* *************************************************************************** */
-__device__ __host__ 
-int Extract_Texture_Features(TEXTURE *Texture, int distance, int angle, 
-                             u_int8_t **grays, int rows,     int cols, 
-                             int max_val)
+__device__  
+int Extract_Texture_Features(TEXTURE *Texture, double **tone_matrix, 
+                             double **matrix_buffer, double *vector_buffer, 
+                             int distance, int angle, u_int8_t **grays, 
+                             int rows, int cols, int max_val)
 /* *************************************************************************** */
 {
 	int tone_LUT[PGM_MAXMAXVAL + 1]; /* LUT mapping gray tone(0-255) to matrix indicies */
@@ -106,47 +107,46 @@ int Extract_Texture_Features(TEXTURE *Texture, int distance, int angle,
 
 	/* compute gray-tone spatial dependence matrix */
 	if (angle == 0)
-		P_matrix = CoOcMat_Angle_0(distance, grays, rows, cols, tone_LUT, tone_count);
+		P_matrix = CoOcMat_Angle_0(tone_matrix, distance, grays, rows, cols, tone_LUT, tone_count);
 	else if (angle == 45)
-		P_matrix = CoOcMat_Angle_45(distance, grays, rows, cols, tone_LUT, tone_count);
+		P_matrix = CoOcMat_Angle_45(tone_matrix, distance, grays, rows, cols, tone_LUT, tone_count);
 	else if (angle == 90)
-		P_matrix = CoOcMat_Angle_90(distance, grays, rows, cols, tone_LUT, tone_count);
+		P_matrix = CoOcMat_Angle_90(tone_matrix, distance, grays, rows, cols, tone_LUT, tone_count);
 	else if (angle == 135)
-		P_matrix = CoOcMat_Angle_135(distance, grays, rows, cols, tone_LUT, tone_count);
+		P_matrix = CoOcMat_Angle_135(tone_matrix, distance, grays, rows, cols, tone_LUT, tone_count);
 	else {
 		return 0;
 	}
 
-//	/* compute the statistics for the spatial dependence matrix */
-//	Texture->ASM           = f1_asm(P_matrix, tone_count);
-//	Texture->contrast      = f2_contrast(P_matrix, tone_count);
-//	Texture->correlation   = f3_corr(P_matrix, tone_count);
-//	Texture->variance      = f4_var(P_matrix, tone_count);
-//	Texture->IDM           = f5_idm(P_matrix, tone_count);
-//	Texture->sum_avg       = f6_savg(P_matrix, tone_count);
-//
-//	/* T.J.M watch below the cast from float to double */
-//	sum_entropy            = f8_sentropy(P_matrix, tone_count);
-//	Texture->sum_entropy   = sum_entropy;
-//	Texture->sum_var       = f7_svar(P_matrix, tone_count, sum_entropy);
-//
-//	Texture->entropy       = f9_entropy(P_matrix, tone_count);
-//	Texture->diff_var      = f10_dvar(P_matrix, tone_count);
-//	Texture->diff_entropy  = f11_dentropy(P_matrix, tone_count);
-//	Texture->meas_corr1    = f12_icorr(P_matrix, tone_count);
-//	Texture->meas_corr2    = f13_icorr(P_matrix, tone_count);
-//	Texture->max_corr_coef = f14_maxcorr(P_matrix, tone_count);
+	/* compute the statistics for the spatial dependence matrix */
+	Texture->ASM           = f1_asm(P_matrix, tone_count);
+	Texture->contrast      = f2_contrast(P_matrix, tone_count);
+	Texture->correlation   = f3_corr(P_matrix, vector_buffer, tone_count);
+	Texture->variance      = f4_var(P_matrix, tone_count);
+	Texture->IDM           = f5_idm(P_matrix, tone_count);
+	Texture->sum_avg       = f6_savg(P_matrix, vector_buffer, tone_count);
 
-	free_matrix(P_matrix, tone_count);
+	/* T.J.M watch below the cast from float to double */
+	sum_entropy            = f8_sentropy(P_matrix, vector_buffer, tone_count);
+	Texture->sum_entropy   = sum_entropy;
+	Texture->sum_var       = f7_svar(P_matrix, vector_buffer, tone_count, sum_entropy);
+
+	Texture->entropy       = f9_entropy(P_matrix, tone_count);
+	Texture->diff_var      = f10_dvar(P_matrix, vector_buffer, tone_count);
+	Texture->diff_entropy  = f11_dentropy(P_matrix, vector_buffer, tone_count);
+	Texture->meas_corr1    = f12_icorr(P_matrix, vector_buffer, tone_count);
+	Texture->meas_corr2    = f13_icorr(P_matrix, vector_buffer, tone_count);
+	Texture->max_corr_coef = f14_maxcorr(P_matrix, matrix_buffer, vector_buffer, tone_count);
+
 	return 1;
 }
 
 
 
 /* ************************************************************************** */
-__device__ __host__ 
-double** CoOcMat_Angle_0(int distance, u_int8_t **grays, int rows, int cols, 
-                         int* tone_LUT, int tone_count)
+__device__  
+double** CoOcMat_Angle_0(double **matrix, int distance, u_int8_t **grays, 
+                         int rows, int cols, int* tone_LUT, int tone_count)
 /* ************************************************************************** */
 {
 	int d = distance;
@@ -154,28 +154,27 @@ double** CoOcMat_Angle_0(int distance, u_int8_t **grays, int rows, int cols,
 	int row, col, itone, jtone;
 	int count = 0; /* normalizing factor */
 
-	double** matrix = allocate_matrix(0, tone_count, 0, tone_count);
-
 	/* zero out matrix */
 	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-		matrix[itone][jtone] = 0;
+    for (jtone = 0; jtone < tone_count; ++jtone)
+      matrix[itone][jtone] = 0;
 
-	for (row = 0; row < rows; ++row)
-	for (col = 0; col < cols; ++col) {
-		/* only non-zero values count*/
-		if (grays[row][col] == 0)
-			continue;
+	for (row = 0; row < rows; ++row) {
+    for (col = 0; col < cols; ++col) {
+      /* only non-zero values count*/
+      if (grays[row][col] == 0)
+        continue;
 
-		/* find x tone */
-		if (col + d < cols && grays[row][col + d]) {
-			x = tone_LUT[grays[row][col]];
-			y = tone_LUT[grays[row][col + d]];
-			matrix[x][y]++;
-			matrix[y][x]++;
-			count += 2;
-		}
-	}
+      /* find x tone */
+      if (col + d < cols && grays[row][col + d]) {
+        x = tone_LUT[grays[row][col]];
+        y = tone_LUT[grays[row][col + d]];
+        matrix[x][y]++;
+        matrix[y][x]++;
+        count += 2;
+      }
+    }
+  }
 
 	/* normalize matrix */
 	for (itone = 0; itone < tone_count; ++itone)
@@ -188,122 +187,141 @@ double** CoOcMat_Angle_0(int distance, u_int8_t **grays, int rows, int cols,
 	return matrix;
 }
 
-__device__ __host__ double** CoOcMat_Angle_90(int distance, u_int8_t **grays,
-	int rows, int cols, int* tone_LUT, int tone_count)
+
+
+
+/* ************************************************************************** */
+__device__  
+double** CoOcMat_Angle_90(double **matrix, int distance, u_int8_t **grays,
+                          int rows, int cols, int* tone_LUT, int tone_count)
+/* ************************************************************************** */
 {
 	int d = distance;
 	int x, y;
 	int row, col, itone, jtone;
 	int count = 0; /* normalizing factor */
 
-	double** matrix = allocate_matrix(0, tone_count, 0, tone_count);
-
 	/* zero out matrix */
 	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-		matrix[itone][jtone] = 0;
+    for (jtone = 0; jtone < tone_count; ++jtone)
+      matrix[itone][jtone] = 0;
 
-	for (row = 0; row < rows; ++row)
-	for (col = 0; col < cols; ++col) {
-		/* only non-zero values count*/
-		if (grays[row][col] == 0)
-			continue;
+	for (row = 0; row < rows; ++row) {
+    for (col = 0; col < cols; ++col) {
+      /* only non-zero values count*/
+      if (grays[row][col] == 0)
+        continue;
 
-		/* find x tone */
-		if (row + d < rows && grays[row + d][col]) {
-			x = tone_LUT[grays[row][col]];
-			y = tone_LUT[grays[row + d][col]];
-			matrix[x][y]++;
-			matrix[y][x]++;
-			count += 2;
-		}
-	}
+      /* find x tone */
+      if (row + d < rows && grays[row + d][col]) {
+        x = tone_LUT[grays[row][col]];
+        y = tone_LUT[grays[row + d][col]];
+        matrix[x][y]++;
+        matrix[y][x]++;
+        count += 2;
+      }
+    }
+  }
 
 	/* normalize matrix */
 	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-	if (count == 0) matrix[itone][jtone] = 0;
-	else matrix[itone][jtone] /= count;
+    for (jtone = 0; jtone < tone_count; ++jtone)
+      if (count == 0) 
+        matrix[itone][jtone] = 0;
+      else 
+        matrix[itone][jtone] /= count;
 
 	return matrix;
 }
 
-__device__ __host__ double** CoOcMat_Angle_45(int distance, u_int8_t **grays,
-	int rows, int cols, int* tone_LUT, int tone_count)
+
+
+/* ************************************************************************** */
+__device__  
+double** CoOcMat_Angle_45(double **matrix, int distance, u_int8_t **grays, 
+                          int rows, int cols, int* tone_LUT, int tone_count)
+/* ************************************************************************** */
 {
 	int d = distance;
 	int x, y;
 	int row, col, itone, jtone;
 	int count = 0; /* normalizing factor */
 
-	double** matrix = allocate_matrix(0, tone_count, 0, tone_count);
-
 	/* zero out matrix */
 	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-		matrix[itone][jtone] = 0;
+    for (jtone = 0; jtone < tone_count; ++jtone)
+      matrix[itone][jtone] = 0;
 
-	for (row = 0; row < rows; ++row)
-	for (col = 0; col < cols; ++col) {
-		/* only non-zero values count*/
-		if (grays[row][col] == 0)
-			continue;
+	for (row = 0; row < rows; ++row) {
+    for (col = 0; col < cols; ++col) {
+      /* only non-zero values count*/
+      if (grays[row][col] == 0)
+        continue;
 
-		/* find x tone */
-		if (row + d < rows && col - d >= 0 && grays[row + d][col - d]) {
-			x = tone_LUT[grays[row][col]];
-			y = tone_LUT[grays[row + d][col - d]];
-			matrix[x][y]++;
-			matrix[y][x]++;
-			count += 2;
-		}
-	}
+      /* find x tone */
+      if (row + d < rows && col - d >= 0 && grays[row + d][col - d]) {
+        x = tone_LUT[grays[row][col]];
+        y = tone_LUT[grays[row + d][col - d]];
+        matrix[x][y]++;
+        matrix[y][x]++;
+        count += 2;
+      }
+    }
+  }
 
 	/* normalize matrix */
 	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-	if (count == 0) matrix[itone][jtone] = 0;       /* protect from error */
-	else matrix[itone][jtone] /= count;
+    for (jtone = 0; jtone < tone_count; ++jtone)
+      if (count == 0) 
+        matrix[itone][jtone] = 0;       /* protect from error */
+      else 
+        matrix[itone][jtone] /= count;
 
 	return matrix;
 }
 
-__device__ __host__ double** CoOcMat_Angle_135(int distance, u_int8_t **grays,
-	int rows, int cols, int* tone_LUT, int tone_count)
+
+
+/* ************************************************************************** */
+__device__  
+double** CoOcMat_Angle_135(double **matrix, int distance, u_int8_t **grays,
+                           int rows, int cols, int* tone_LUT, int tone_count)
+/* ************************************************************************** */
 {
 	int d = distance;
 	int x, y;
 	int row, col, itone, jtone;
 	int count = 0; /* normalizing factor */
 
-	double** matrix = allocate_matrix(0, tone_count, 0, tone_count);
-
 	/* zero out matrix */
 	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-		matrix[itone][jtone] = 0;
+    for (jtone = 0; jtone < tone_count; ++jtone)
+      matrix[itone][jtone] = 0;
 
-	for (row = 0; row < rows; ++row)
-	for (col = 0; col < cols; ++col) {
-		/* only non-zero values count*/
-		if (grays[row][col] == 0)
-			continue;
+	for (row = 0; row < rows; ++row) {
+    for (col = 0; col < cols; ++col) {
+      /* only non-zero values count*/
+      if (grays[row][col] == 0)
+        continue;
 
-		/* find x tone */
-		if (row + d < rows && col + d < cols && grays[row + d][col + d]) {
-			x = tone_LUT[grays[row][col]];
-			y = tone_LUT[grays[row + d][col + d]];
-			matrix[x][y]++;
-			matrix[y][x]++;
-			count += 2;
-		}
-	}
+      /* find x tone */
+      if (row + d < rows && col + d < cols && grays[row + d][col + d]) {
+        x = tone_LUT[grays[row][col]];
+        y = tone_LUT[grays[row + d][col + d]];
+        matrix[x][y]++;
+        matrix[y][x]++;
+        count += 2;
+      }
+    }
+  }
 
 	/* normalize matrix */
 	for (itone = 0; itone < tone_count; ++itone)
-	for (jtone = 0; jtone < tone_count; ++jtone)
-	if (count == 0) matrix[itone][jtone] = 0;   /* protect from error */
-	else matrix[itone][jtone] /= count;
+    for (jtone = 0; jtone < tone_count; ++jtone)
+      if (count == 0) 
+        matrix[itone][jtone] = 0;   /* protect from error */
+      else 
+        matrix[itone][jtone] /= count;
 
 	return matrix;
 }
@@ -314,7 +332,7 @@ __device__ __host__ double** CoOcMat_Angle_135(int distance, u_int8_t **grays,
 
 /* support functions to compute f14_maxcorr */
 
-__device__ __host__ void mkbalanced(double **a, int n)
+__device__  void mkbalanced(double **a, int n)
 {
 	int last, j, i;
 	double s, r, g, f, c, sqrdx;
@@ -364,7 +382,7 @@ __device__ __host__ void mkbalanced(double **a, int n)
 }
 
 
-__device__ __host__ void reduction(double **a, int n)
+__device__  void reduction(double **a, int n)
 {
 	int m, j, i;
 	double y, x;
@@ -407,7 +425,7 @@ __device__ __host__ void reduction(double **a, int n)
 	}
 }
 
-__device__ __host__ int hessenberg(double **a, int n, double wr[], double wi[])
+__device__  int hessenberg(double **a, int n, double wr[], double wi[])
 {
 	int nn, m, l, k, j, its, i, mmin;
 	double z, y, x, w, v, u, t, s, r = 0.0, q = 0.0, p = 0.0, anorm;
@@ -586,7 +604,7 @@ of gray-levels.
 * gray-tone transitions. Hence the P matrix for such an image will have
 * fewer entries of large magnitude.
 */
-__device__ __host__ double f1_asm(double **P, int Ng) {
+__device__  double f1_asm(double **P, int Ng) {
 	int i, j;
 	double sum = 0;
 
@@ -603,7 +621,7 @@ __device__ __host__ double f1_asm(double **P, int Ng) {
 * measure of the contrast or the amount of local variations present in an
 * image.
 */
-__device__ __host__ double f2_contrast(double **P, int Ng) {
+__device__  double f2_contrast(double **P, int Ng) {
 	int i, j, n;
 	double sum = 0, bigsum = 0;
 
@@ -625,12 +643,11 @@ __device__ __host__ double f2_contrast(double **P, int Ng) {
 * This correlation feature is a measure of gray-tone linear-dependencies
 * in the image.
 */
-__device__ __host__ double f3_corr(double **P, int Ng) {
+__device__  double f3_corr(double **P, double *px, int Ng) {
 	int i, j;
-	double sum_sqrx = 0, sum_sqry = 0, tmp, *px;
+	double sum_sqrx = 0, sum_sqry = 0, tmp;
 	double meanx = 0, meany = 0, stddevx, stddevy;
 
-	px = allocate_vector(0, Ng);
 	for (i = 0; i < Ng; ++i)
 		px[i] = 0;
 
@@ -639,8 +656,8 @@ __device__ __host__ double f3_corr(double **P, int Ng) {
 	* by summing the rows of p[i][j]
 	*/
 	for (i = 0; i < Ng; ++i)
-	for (j = 0; j < Ng; ++j)
-		px[i] += P[i][j];
+    for (j = 0; j < Ng; ++j)
+      px[i] += P[i][j];
 
 
 	/* Now calculate the means and standard deviations of px and py */
@@ -661,16 +678,17 @@ __device__ __host__ double f3_corr(double **P, int Ng) {
 
 	/* Finally, the correlation ... */
 	for (tmp = 0, i = 0; i < Ng; ++i)
-	for (j = 0; j < Ng; ++j)
-		tmp += i*j*P[i][j];
+    for (j = 0; j < Ng; ++j)
+      tmp += i*j*P[i][j];
 
-	free(px);
-	if (stddevx * stddevy == 0) return(1);  /* protect from error */
-	else return (tmp - meanx * meany) / (stddevx * stddevy);
+	if (stddevx * stddevy == 0) 
+    return(1);  /* protect from error */
+	else 
+    return (tmp - meanx * meany) / (stddevx * stddevy);
 }
 
 /* Sum of Squares: Variance */
-__device__ __host__ double f4_var(double **P, int Ng) {
+__device__  double f4_var(double **P, int Ng) {
 	int i, j;
 	double mean = 0, var = 0;
 
@@ -679,82 +697,78 @@ __device__ __host__ double f4_var(double **P, int Ng) {
 	*  cooccurrence matrix elements
 	*/
 	for (i = 0; i < Ng; ++i)
-	for (j = 0; j < Ng; ++j)
-		mean += i * P[i][j];
+    for (j = 0; j < Ng; ++j)
+      mean += i * P[i][j];
 
 	for (i = 0; i < Ng; ++i)
-	for (j = 0; j < Ng; ++j)
-		/*  M. Boland - var += (i + 1 - mean) * (i + 1 - mean) * P[i][j]; */
-		var += (i - mean) * (i - mean) * P[i][j];
+    for (j = 0; j < Ng; ++j)
+      /*  M. Boland - var += (i + 1 - mean) * (i + 1 - mean) * P[i][j]; */
+      var += (i - mean) * (i - mean) * P[i][j];
 
 	return var;
 }
 
 /* Inverse Difference Moment */
-__device__ __host__ double f5_idm(double **P, int Ng) {
+__device__  double f5_idm(double **P, int Ng) {
 	int i, j;
 	double idm = 0;
 
 	for (i = 0; i < Ng; ++i)
-	for (j = 0; j < Ng; ++j)
-		idm += P[i][j] / (1 + (i - j) * (i - j));
+    for (j = 0; j < Ng; ++j)
+      idm += P[i][j] / (1 + (i - j) * (i - j));
 
 	return idm;
 }
 
 /* Sum Average */
-__device__ __host__ double f6_savg(double **P, int Ng) {
+__device__  double f6_savg(double **P, double *Pxpy, int Ng) {
 	int i, j;
 	double savg = 0;
-	double *Pxpy = allocate_vector(0, 2 * Ng);
+	//double *Pxpy = allocate_vector(0, 2 * Ng);
 
 	for (i = 0; i <= 2 * Ng; ++i)
 		Pxpy[i] = 0;
 
 	for (i = 0; i < Ng; ++i)
-	for (j = 0; j < Ng; ++j)
-		/* M. Boland Pxpy[i + j + 2] += P[i][j]; */
-		/* Indexing from 2 instead of 0 is inconsistent with rest of code*/
-		Pxpy[i + j] += P[i][j];
+    for (j = 0; j < Ng; ++j)
+      /* M. Boland Pxpy[i + j + 2] += P[i][j]; */
+      /* Indexing from 2 instead of 0 is inconsistent with rest of code*/
+      Pxpy[i + j] += P[i][j];
 
 	/* M. Boland for (i = 2; i <= 2 * Ng; ++i) */
 	/* Indexing from 2 instead of 0 is inconsistent with rest of code*/
 	for (i = 0; i <= (2 * Ng - 2); ++i)
 		savg += i * Pxpy[i];
 
-	free(Pxpy);
 	return savg;
 }
 
 /* Sum Variance */
-__device__ __host__ double f7_svar(double **P, int Ng, double S) {
+__device__  double f7_svar(double **P, double *Pxpy, int Ng, double S) {
 	int i, j;
 	double var = 0;
-	double *Pxpy = allocate_vector(0, 2 * Ng);
 
 	for (i = 0; i <= 2 * Ng; ++i)
 		Pxpy[i] = 0;
 
 	for (i = 0; i < Ng; ++i)
-	for (j = 0; j < Ng; ++j)
-		/* M. Boland Pxpy[i + j + 2] += P[i][j]; */
-		/* Indexing from 2 instead of 0 is inconsistent with rest of code*/
-		Pxpy[i + j] += P[i][j];
+    for (j = 0; j < Ng; ++j)
+      /* M. Boland Pxpy[i + j + 2] += P[i][j]; */
+      /* Indexing from 2 instead of 0 is inconsistent with rest of code*/
+      Pxpy[i + j] += P[i][j];
 
 	/*  M. Boland for (i = 2; i <= 2 * Ng; ++i) */
 	/* Indexing from 2 instead of 0 is inconsistent with rest of code*/
 	for (i = 0; i <= (2 * Ng - 2); ++i)
 		var += (i - S) * (i - S) * Pxpy[i];
 
-	free(Pxpy);
 	return var;
 }
 
 /* Sum Entropy */
-__device__ __host__ double f8_sentropy(double **P, int Ng) {
+__device__  double f8_sentropy(double **P, double *Pxpy, int Ng) {
 	int i, j;
 	double sentropy = 0;
-	double *Pxpy = allocate_vector(0, 2 * Ng);
 
 	for (i = 0; i <= 2 * Ng; ++i)
 		Pxpy[i] = 0;
@@ -767,35 +781,33 @@ __device__ __host__ double f8_sentropy(double **P, int Ng) {
 		/*  M. Boland  sentropy -= Pxpy[i] * log10 (Pxpy[i] + EPSILON); */
 		sentropy -= Pxpy[i] * log10(Pxpy[i] + EPSILON) / log10(2.0);
 
-	free(Pxpy);
 	return sentropy;
 }
 
 /* Entropy */
-__device__ __host__ double f9_entropy(double **P, int Ng) {
+__device__  double f9_entropy(double **P, int Ng) {
 	int i, j;
 	double entropy = 0;
 
 	for (i = 0; i < Ng; ++i)
-	for (j = 0; j < Ng; ++j)
-		/*      entropy += P[i][j] * log10 (P[i][j] + EPSILON); */
-		entropy += P[i][j] * log10(P[i][j] + EPSILON) / log10(2.0);
+    for (j = 0; j < Ng; ++j)
+      /*      entropy += P[i][j] * log10 (P[i][j] + EPSILON); */
+      entropy += P[i][j] * log10(P[i][j] + EPSILON) / log10(2.0);
 
 	return -entropy;
 }
 
 /* Difference Variance */
-__device__ __host__ double f10_dvar(double **P, int Ng) {
+__device__  double f10_dvar(double **P, double *Pxpy, int Ng) {
 	int i, j;
 	double sum = 0, sum_sqr = 0, var = 0;
-	double *Pxpy = allocate_vector(0, 2 * Ng);
 
 	for (i = 0; i <= 2 * Ng; ++i)
 		Pxpy[i] = 0;
 
 	for (i = 0; i < Ng; ++i)
-	for (j = 0; j < Ng; ++j)
-		Pxpy[abs(i - j)] += P[i][j];
+    for (j = 0; j < Ng; ++j)
+      Pxpy[abs(i - j)] += P[i][j];
 
 	/* Now calculate the variance of Pxpy (Px-y) */
 	for (i = 0; i < Ng; ++i) {
@@ -810,40 +822,42 @@ __device__ __host__ double f10_dvar(double **P, int Ng) {
 
 	var = sum_sqr - sum*sum;
 
-	free(Pxpy);
 	return var;
 }
 
 /* Difference Entropy */
-__device__ __host__ double f11_dentropy(double **P, int Ng) {
+__device__  double f11_dentropy(double **P, double *Pxpy, int Ng) {
 	int i, j;
 	double sum = 0;
-	double *Pxpy = allocate_vector(0, 2 * Ng);
 
 	for (i = 0; i <= 2 * Ng; ++i)
 		Pxpy[i] = 0;
 
 	for (i = 0; i < Ng; ++i)
-	for (j = 0; j < Ng; ++j)
-		Pxpy[abs(i - j)] += P[i][j];
+    for (j = 0; j < Ng; ++j)
+      Pxpy[abs(i - j)] += P[i][j];
 
 	for (i = 0; i < Ng; ++i)
 		/*    sum += Pxpy[i] * log10 (Pxpy[i] + EPSILON); */
 		sum += Pxpy[i] * log10(Pxpy[i] + EPSILON) / log10(2.0);
 
-	free(Pxpy);
 	return -sum;
 }
 
 /* Information Measures of Correlation */
-__device__ __host__ double f12_icorr(double **P, int Ng) {
+__device__  double f12_icorr(double **P, double *PxPy, int Ng) {
 	int i, j;
-	double *px, *py;
+	//double *px, *py;
 	double hx = 0, hy = 0, hxy = 0, hxy1 = 0, hxy2 = 0;
 
-	px = allocate_vector(0, Ng);
-	py = allocate_vector(0, Ng);
+  double *px = PxPy;
+  double *py = PxPy+Ng;
+	//px = allocate_vector(0, Ng);
+	//py = allocate_vector(0, Ng);
 	/* All /log10(2.0) added by M. Boland */
+
+  for(i = 0; i < Ng; i++)
+    px[i] = py[i] = 0;
 
 	/*
 	* px[i] is the (i-1)th entry in the marginal probability matrix obtained
@@ -856,12 +870,13 @@ __device__ __host__ double f12_icorr(double **P, int Ng) {
 		}
 	}
 
-	for (i = 0; i < Ng; ++i)
-	for (j = 0; j < Ng; ++j) {
-		hxy1 -= P[i][j] * log10(px[i] * py[j] + EPSILON) / log10(2.0);
-		hxy2 -= px[i] * py[j] * log10(px[i] * py[j] + EPSILON) / log10(2.0);
-		hxy -= P[i][j] * log10(P[i][j] + EPSILON) / log10(2.0);
-	}
+	for (i = 0; i < Ng; ++i) {
+    for (j = 0; j < Ng; ++j) {
+      hxy1 -= P[i][j] * log10(px[i] * py[j] + EPSILON) / log10(2.0);
+      hxy2 -= px[i] * py[j] * log10(px[i] * py[j] + EPSILON) / log10(2.0);
+      hxy -= P[i][j] * log10(P[i][j] + EPSILON) / log10(2.0);
+    }
+  }
 
 	/* Calculate entropies of px and py - is this right? */
 	for (i = 0; i < Ng; ++i) {
@@ -869,23 +884,29 @@ __device__ __host__ double f12_icorr(double **P, int Ng) {
 		hy -= py[i] * log10(py[i] + EPSILON) / log10(2.0);
 	}
 
-	free(px);
-	free(py);
-	if ((hx > hy ? hx : hy) == 0) return(1);
+	//free(px);
+	//free(py);
+	if ((hx > hy ? hx : hy) == 0) 
+    return(1);
 	else
 		return ((hxy - hxy1) / (hx > hy ? hx : hy));
 }
 
 /* Information Measures of Correlation */
-__device__ __host__ double f13_icorr(double **P, int Ng) {
+__device__  double f13_icorr(double **P, double *Pxpy, int Ng) {
 	int i, j;
-	double *px, *py;
+	//double *px, *py;
 	double hx = 0, hy = 0, hxy = 0, hxy1 = 0, hxy2 = 0;
 
-	px = allocate_vector(0, Ng);
-	py = allocate_vector(0, Ng);
+	//px = allocate_vector(0, Ng);
+	//py = allocate_vector(0, Ng);
+
+  double *px = Pxpy;
+  double *py = Pxpy+Ng;
 
 	/* All /log10(2.0) added by M. Boland */
+  for(i = 0; i < Ng; i++)
+    px[i] = py[i] = 0;
 
 	/*
 	* px[i] is the (i-1)th entry in the marginal probability matrix obtained
@@ -911,23 +932,45 @@ __device__ __host__ double f13_icorr(double **P, int Ng) {
 		hy -= py[i] * log10(py[i] + EPSILON) / log10(2.0);
 	}
 
-	free(px);
-	free(py);
+	//free(px);
+	//free(py);
 	return (sqrt(fabs(1 - exp(-2.0 * (hxy2 - hxy)))));
 }
 
 /* Returns the Maximal Correlation Coefficient */
-__device__ __host__ double f14_maxcorr(double **P, int Ng) {
+__device__  double f14_maxcorr(double **P, double **Q_buf, double *Pxpy, int Ng) {
 	int i, j, k;
-	double *px, *py, **Q;
-	double *x, *iy, tmp;
+	//double *px, *py, *x, *iy;
+  //double **Q;
+	double tmp;
 	double f = 0.0;
 
+  double *px = Pxpy;
+  double *py = Pxpy+Ng;
+  double *x  = Pxpy+(2*Ng) - 1;
+  double *iy = Pxpy+(3*Ng) - 1;
+
+  double **Q = Q_buf;
+  for(i = 0; i <= Ng; i++) 
+    Q[i]--;
+  Q--;
+
+  for(i = 0; i <= Ng; i++) 
+  {
+    px[i] = py[i] = x[i+1] = iy[i+1] = 0;
+
+    for(j = 0; j <= Ng; j++)
+      Q[i+1][j+1] = 0;
+  }
+
+
+  /*
 	px = allocate_vector(0, Ng);
 	py = allocate_vector(0, Ng);
 	Q = allocate_matrix(1, Ng + 1, 1, Ng + 1);
 	x = allocate_vector(1, Ng);
 	iy = allocate_vector(1, Ng);
+  */
 
 	/*
 	* px[i] is the (i-1)th entry in the marginal probability matrix obtained
@@ -957,12 +1000,12 @@ __device__ __host__ double f14_maxcorr(double **P, int Ng) {
 	/* Finding eigenvalue for nonsymetric matrix using QR algorithm */
 	if (!hessenberg(Q, Ng, x, iy)) {
 		/* Memmory cleanup */
-		for (i = 1; i <= Ng + 1; i++) free(Q[i] + 1);
-		free(Q + 1);
-		free((char *)px);
-		free((char *)py);
-		free((x + 1));
-		free((iy + 1));
+//		for (i = 1; i <= Ng + 1; i++) free(Q[i] + 1);
+//		free(Q + 1);
+//		free((char *)px);
+//		free((char *)py);
+//		free((x + 1));
+//		free((iy + 1));
 
 		/* computation failed ! */
 		return 0.0;
@@ -976,61 +1019,61 @@ __device__ __host__ double f14_maxcorr(double **P, int Ng) {
 	if (x[Ng - 1] >= 0)
 		f = sqrt(x[Ng - 1]);
 
-	for (i = 1; i <= Ng + 1; i++) free(Q[i] + 1);
-	free(Q + 1);
-	free((char *)px);
-	free((char *)py);
-	free((x + 1));
-	free((iy + 1));
+//	for (i = 1; i <= Ng + 1; i++) free(Q[i] + 1);
+//	free(Q + 1);
+//	free((char *)px);
+//	free((char *)py);
+//	free((x + 1));
+//	free((iy + 1));
 
 	return f;
 }
 
-__device__ __host__ double *allocate_vector(int nl, int nh) {
-	double *v;
+//__device__  double *allocate_vector(int nl, int nh) {
+//	double *v;
+//
+//	v = (double *)malloc((unsigned)(nh - nl + 1) * sizeof (double));
+//	if (!v)
+//		return NULL;
+//
+//	return v - nl;
+//}
+//
+///* free matrix */
+//__device__  void free_matrix(double **matrix, int nrh)
+//{
+//	int col_index;
+//	for (col_index = 0; col_index <= nrh; col_index++)
+//		free(matrix[col_index]);
+//	free(matrix);
+//}
+//
+///* Allocates a double matrix with range [nrl..nrh][ncl..nch] */
+//__device__  double **allocate_matrix(int nrl, int nrh, int ncl, int nch)
+//{
+//	int i;
+//	double **m;
+//
+//	/* allocate pointers to rows */
+//	m = (double **)malloc((unsigned)(nrh - nrl + 1) * sizeof (double *));
+//	if (!m) 
+//		return NULL;
+//	m -= ncl;
+//
+//	/* allocate rows and set pointers to them */
+//	for (i = nrl; i <= nrh; i++) {
+//		m[i] = (double *)malloc((unsigned)(nch - ncl + 1) * sizeof (double));
+//		if (!m[i])
+//			return NULL;
+//		m[i] -= ncl;
+//	}
+//
+//	/* return pointer to array of pointers to rows */
+//	return m;
+//}
 
-	v = (double *)malloc((unsigned)(nh - nl + 1) * sizeof (double));
-	if (!v)
-		return NULL;
 
-	return v - nl;
-}
-
-/* free matrix */
-__device__ __host__ void free_matrix(double **matrix, int nrh)
-{
-	int col_index;
-	for (col_index = 0; col_index <= nrh; col_index++)
-		free(matrix[col_index]);
-	free(matrix);
-}
-
-/* Allocates a double matrix with range [nrl..nrh][ncl..nch] */
-__device__ __host__ double **allocate_matrix(int nrl, int nrh, int ncl, int nch)
-{
-	int i;
-	double **m;
-
-	/* allocate pointers to rows */
-	m = (double **)malloc((unsigned)(nrh - nrl + 1) * sizeof (double *));
-	if (!m) 
-		return NULL;
-	m -= ncl;
-
-	/* allocate rows and set pointers to them */
-	for (i = nrl; i <= nrh; i++) {
-		m[i] = (double *)malloc((unsigned)(nch - ncl + 1) * sizeof (double));
-		if (!m[i])
-			return NULL;
-		m[i] -= ncl;
-	}
-
-	/* return pointer to array of pointers to rows */
-	return m;
-}
-
-
-__device__ __host__ void results(double *Tp, char *c, double *a)
+__device__  void results(double *Tp, char *c, double *a)
 {
 	int i;
 	double max, min;
@@ -1050,7 +1093,7 @@ __device__ __host__ void results(double *Tp, char *c, double *a)
 	*Tp = max - min;
 }
 
-__device__ __host__ void simplesrt(int n, double arr[])
+__device__  void simplesrt(int n, double arr[])
 {
 	int i, j;
 	double a;
