@@ -105,7 +105,7 @@ __global__ void cuda_haralick(CudaImages images, HaralickData data)
     assign_feature(features.meas_corr2,    &data.min[th_idx][12], &data.max[th_idx][12], &data.sum[th_idx][12]);
 
 		/* (14) Maximal Correlation Coefficient */
-    assign_feature(0.0f /*features.max_corr_coef*/, &data.min[th_idx][13], &data.max[th_idx][13], &data.sum[th_idx][13]);
+    assign_feature(features.max_corr_coef, &data.min[th_idx][13], &data.max[th_idx][13], &data.sum[th_idx][13]);
 	}
 
 	/* copy the values to the output array in the right output order */
