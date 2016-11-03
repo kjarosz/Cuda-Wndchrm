@@ -1,9 +1,12 @@
 #include "fractal.h"
 #include "../utils/cuda_utils.h"
+#include "image_matrix.h"
+
 
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <sstream>
+
 
 
 __global__ void cuda_fractal(CudaImages images, FractalData data)
