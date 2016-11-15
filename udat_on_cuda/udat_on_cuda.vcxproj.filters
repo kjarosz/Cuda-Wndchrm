@@ -30,9 +30,6 @@
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="colors\FuzzyCalc.cpp">
       <Filter>Source\colors</Filter>
     </ClCompile>
@@ -44,6 +41,9 @@
     </ClCompile>
     <ClCompile Include="utils\file_manip.cpp">
       <Filter>Source\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="udat_on_cuda.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -106,6 +106,9 @@
     </ClInclude>
     <ClInclude Include="utils\file_manip.h">
       <Filter>Headers\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="udat_on_cuda.h">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

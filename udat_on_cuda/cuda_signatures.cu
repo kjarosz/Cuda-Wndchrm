@@ -433,9 +433,3 @@ int find_in_vector(std::vector<std::string> &vector, std::string value)
   }
   return -1;
 }
-
-
-
-//CudaAlgorithm::CudaAlgorithm(const std::vector<ImageMatrix *> *images,
-//                             const CudaImages *cuda_images)
-//: images(images), cuda_images(cuda_images) {}

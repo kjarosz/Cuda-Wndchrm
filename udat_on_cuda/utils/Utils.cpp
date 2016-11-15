@@ -3,6 +3,9 @@
 #include <Windows.h>
 #include <iostream>
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+
 std::string print_windows_error()
 {
   DWORD flags;
