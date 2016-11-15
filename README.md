@@ -1,14 +1,17 @@
-# CUDA UDAT
-A collection of algorithms design to process images into ones more usable in other algorithms.
+# CUDA Wndchrm
 
-These algorithms are being optimized for use with NVIDIA [CUDA](http://www.nvidia.com/object/cuda_home_new.html) GPU
-technology, so that multiple images can be processed in parallel for higher throughput.
+## Background
 
-This is a research project performed under the direction of
-[Dr. Lior Shamir](http://www.ltu.edu/arts_sciences/mathematics_computer_science/l_shamir.asp) at Lawrence Technological
-University.
+  Image processing is increasing in demand every year as our technology produces images in higher resolution and higher volumes. This demand arises from both consumer and scientific sources alike. The volume of data produced increases steadily however the methods to deal with it are limiting its usefulness.
+  
+## Methods
+  
+  CUDA Wndchrm is an open source re-implementation of select algorithms from [`wndchrm`](http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13). They are modified and structured in a way that they may be executed on Nvidia's CUDA enabled devices to employ parallel computing and speed up the process of image analysis. The algorithms selected are those that are the most time consuming to reduce image processing time as much as possible.
+  
+## Results
 
-[Link to original `wndchrm` paper,
-featuring the algorithms we are going to convert.](http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13)
+  The modified algorithms are tested against the results of the [original implementation](http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13). Of interest is the accuracy of the algorithms, compared to the ones found in [wndchrm](http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13) as well as a quantified measure of improvement in speed. CUDA Wndchrm also aims to maintain a simple interface so that anyone can take advantage of its bulk image processing capabilities.
+  
+## Conclusion
 
-For further project information, such as how to compile and use it, please see our [wiki](https://github.com/kjarosz/new_cuda_udat/wiki).
+  CUDA Wndchrm can be freely used to perform computationaly expensive image processing on widely available, cheap consumer-grade GPUs to improve processing speed significantly. It is suggested for use on large datasets that would otherwise take impractical amounts of time to compute. 
