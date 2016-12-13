@@ -89,25 +89,28 @@ how to install the toolkit properly.
 ### Nsight Monitor
 
 The [CUDA Toolkit][] (or perhaps your graphics drivers) is likely to install
-software called Nsight Monitor. This utility keeps track of your GPU and also
-supplies us with a debugger for our CUDA code if anything goes awry. Before
-continuing on with this project, there is a setting that must be changed.
-Search for Nsight Monitor on your system (either in the start menu or on your
-desktop) and start it up if it isn't already running. An icon should show up
-for in in the windows tray where the system time is as well as various app
-notifications. Find the Nsight icon, right click on it, and go to Options... .
-In the Options page, in the General section, you will find a subsection of
+software called `Nsight Monitor`. This utility keeps track of your GPU status
+and also supplies us with a debugger for our CUDA code if anything goes awry.
+Before continuing on with this project, we must make sure that Nsight doesn't
+kill our software unexpectedly.
+
+1. If Nsight isn't already running, search for Nsight Monitor on your system
+and start it up if it isn't already running. An icon should show up for in in
+the windows tray where the system time is as well as various app notifications. 
+2. Find the Nsight icon, right click on it, and go to Options... .
+3. In the Options page, in the General section, you will find a subsection of
 settings for "Microsoft Display Driver" along with parameters for something
-called "WDDM TDR", namely "Delay" and an "enabled" flag. The TDR is a Timeout
-Detection and Repair and is responsible for effectively making sure that your
-GPU does not get locked up by a non-responsive app. Unfortunately for us, the
-image processing algorithms take a long time to run, and the delay is set to 2
-seconds by default; therefore, we must either increase the delay to a
-reasonable time or turn it off entirety. For the entirety of development TDR
-was disabled, howeverr, it is ultimately up to you what you would like to do
-with this setting. Just be sure that when you actually do run the code, the
-delay is long enough for your algorithms to finish executing, otherwise Nsight
-will kill your processes and dump an error.
+called "WDDM TDR", namely "Delay" and an "enabled" flag. 
+4. The TDR is a Timeout Detection and Repair and is responsible for effectively
+making sure that your GPU does not get locked up by a non-responsive app.
+Unfortunately for us, the image processing algorithms take a long time to run,
+and the delay is set to 2 seconds by default; therefore, we must either
+increase the delay to a reasonable time or turn it off entirety. 
+
+*For the entirety of development TDR was disabled, howeverr, it is ultimately
+up to you what you would like to do with this setting. Just be sure that when
+you actually do run the code, the delay is long enough for your algorithms to
+finish executing, otherwise Nsight will kill your processes and dump an error.*
 
 [wndchrm]: http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13
 [CUDA Toolkit]: https://developer.nvidia.com/cuda-downloads
