@@ -64,11 +64,8 @@ chosen algorithms are:
 
 
 + Zernike moments - Algorithm based on the Zernike polynomials; used for image shape classifications.  
-
 + Haralick texture features - Employing a gray-level co-occurrence matrix, it is used in texture analysis.  
-
 + Multiscale Histograms - A standard histogram but at various scales of the source image.  
-
 + Fractals - An algorithm employed to detect fractals.
 
 ## Setting up CUDA
