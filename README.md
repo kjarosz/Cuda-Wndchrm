@@ -55,13 +55,11 @@ available as an open source package.
 
 The Wndchrm library is at the core of this project as it is the source of all
 the algorithm implementations used in this project. It is open source and
-available [here][wndchrm]. Its
-own library of algorithms is fairly impressive and overall the software can
-spit out thousands of features for each image, but due to limited resources in
-development, this project will focus only on those algorithms that are the most
-computationally expensive to maximize our gains from the reimplementations. The
-chosen algorithms are:
-
+available [here][wndchrm]. Its own library of algorithms is fairly impressive
+and overall the software can spit out thousands of features for each image, but
+due to limited resources in development, this project will focus only on those
+algorithms that are the most computationally expensive to maximize our gains
+from the reimplementations. The chosen algorithms are:
 
 + Zernike moments - Algorithm based on the Zernike polynomials; used for image shape classifications.  
 + Haralick texture features - Employing a gray-level co-occurrence matrix, it is used in texture analysis.  
@@ -76,20 +74,21 @@ of this library if it can be done so easily. Later version ought to work,
 however be sure that they are compatible with the CUDA Toolkit version that you
 are installing.
 
-This probably goes without saying, but just in case, the reader should be aware
-that CUDA is an Nvidia technology and works only on CUDA enabled cards from
-Nvidia. While this library should work on most CUDA devices, only CUDA 7.5 has
-been used in its development; therefore, no guarantees are made for other
-versions of the library.  If your target machine already possesses a graphics
-card with CUDA support, head over to Nvidia to download and install the [CUDA
-Toolkit](https://developer.nvidia.com/cuda-downloads). The software is
-available for windows as a standard installer, but it is also available on Mac
-and Linux. On Windows, simply running through the installation with all
-defaults will install the CUDA Toolkit properly; however, if you are installing
-on any of the other platforms, be sure to read Nvidia's documents on how to
-install the toolkit properly.
+**Note** This probably goes without saying, but the reader should be aware that
+CUDA is an Nvidia technology and works only on CUDA enabled cards from Nvidia.
+While this library should work on most CUDA devices, only CUDA 7.5 has been
+used in its development; therefore, no guarantees are made for other versions
+of the library.  If your target machine already possesses a graphics card with
+CUDA support, head over to Nvidia to download and install the [CUDA Toolkit][].
+The software is available for windows as a standard installer, but it is also
+available on Mac and Linux. On Windows, simply running through the installation
+with all defaults will install the CUDA Toolkit properly; however, if you are
+installing on any of the other platforms, be sure to read Nvidia's documents on
+how to install the toolkit properly.
 
-The CUDA Toolkit (or perhaps your graphics drivers) is likely to install
+### Nsight Monitor
+
+The [CUDA Toolkit][] (or perhaps your graphics drivers) is likely to install
 software called Nsight Monitor. This utility keeps track of your GPU and also
 supplies us with a debugger for our CUDA code if anything goes awry. Before
 continuing on with this project, there is a setting that must be changed.
@@ -110,4 +109,5 @@ with this setting. Just be sure that when you actually do run the code, the
 delay is long enough for your algorithms to finish executing, otherwise Nsight
 will kill your processes and dump an error.
 
-[wndchrm]: http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13 "Wndchrm"
+[wndchrm]: http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13
+[CUDA Toolkit]: https://developer.nvidia.com/cuda-downloads
