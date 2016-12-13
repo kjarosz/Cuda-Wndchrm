@@ -55,18 +55,21 @@ available as an open source package.
 
 The Wndchrm library is at the core of this project as it is the source of all
 the algorithm implementations used in this project. It is open source and
-available [`here`][wndchrm]. Its
+available [here][wndchrm]. Its
 own library of algorithms is fairly impressive and overall the software can
 spit out thousands of features for each image, but due to limited resources in
 development, this project will focus only on those algorithms that are the most
 computationally expensive to maximize our gains from the reimplementations. The
 chosen algorithms are:
 
-+ Zernike moments - Algorithm based on the Zernike polynomials; used for image
-shape classifications.  + Haralick texture features - Employing a gray-level
-co-occurrence matrix, it is used in texture analysis.  + Multiscale Histograms
-- A standard histogram but at various scales of the source image.  + Fractals -
-  An algorithm employed to detect fractals.
+
++ Zernike moments - Algorithm based on the Zernike polynomials; used for image shape classifications.  
+
++ Haralick texture features - Employing a gray-level co-occurrence matrix, it is used in texture analysis.  
+
++ Multiscale Histograms - A standard histogram but at various scales of the source image.  
+
++ Fractals - An algorithm employed to detect fractals.
 
 ## Setting up CUDA
 
