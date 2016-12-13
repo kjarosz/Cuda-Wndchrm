@@ -12,10 +12,9 @@ executed on Nvidia's CUDA enabled devices to employ parallel computing and
 speed up the process of image analysis. The algorithms selected are those that
 are the most time consuming to reduce image processing time as much as
 possible. The modified algorithms are tested against the results of the
-[original
-implementation](http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13).
+[original implementation][wndchrm].
 Of interest is the accuracy of the algorithms, compared to the ones found in
-[wndchrm](http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13) as
+[wndchrm][] as
 well as a quantified measure of improvement in speed. CUDA Wndchrm also aims to
 maintain a simple interface so that anyone can take advantage of its bulk image
 processing capabilities. CUDA Wndchrm can be freely used to perform
@@ -56,8 +55,7 @@ available as an open source package.
 
 The Wndchrm library is at the core of this project as it is the source of all
 the algorithm implementations used in this project. It is open source and
-available
-[`here`](http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13). Its
+available [`here`][wndchrm]. Its
 own library of algorithms is fairly impressive and overall the software can
 spit out thousands of features for each image, but due to limited resources in
 development, this project will focus only on those algorithms that are the most
@@ -112,5 +110,4 @@ with this setting. Just be sure that when you actually do run the code, the
 delay is long enough for your algorithms to finish executing, otherwise Nsight
 will kill your processes and dump an error.
 
-[wndchrm]: http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13 
-"Wndchrm"
+[wndchrm]: http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13 "Wndchrm"
