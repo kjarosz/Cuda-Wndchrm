@@ -61,9 +61,15 @@ due to limited resources in development, this project will focus only on those
 algorithms that are the most computationally expensive to maximize our gains
 from the reimplementations. The chosen algorithms are:
 
-+ Zernike moments - Algorithm based on the Zernike polynomials; used for image shape classifications.  
-+ Haralick texture features - Employing a gray-level co-occurrence matrix, it is used in texture analysis.  
-+ Multiscale Histograms - A standard histogram but at various scales of the source image.  
++ Zernike moments - Algorithm based on the Zernike polynomials; used for image
+shape classifications.  
+
++ Haralick texture features - Employing a gray-level co-occurrence matrix, it
+is used in texture analysis.  
+
++ Multiscale Histograms - A standard histogram but at various scales of the
+source image.  
+
 + Fractals - An algorithm employed to detect fractals.
 
 ## Setting up CUDA
@@ -97,10 +103,13 @@ kill our software unexpectedly.
 1. If Nsight isn't already running, search for Nsight Monitor on your system
 and start it up if it isn't already running. An icon should show up for in in
 the windows tray where the system time is as well as various app notifications. 
+
 2. Find the Nsight icon, right click on it, and go to Options... .
+
 3. In the Options page, in the General section, you will find a subsection of
 settings for "Microsoft Display Driver" along with parameters for something
 called "WDDM TDR", namely "Delay" and an "enabled" flag. 
+
 4. The TDR is a Timeout Detection and Repair and is responsible for effectively
 making sure that your GPU does not get locked up by a non-responsive app.
 Unfortunately for us, the image processing algorithms take a long time to run,
