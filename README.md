@@ -77,8 +77,8 @@ source image.
 To compile this project, you will need Visual Studio. During development Visual
 Studio 2013 Community Edition was used and is most recommended for compilation
 of this library if it can be done so easily. Later version ought to work,
-however be sure that they are compatible with the CUDA Toolkit version that you
-are installing.
+however be sure that they are compatible with the [CUDA Toolkit][] version that
+you are installing.
 
 **Note** This probably goes without saying, but the reader should be aware that
 CUDA is an Nvidia technology and works only on CUDA enabled cards from Nvidia.
@@ -115,11 +115,91 @@ making sure that your GPU does not get locked up by a non-responsive app.
 Unfortunately for us, the image processing algorithms take a long time to run,
 and the delay is set to 2 seconds by default; therefore, we must either
 increase the delay to a reasonable time or turn it off entirety. 
-
 *For the entirety of development TDR was disabled, howeverr, it is ultimately
 up to you what you would like to do with this setting. Just be sure that when
 you actually do run the code, the delay is long enough for your algorithms to
 finish executing, otherwise Nsight will kill your processes and dump an error.*
 
+## Compiling the code
+
+The Visual Studio project is already prepared and ready to compile. Simply go
+into the Build menu and hit Build Solution, and the code will be compiled. This
+will produce udat_on_cuda.lib in the Release or Debug folder depending on which
+build you select.
+
+![][Figure 1]
+
+In order to build your project against Cuda Wndchrm, create an NVIDIA Cuda
+Project.
+
+![][Figure 2]
+
+Having created the Cuda Project, you must add the headers from Cuda-Wndchrm to
+be usable in your project. Head over to your Project's Property Pages (in the
+Solution Explorer, right click your Project and select Properties) and on the
+left select VC++ Directories. Edit the field called "Include Directories" and
+add the folder with the source code for Cuda-Wndchrm. Now your project can
+include headers from Cuda-Wndchrm.
+
+![][Figure 3]
+
+Here is a sample program running the Cuda-Wndchrm library on a folder of images
+passed in through the command line:
+
+![][Figure 4]
+
+Before compiling this project, we must make sure all the libraries get properly
+linked to the project, otherwise the linker will yell at us about missing
+implementations. First, the static library for Cuda-Wndchrm. Go back to the
+Property Pages of your project and head to VC++ Directories again. First, in
+the upper right corner, switch to Debug configuration. Then, edit the Libraries
+Directory and add the output directory of Cuda-Wndchrm labeled "Debug"
+(typically located "Cuda-Wndchrm/Debug"). If the folder is not there, or if you
+wish not to compile against the debug version, omit this step. Switch the
+Configuration to Release and do the same thing except this time selecting the
+output directory labeled "Release". Now on the left side, expand the Linker
+section and go into Input. Switch Configuration to "All Configurations" and
+then edit the "Additional Dependencies" field. At the end of all the libraries
+included, append "udat_on_cuda.lib" (or whatever the name of the Cuda-Wndchrm
+project is, if you have changed it at all). Now your project ought to be ready
+for compiling.
+
+After compiling we still have some leg work to do before we can run it. First,
+let's copy over the dll files that are required for the code to work. Head over
+to the folder for Cuda-Wndchrm and in the folder libs, you'll find folders
+labeled Debug and Release. Depending on your build, copy the contents of one of
+the folders, head back to the directory for your project, and paste them into
+the appropriate folder for your build (depending on if you're trying to run
+debug or release).
+
+Secondly, we have to make sure our Cuda code does not get killed while it is
+running. NVIDIA's Nsight Monitor has a feature that will time out your code if
+it doesn't finish execution within a specific amount of time. The time is, by
+default (at least on my machine), set to 2 seconds, which is unlikely to grant
+enough time to finish any of the algorithms, so we have to either extend it or
+turn it off. First, start the Nsight monitor (there should be an icon on your
+desktop if you installed it, else just search for "Nsight"). In the tray, right
+click the Nsight icon and hit Options
+
+![][Figure 5]
+
+In the options, the property `WDDM TDR enabled` should be switched to false in
+order to disable the time out mechanism. This will allow your code to run
+without any time constraints, which is most like what you'd like. If you wish
+to set the time out to a large amount instead of straight turning it off, then
+just set the timeout delay to a longer time
+
+![][Figure 6]
+
+Now you should be good to go. Specify a folder with images for processing and
+let the algorithms run!
+
 [wndchrm]: http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13
 [CUDA Toolkit]: https://developer.nvidia.com/cuda-downloads
+
+[Figure 1]: https://github.com/kjarosz/Cuda-Wndchrm/blob/gh-pages/Build%20Button.png?raw=true
+[Figure 2]: https://github.com/kjarosz/Cuda-Wndchrm/blob/gh-pages/New%20Project.png?raw=true
+[Figure 3]: https://github.com/kjarosz/Cuda-Wndchrm/blob/gh-pages/Include%20Directories.png?raw=true
+[Figure 4]: https://github.com/kjarosz/Cuda-Wndchrm/blob/gh-pages/Test%20Program.png?raw=true
+[Figure 5]: https://github.com/kjarosz/Cuda-Wndchrm/blob/gh-pages/nsight-icon.png?raw=true
+[Figure 6]: https://github.com/kjarosz/Cuda-Wndchrm/blob/gh-pages/nsight-options.png?raw=true
