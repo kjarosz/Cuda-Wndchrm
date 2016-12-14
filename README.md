@@ -12,16 +12,14 @@ executed on Nvidia's CUDA enabled devices to employ parallel computing and
 speed up the process of image analysis. The algorithms selected are those that
 are the most time consuming to reduce image processing time as much as
 possible. The modified algorithms are tested against the results of the
-[original implementation][wndchrm].
-Of interest is the accuracy of the algorithms, compared to the ones found in
-[wndchrm][] as
-well as a quantified measure of improvement in speed. CUDA Wndchrm also aims to
-maintain a simple interface so that anyone can take advantage of its bulk image
-processing capabilities. CUDA Wndchrm can be freely used to perform
-computationaly expensive image processing on widely available, cheap
-consumer-grade GPUs to improve processing speed significantly. It is suggested
-for use on large datasets that would otherwise take impractical amounts of time
-to compute. 
+[original implementation][wndchrm]. Of interest is the accuracy of the 
+algorithms, compared to the ones found in [wndchrm][] as well as a quantified
+measure of improvement in speed. CUDA Wndchrm also aims to maintain a simple
+interface so that anyone can take advantage of its bulk image processing
+capabilities. CUDA Wndchrm can be freely used to perform computationaly
+expensive image processing on widely available, cheap consumer-grade GPUs to
+improve processing speed significantly. It is suggested for use on large
+datasets that would otherwise take impractical amounts of time to compute. 
 
 ## Problem
 
