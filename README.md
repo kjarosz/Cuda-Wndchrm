@@ -7,19 +7,21 @@ images in higher resolution and higher volumes. This demand arises from both
 corporate and scientific sources alike. The volume of data produced increases
 steadily however the methods to deal with it are limiting its usefulness. CUDA
 Wndchrm is an open source re-implementation of select algorithms from
-[wndchrm][]. They are modified and structured in a way that they may be
-executed on Nvidia's CUDA enabled devices to employ parallel computing and
-speed up the process of image analysis. The algorithms selected are those that
-are the most time consuming to reduce image processing time as much as
+wndchrm *(see the [More about the original Wndchrm
+software](#More-about-the-original-Wndchrm-software) section below for more
+details)*. They are modified and structured in a way that they
+may be executed on Nvidia's CUDA enabled devices to employ parallel computing
+and speed up the process of image analysis. The algorithms selected are those
+that are the most time consuming to reduce image processing time as much as
 possible. The modified algorithms are tested against the results of the
-[original implementation][wndchrm]. Of interest is the accuracy of the 
-algorithms, compared to the ones found in [wndchrm][] as well as a quantified
+original implementation. Of interest is the accuracy of the
+algorithms, compared to the ones found in wndchrm as well as a quantified
 measure of improvement in speed. CUDA Wndchrm also aims to maintain a simple
 interface so that anyone can take advantage of its bulk image processing
 capabilities. CUDA Wndchrm can be freely used to perform computationaly
 expensive image processing on widely available, cheap consumer-grade GPUs to
 improve processing speed significantly. It is suggested for use on large
-datasets that would otherwise take impractical amounts of time to compute. 
+datasets that would otherwise take impractical amounts of time to compute.
 
 ## Problem
 
@@ -33,7 +35,7 @@ enough data to occupy our image processing machines for centuries. It is clear
 that collecting the data is no longer a problem but rather its interpretation.
 Commonly available algorithms run strictly on CPUs and there is a lack of
 openly available, fast implementations. These solutions surely exist, but they
-are likely to be privatized. 
+are likely to be privatized.
 
 ## Solution
 
@@ -53,11 +55,11 @@ available as an open source package.
 
 The Wndchrm library is at the core of this project as it is the source of all
 the algorithm implementations used in this project. It is open source and
-available [here][wndchrm]. Its own library of algorithms is fairly impressive
-and overall the software can spit out thousands of features for each image, but
-due to limited resources in development, this project will focus only on those
-algorithms that are the most computationally expensive to maximize our gains
-from the reimplementations. The chosen algorithms are:
+available [here][wndchrm-github]. Its own library of algorithms is fairly
+impressive and overall the software can spit out thousands of features for
+each image, but due to limited resources in development, this project will
+focus only on those algorithms that are the most computationally expensive to
+maximize our gains from the reimplementations. The chosen algorithms are:
 
 + Zernike moments - Algorithm based on the Zernike polynomials; used for image
 shape classifications.  
@@ -100,20 +102,20 @@ kill our software unexpectedly.
 
 1. If Nsight isn't already running, search for Nsight Monitor on your system
 and start it up if it isn't already running. An icon should show up for in in
-the windows tray where the system time is as well as various app notifications. 
+the windows tray where the system time is as well as various app notifications.
 
 2. Find the Nsight icon, right click on it, and go to Options... .
 
 3. In the Options page, in the General section, you will find a subsection of
 settings for "Microsoft Display Driver" along with parameters for something
-called "WDDM TDR", namely "Delay" and an "enabled" flag. 
+called "WDDM TDR", namely "Delay" and an "enabled" flag.
 
 4. The TDR is a Timeout Detection and Repair and is responsible for effectively
 making sure that your GPU does not get locked up by a non-responsive app.
 Unfortunately for us, the image processing algorithms take a long time to run,
 and the delay is set to 2 seconds by default; therefore, we must either
-increase the delay to a reasonable time or turn it off entirety. 
-*For the entirety of development TDR was disabled, howeverr, it is ultimately
+increase the delay to a reasonable time or turn it off entirety.
+*For the entirety of development TDR was disabled, however, it is ultimately
 up to you what you would like to do with this setting. Just be sure that when
 you actually do run the code, the delay is long enough for your algorithms to
 finish executing, otherwise Nsight will kill your processes and dump an error.*
@@ -192,7 +194,18 @@ just set the timeout delay to a longer time
 Now you should be good to go. Specify a folder with images for processing and
 let the algorithms run!
 
+## More about the original Wndchrm software
+
+If you are interested in reading more about the original Wndchrm software that
+this CUDA-enabled version is based upon, you can use the following links:
+
+* [The original Wndchrm research paper][wndchrm]
+* [The GitHub source code repository for Wndchrm][wndchrm-github]
+* [The Wndchrm homepage][wndchrm-homepage]
+
 [wndchrm]: http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13
+[wndchrm-github]: https://github.com/wnd-charm/wnd-charm
+[wndchrm-homepage]: https://ome.grc.nia.nih.gov/wnd-charm/
 [CUDA Toolkit]: https://developer.nvidia.com/cuda-downloads
 
 [Figure 1]: https://github.com/kjarosz/Cuda-Wndchrm/blob/gh-pages/Build%20Button.png?raw=true
