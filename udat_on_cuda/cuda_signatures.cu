@@ -1,3 +1,24 @@
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*                                                                               */
+/*    This file is part of Cuda-Wndchrm.                                         */
+/*    Copyright (C) 2017 Kamil Jarosz, Christopher K. Horton and Tyler Wiersing  */
+/*                                                                               */
+/*    This library is free software; you can redistribute it and/or              */
+/*    modify it under the terms of the GNU Lesser General Public                 */
+/*    License as published by the Free Software Foundation; either               */
+/*    version 2.1 of the License, or (at your option) any later version.         */
+/*                                                                               */
+/*    This library is distributed in the hope that it will be useful,            */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of             */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU          */
+/*    Lesser General Public License for more details.                            */
+/*                                                                               */
+/*    You should have received a copy of the GNU Lesser General Public           */
+/*    License along with this library; if not, write to the Free Software        */
+/*    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA  */
+/*                                                                               */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -82,7 +103,7 @@ bool get_next_batch(DirectoryListing *listing, std::vector<ImageMatrix *> &image
     delete image;
   images.clear();
 
-  try 
+  try
   {
     while(!batch_is_full(images))
     {
@@ -94,8 +115,8 @@ bool get_next_batch(DirectoryListing *listing, std::vector<ImageMatrix *> &image
           images.push_back(image);
       }
     }
-  } 
-  catch( OutOfFilesException &exc) 
+  }
+  catch( OutOfFilesException &exc)
   {
     if (images.size() == 0)
       return false;
@@ -128,7 +149,7 @@ bool supported_format(const char *filename)
     }
   }
 
-  if (period <= 0) 
+  if (period <= 0)
     return false;
 
   // TODO Check if this compares the extension correctly.
@@ -237,8 +258,8 @@ std::vector<FileSignatures> compute_zernike_on_cuda(const std::vector<ImageMatri
   if(sync_error == cudaSuccess && async_error == cudaSuccess)
   {
     signatures = cuda_get_zernike_signatures(images, zernike_data, cuda_images.count);
-  } 
-  else 
+  }
+  else
   {
     if (sync_error != cudaSuccess)
       print_cuda_error(sync_error, "Synchronous CUDA error occurred");
