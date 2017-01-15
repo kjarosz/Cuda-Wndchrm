@@ -203,6 +203,11 @@ this CUDA-enabled version is based upon, you can use the following links:
 * [The GitHub source code repository for Wndchrm][wndchrm-github]
 * [The Wndchrm homepage][wndchrm-homepage]
 
+## License
+
+This software is made available under the terms of the LGPL v2.1 license.
+Please see [LICENSE.txt](LICENSE.txt) for more details.
+
 [wndchrm]: http://scfbm.biomedcentral.com/articles/10.1186/1751-0473-3-13
 [wndchrm-github]: https://github.com/wnd-charm/wnd-charm
 [wndchrm-homepage]: https://ome.grc.nia.nih.gov/wnd-charm/
