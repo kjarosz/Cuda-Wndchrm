@@ -1,3 +1,24 @@
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*                                                                               */
+/*    This file is part of Cuda-Wndchrm.                                         */
+/*    Copyright (C) 2017 Kamil Jarosz, Christopher K. Horton and Tyler Wiersing  */
+/*                                                                               */
+/*    This library is free software; you can redistribute it and/or              */
+/*    modify it under the terms of the GNU Lesser General Public                 */
+/*    License as published by the Free Software Foundation; either               */
+/*    version 2.1 of the License, or (at your option) any later version.         */
+/*                                                                               */
+/*    This library is distributed in the hope that it will be useful,            */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of             */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU          */
+/*    Lesser General Public License for more details.                            */
+/*                                                                               */
+/*    You should have received a copy of the GNU Lesser General Public           */
+/*    License along with this library; if not, write to the Free Software        */
+/*    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA  */
+/*                                                                               */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
 #ifndef _CUDA_UTIL_H
 #define _CUDA_UTIL_H
 
@@ -34,7 +55,7 @@ cudaError move_cuda_to_host(T *data, unsigned int size, T* &output)
   if(status != cudaSuccess) {
     delete [] host_data;
     host_data = 0;
-  } 
+  }
   output = host_data;
   return status;
 }
@@ -57,7 +78,7 @@ cudaError cuda_alloc_multivar_array(unsigned int sizes[], unsigned int count, T*
       break;
   }
 
-  if (status == cudaSuccess) 
+  if (status == cudaSuccess)
   {
     status = cudaMalloc(&output, sizeof(T*) * count);
 
