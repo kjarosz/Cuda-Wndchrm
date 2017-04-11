@@ -25,7 +25,7 @@ Authors:
 
 === 1. LICENSE ===
 
-This software is covered under the terms of the MIT license. Please see
+This software is covered under the terms of the LGPL v2.1 license. Please see
 LICENSE.txt for more information.
 
 

@@ -1,3 +1,24 @@
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*                                                                               */
+/*    This file is part of Cuda-Wndchrm.                                         */
+/*    Copyright (C) 2017 Kamil Jarosz, Christopher K. Horton and Tyler Wiersing  */
+/*                                                                               */
+/*    This library is free software; you can redistribute it and/or              */
+/*    modify it under the terms of the GNU Lesser General Public                 */
+/*    License as published by the Free Software Foundation; either               */
+/*    version 2.1 of the License, or (at your option) any later version.         */
+/*                                                                               */
+/*    This library is distributed in the hope that it will be useful,            */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of             */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU          */
+/*    Lesser General Public License for more details.                            */
+/*                                                                               */
+/*    You should have received a copy of the GNU Lesser General Public           */
+/*    License along with this library; if not, write to the Free Software        */
+/*    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA  */
+/*                                                                               */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
 #include <sstream>
 
 #include "chebyshev.h"
@@ -8,8 +29,8 @@
 IM - image
 N - coefficient
 */
-__global__ void cuda_chebyshev(CudaImages images, ChebyshevData data) 
-{  
+__global__ void cuda_chebyshev(CudaImages images, ChebyshevData data)
+{
   unsigned long th_idx = blockIdx.x * blockDim.x + threadIdx.x;
 
   pix_data *pixels  = images.pixels[th_idx];
@@ -58,7 +79,7 @@ __global__ void cuda_chebyshev(CudaImages images, ChebyshevData data)
 
 __device__
 void cuda_chebyshev_coefficients(
-  double *intensities, double *out, double *x, 
+  double *intensities, double *out, double *x,
   int N, int width, int height, double *y, double *y_out,
   double *Tj, double *tj, double *tnx1, double *tnx2)
 {
@@ -79,7 +100,7 @@ void cuda_chebyshev_coefficients(
 __device__
 void cuda_chebyshev_coefficients_1D(
   double *f, double *out, double *x,
-  int N, int width, double *Tj, double *tj, 
+  int N, int width, double *Tj, double *tj,
   double *tnx1, double *tnx2)
 {
   cuda_TNx(x, Tj, N, width, tnx1, tnx2);
@@ -195,7 +216,7 @@ std::vector<FileSignatures> cuda_get_chebyshev_signatures(const std::vector<Imag
 
   double **out;
   move_cuda_to_host<double*>(data.out, images.size(), out);
-  for(int i = 0; i < images.size(); i++) 
+  for(int i = 0; i < images.size(); i++)
   {
     double *o;
     move_cuda_to_host<double>(out[i], N[i], o);
@@ -208,7 +229,7 @@ std::vector<FileSignatures> cuda_get_chebyshev_signatures(const std::vector<Imag
     FileSignatures f_signatures;
     f_signatures.file_name = images[i]->source_file;
 
-    for(int j = 0; j < N[i]; j++) 
+    for(int j = 0; j < N[i]; j++)
     {
       std::stringstream ss;
       ss << "Chebyshev bin " << j;

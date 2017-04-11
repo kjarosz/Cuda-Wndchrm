@@ -1,4 +1,23 @@
-//---------------------------------------------------------------------------
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*                                                                               */
+/*    This file is part of Cuda-Wndchrm.                                         */
+/*    Copyright (C) 2017 Kamil Jarosz, Christopher K. Horton and Tyler Wiersing  */
+/*                                                                               */
+/*    This library is free software; you can redistribute it and/or              */
+/*    modify it under the terms of the GNU Lesser General Public                 */
+/*    License as published by the Free Software Foundation; either               */
+/*    version 2.1 of the License, or (at your option) any later version.         */
+/*                                                                               */
+/*    This library is distributed in the hope that it will be useful,            */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of             */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU          */
+/*    Lesser General Public License for more details.                            */
+/*                                                                               */
+/*    You should have received a copy of the GNU Lesser General Public           */
+/*    License along with this library; if not, write to the Free Software        */
+/*    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA  */
+/*                                                                               */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 #pragma hdrstop
 
@@ -35,17 +54,17 @@ __device__ const unsigned int HARALICK_OUT_MAP[HARALICK_OUT_SIZE] = {
 
 
 
-__global__ void cuda_haralick(CudaImages images, HaralickData data) 
+__global__ void cuda_haralick(CudaImages images, HaralickData data)
 {
 	const int th_idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-	if (data.distance[th_idx] <= 0) 
+	if (data.distance[th_idx] <= 0)
     data.distance[th_idx] = 1;
 
   unsigned int pixel_count = images.heights[th_idx] * images.widths[th_idx] * images.depths[th_idx];
 
 	double min_value = INF;
-  double max_value = -INF; 
+  double max_value = -INF;
 	get_intensity_range(images.pixels[th_idx], pixel_count, &min_value, &max_value);
   normalize_to_8_bits(images.pixels[th_idx], images.widths[th_idx], images.heights[th_idx],
                       images.bits[th_idx], min_value, max_value, data.gray[th_idx]);
@@ -61,8 +80,8 @@ __global__ void cuda_haralick(CudaImages images, HaralickData data)
 	{
     TEXTURE features;
 		Extract_Texture_Features(&features, data.tone_matrix[th_idx], data.buffer_matrix[th_idx],
-                             data.buffer_vector[th_idx], (int)data.distance[th_idx], angle, 
-                             data.gray[th_idx], images.heights[th_idx], images.widths[th_idx], 
+                             data.buffer_vector[th_idx], (int)data.distance[th_idx], angle,
+                             data.gray[th_idx], images.heights[th_idx], images.widths[th_idx],
                              (int)max_value);
 
 		/*  (1) Angular Second Moment */
@@ -168,17 +187,17 @@ __device__ void get_intensity_range(pix_data *pixels, int pixel_count, double *m
 
 
 
-__device__ void normalize_to_8_bits(pix_data *image, int width, int height, int bits, 
+__device__ void normalize_to_8_bits(pix_data *image, int width, int height, int bits,
                                     double min, double max, unsigned char **gray)
 {
-	// for more than 8 bits - normalize the image to (0,255) range 
+	// for more than 8 bits - normalize the image to (0,255) range
 	for (int y = 0; y < height; y++) {
-		for (int x = 0; x < width; x++) { 
+		for (int x = 0; x < width; x++) {
       pix_data pixel = get_pixel(image, width, height, x, y, 0);
 
-			if (bits > 8) 
+			if (bits > 8)
 				gray[y][x] = unsigned char((pixel.intensity - min)*(255.0 / (max - min)));
-			else 
+			else
 				gray[y][x] = unsigned char(pixel.intensity);
     }
   }
@@ -190,10 +209,10 @@ __device__ inline void assign_feature(float feature, double *min, double *max, d
 {
   *sum += feature;
 
-  if (feature < (*min)) 
+  if (feature < (*min))
     *min = feature;
 
-  if (feature > (*max)) 
+  if (feature > (*max))
     *max = feature;
 }
 
@@ -212,7 +231,7 @@ HaralickData cuda_allocate_haralick_data(const std::vector<ImageMatrix *> &image
   for(int i = 0; i < images.size(); i++)
   {
     unsigned char **gray = new unsigned char*[images[i]->height];
-    for(int j = 0; j < images[i]->height; j++) 
+    for(int j = 0; j < images[i]->height; j++)
       status = cudaMalloc(&gray[j], sizeof(unsigned char) * images[i]->width);
 
     status = cudaMalloc(&th_gray[i], sizeof(unsigned char *) * images[i]->height);
@@ -259,7 +278,7 @@ std::vector<FileSignatures> cuda_get_haralick_signatures(const std::vector<Image
 
   double **output = new double*[images.size()];
   status = cudaMemcpy(output, data.out, sizeof(double *) * images.size(), cudaMemcpyDeviceToHost);
-  for(int i = 0; i < images.size(); i++) 
+  for(int i = 0; i < images.size(); i++)
   {
     double *out = new double[HARALICK_OUT_SIZE];
     cudaMemcpy(out, output[i], sizeof(double) * HARALICK_OUT_SIZE, cudaMemcpyDeviceToHost);

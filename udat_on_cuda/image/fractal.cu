@@ -1,3 +1,24 @@
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*                                                                               */
+/*    This file is part of Cuda-Wndchrm.                                         */
+/*    Copyright (C) 2017 Kamil Jarosz, Christopher K. Horton and Tyler Wiersing  */
+/*                                                                               */
+/*    This library is free software; you can redistribute it and/or              */
+/*    modify it under the terms of the GNU Lesser General Public                 */
+/*    License as published by the Free Software Foundation; either               */
+/*    version 2.1 of the License, or (at your option) any later version.         */
+/*                                                                               */
+/*    This library is distributed in the hope that it will be useful,            */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of             */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU          */
+/*    Lesser General Public License for more details.                            */
+/*                                                                               */
+/*    You should have received a copy of the GNU Lesser General Public           */
+/*    License along with this library; if not, write to the Free Software        */
+/*    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA  */
+/*                                                                               */
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
 #include "fractal.h"
 #include "../utils/cuda_utils.h"
 #include "image_matrix.h"
@@ -10,7 +31,7 @@
 
 
 __global__ void cuda_fractal(CudaImages images, FractalData data)
-{  
+{
   int th_idx = blockIdx.x * blockDim.x + threadIdx.x;
   int bins = data.bin_count[th_idx];
 
@@ -21,12 +42,12 @@ __global__ void cuda_fractal(CudaImages images, FractalData data)
   int K = min(width, height) / 5;
 
   int step = (long)floor((double)(K/bins));
-  if (step<1) 
+  if (step<1)
     step=1;   /* avoid an infinite loop if the image is small */
 
   int bin = 0;
   for (int k = 1; k < K; k += step)
-  {  
+  {
     double sum=0.0;
     for (int x = 0; x < width; x++) {
       for (int y = 0; y < height - k; y++) {
@@ -44,8 +65,8 @@ __global__ void cuda_fractal(CudaImages images, FractalData data)
       }
     }
 
-    if (bin < bins) 
-      data.output[th_idx][bin++] = sum / (width*(width-k)+height*(height-k));	  
+    if (bin < bins)
+      data.output[th_idx][bin++] = sum / (width*(width-k)+height*(height-k));
   }
 }
 
