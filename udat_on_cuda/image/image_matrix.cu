@@ -32,10 +32,7 @@
 #include <algorithm>
 
 #include "image_matrix.h"
-#include "cuda.h"
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include "device_functions.h"
+#include <cuda_runtime_api.h>
 
 
 

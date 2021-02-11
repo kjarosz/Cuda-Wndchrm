@@ -35,9 +35,7 @@
 
 #include <cstdio>
 #include "../colors/FuzzyCalc.h"
-#include <cuda.h>
-#include <cuda_runtime.h>
-#include <device_launch_parameters.h>
+#include <cuda_runtime_api.h>
 
 #define cmRGB 1
 #define cmHSV 2
