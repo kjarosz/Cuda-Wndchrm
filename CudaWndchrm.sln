@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.31005.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "udat_on_cuda", "udat_on_cuda\udat_on_cuda.vcxproj", "{BA72F053-6356-4E73-94F8-95838CA2D45D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Example1", "Example1\Example1.vcxproj", "{AF93A697-0FF8-40EA-B0C9-6DD1679F4A3F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{BA72F053-6356-4E73-94F8-95838CA2D45D}.Release|x64.Build.0 = Release|x64
 		{BA72F053-6356-4E73-94F8-95838CA2D45D}.Release|x86.ActiveCfg = Release|Win32
 		{BA72F053-6356-4E73-94F8-95838CA2D45D}.Release|x86.Build.0 = Release|Win32
+		{AF93A697-0FF8-40EA-B0C9-6DD1679F4A3F}.Debug|x64.ActiveCfg = Debug|x64
+		{AF93A697-0FF8-40EA-B0C9-6DD1679F4A3F}.Debug|x64.Build.0 = Debug|x64
+		{AF93A697-0FF8-40EA-B0C9-6DD1679F4A3F}.Debug|x86.ActiveCfg = Debug|Win32
+		{AF93A697-0FF8-40EA-B0C9-6DD1679F4A3F}.Debug|x86.Build.0 = Debug|Win32
+		{AF93A697-0FF8-40EA-B0C9-6DD1679F4A3F}.Release|x64.ActiveCfg = Release|x64
+		{AF93A697-0FF8-40EA-B0C9-6DD1679F4A3F}.Release|x64.Build.0 = Release|x64
+		{AF93A697-0FF8-40EA-B0C9-6DD1679F4A3F}.Release|x86.ActiveCfg = Release|Win32
+		{AF93A697-0FF8-40EA-B0C9-6DD1679F4A3F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
